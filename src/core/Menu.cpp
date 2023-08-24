@@ -3,7 +3,6 @@
 #include <fmt/format.h>
 
 #include "sys/Renderer.h"
-#include "Engine.h"
 
 MenuList::MenuList(MenuCallback callback)
     : callback{ std::move(callback) }, currChoice{ 0 }

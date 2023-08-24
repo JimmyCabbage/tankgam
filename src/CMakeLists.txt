@@ -2,9 +2,10 @@ add_executable(tankgam)
 
 #core source code
 target_sources(tankgam PRIVATE
-        core/Engine.h core/Engine.cpp
         core/Menu.h core/Menu.cpp
-        core/Event.h core/Event.cpp)
+        core/Event.h core/Event.cpp
+        core/Client.h core/Client.cpp
+        core/Server.h core/Server.cpp)
 
 #SDL2 specific source code
 target_sources(tankgam PRIVATE

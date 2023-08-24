@@ -10,7 +10,6 @@
 #include "sys/Renderer/Texture.h"
 #include "sys/Renderer/TextRenderer.h"
 #include "sys/File.h"
-#include "Engine.h"
 
 Renderer::Renderer(Console& console, FileManager& fileManager, std::string_view windowName)
     : console{ console }, fileManager{ fileManager },

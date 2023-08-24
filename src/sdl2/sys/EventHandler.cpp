@@ -6,7 +6,6 @@
 #include "SDL.h"
 
 #include "sys/Renderer.h"
-#include "Engine.h"
 
 EventHandler::EventHandler(EventQueue& eventQueue)
     : eventQueue{ eventQueue }

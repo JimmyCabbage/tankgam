@@ -1,4 +1,4 @@
-#include "Engine.h"
+#include "Client.h"
 
 #include <stdexcept>
 #include <numeric>
@@ -13,38 +13,37 @@
 #include "Menu.h"
 #include "Event.h"
 
-Engine::Engine()
+Client::Client(Console& console)
+    : console{ console }
 {
-    console = std::make_unique<Console>();
-    
     try
     {
-        console->log("Init File Subsystem...");
-        fileManager = std::make_unique<FileManager>(*console);
+        console.log("Client: Init File Subsystem...");
+        fileManager = std::make_unique<FileManager>(console);
         fileManager->loadAssetsFile("dev.assets");
         fileManager->loadAssetsFile("tank.assets");
-        
-        console->log("Init Event Subsystem...");
+
+        console.log("Client: Init Event Subsystem...");
         eventQueue = std::make_unique<EventQueue>();
         eventHandler = std::make_unique<EventHandler>(*eventQueue);
-        
-        console->log("Init Renderer Subsystem...");
-        renderer = std::make_unique<Renderer>(*console, *fileManager, "src");
 
-        console->log("Init Timer Subsystem...");
+        console.log("Client: Init Renderer Subsystem...");
+        renderer = std::make_unique<Renderer>(console, *fileManager, "src");
+
+        console.log("Client: Init Timer Subsystem...");
         timer = std::make_unique<Timer>();
-        
+
         lastTick = 0;
-        
-        console->log("Init Menu Subsystem...");
+
+        console.log("Client: Init Menu Subsystem...");
         menu = std::make_unique<Menu>(*renderer);
-        
+
         const auto mainListCallback = [this](size_t choice) -> void
         {
             switch (choice)
             {
             case 0:
-                changeState(GameState::Level);
+                changeState(ClientState::Game);
                 break;
             case 1:
                 shutdown();
@@ -58,86 +57,83 @@ Engine::Engine()
     }
     catch (const std::exception& e)
     {
-        console->log(fmt::format("Init Error:\n{}", e.what()));
+        console.log(fmt::format("Client: Init Error:\n{}", e.what()));
         throw e;
     }
-    
-    gameState = GameState::StartScreen;
-    
+
+    clientState = ClientState::StartScreen;
+
     running = true;
-    
+
     menuVisible = true;
-    
-    //playerThing = std::make_unique<Player>(*this);
 
-    console->log("Initialized Engine!");
+    console.log("Client: Initialized");
 }
 
-Engine::~Engine()
+Client::~Client()
 {
-    console->log("Quitting Engine...");
+    console.log("Client: Quitting");
 }
 
-void Engine::loop()
+bool Client::runFrame()
 {
     try
     {
-        while (running)
-        {
-            handleEvents();
-            
-            tryRunTicks();
-            
-            draw();
-        }
+        handleEvents();
+
+        tryRunTicks();
+
+        draw();
     }
     catch (const std::exception& e)
     {
-        console->log(fmt::format("Runtime Error:\n{}", e.what()));
+        console.log(fmt::format("Client: Runtime Error:\n{}", e.what()));
         throw e;
     }
+
+    return running;
 }
 
-void Engine::shutdown()
+void Client::shutdown()
 {
     running = false;
 }
 
-void Engine::showMenu()
+void Client::showMenu()
 {
     menuVisible = true;
-    
+
     timer->pause();
-    console->log("Showing Menu");
+    console.log("Client: Showing Menu");
 }
 
-void Engine::hideMenu()
+void Client::hideMenu()
 {
     menuVisible = false;
-    
+
     timer->unpause();
-    console->log("Hiding Menu");
+    console.log("Client: Hiding Menu");
 }
 
-void Engine::changeState(GameState state)
+void Client::changeState(ClientState state)
 {
-    if (gameState == state)
+    if (clientState == state)
     {
         return;
     }
 
     switch (state)
     {
-    case GameState::StartScreen:
+    case ClientState::StartScreen:
         timer->stop();
-        console->log("Changing state to StartScreen");
-        gameState = state;
+        console.log("Client: Changing state to StartScreen");
+        clientState = state;
         break;
-    case GameState::Level:
+    case ClientState::Game:
         timer->start();
-        console->log("Changing state to Level");
+        console.log("Client: Changing state to Game");
         menuVisible = false;
-        gameState = state;
+        clientState = state;
         lastTick = timer->getTicks();
         break;
     default:
@@ -145,10 +141,10 @@ void Engine::changeState(GameState state)
     }
 }
 
-void Engine::handleEvents()
+void Client::handleEvents()
 {
     eventHandler->refreshEvents();
-    
+
     Event ev{};
     while (eventQueue->popEvent(ev))
     {
@@ -161,7 +157,7 @@ void Engine::handleEvents()
         {
             continue;
         }
-        
+
         if (renderer->consumeEvent(ev))
         {
             continue;
@@ -169,7 +165,7 @@ void Engine::handleEvents()
     }
 }
 
-bool Engine::consumeEvent(const Event& ev)
+bool Client::consumeEvent(const Event& ev)
 {
     switch (ev.type)
     {
@@ -179,58 +175,58 @@ bool Engine::consumeEvent(const Event& ev)
     }
 }
 
-void Engine::tryRunTicks()
+void Client::tryRunTicks()
 {
     if (menuVisible)
     {
         return;
     }
-    
-    if (gameState == GameState::Level)
+
+    if (clientState == ClientState::Game)
     {
         const uint64_t currTicks = timer->getTicks();
         const uint64_t ticks = currTicks - lastTick;
         lastTick = currTicks;
-        
+
         if (ticks == 0)
         {
             return;
         }
-        
+
         for (uint64_t i = 0; i < ticks; i++)
         {
             //for (auto& [id, thing] : things)
             {
-            //    thing->think();
+                //    thing->think();
             }
         }
     }
 }
 
-void Engine::draw()
+void Client::draw()
 {
     renderer->beginDraw();
-    
+
     renderer->drawText("HELLO WORLD ARE YOU THERE", glm::vec2{ 0.0f, 0.0f }, 100.0f);
-    
-    if (gameState == GameState::Level)
+
+    if (clientState == ClientState::Game)
     {
         //if (playerId.has_value())
         {
             //things[playerId]
         }
-        
+
         //for (auto& [id, thing] : things)
         {
-        //    thing->draw();
+            //    thing->draw();
         }
     }
-    
+
     if (menuVisible)
     {
         menu->draw();
     }
-    
+
     const float rotation = -static_cast<float>(lastTick % 360);
 
     renderer->endDraw();

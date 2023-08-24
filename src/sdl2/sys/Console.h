@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vector>
+#include <string>
+
 #include <fmt/printf.h>
 #include "SDL.h"
 
@@ -19,10 +22,11 @@ public:
     {
         SDL_Log(format.data(), args...);
         
-        //lines.push_back(fmt::sprintf(format.data(), args...));
+        lines.push_back(fmt::sprintf(format.data(), args...));
     }
     
     void log(std::string_view line);
     
 private:
+    std::vector<std::string> lines;
 };

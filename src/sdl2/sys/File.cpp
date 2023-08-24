@@ -6,7 +6,6 @@
 
 #include <fmt/format.h>
 
-#include "Engine.h"
 #include "Console.h"
 
 FileManager::FileManager(Console& console)
