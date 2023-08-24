@@ -4,9 +4,8 @@
 
 #include "SDL.h"
 
-Timer::Timer(Engine& engine)
-    : engine{ engine },
-      enabled{ false }, startTime{ 0 }, lastTick{ 0 },
+Timer::Timer()
+    : enabled{ false }, startTime{ 0 }, lastTick{ 0 },
       paused{ false }, pauseOffset{ 0 }
 {
     if (SDL_InitSubSystem(SDL_INIT_TIMER) != 0)

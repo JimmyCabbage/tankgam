@@ -4,13 +4,7 @@ add_executable(tankgam)
 target_sources(tankgam PRIVATE
         core/Engine.h core/Engine.cpp
         core/Menu.h core/Menu.cpp
-        core/Thing.h core/Thing.cpp
-        core/Player.h core/Player.cpp
-        core/World.h core/World.cpp
-        core/Physics.h core/Physics.cpp
-        core/Event.h core/Event.cpp
-        core/Renderable.h core/Renderable.cpp
-        core/Thinker.h core/Thinker.cpp)
+        core/Event.h core/Event.cpp)
 
 #SDL2 specific source code
 target_sources(tankgam PRIVATE

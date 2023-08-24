@@ -62,7 +62,8 @@ enum class EventType : uint16_t
     MouseMove,
     WindowResize,
     WindowHide,
-    WindowShow
+    WindowShow,
+    Quit
 };
 
 struct Event

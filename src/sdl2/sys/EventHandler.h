@@ -7,13 +7,12 @@
 
 #include "Event.h"
 
-class Engine;
-class Renderer;
+class EventQueue;
 
 class EventHandler
 {
 public:
-    explicit EventHandler(Engine& engine);
+    explicit EventHandler(EventQueue& eventQueue);
     ~EventHandler();
     
     EventHandler(EventHandler&) = delete;
@@ -22,9 +21,7 @@ public:
     void refreshEvents();
 
 private:
-    Engine& engine;
-    
-    Renderer& renderer;
-    
+    EventQueue& eventQueue;
+
     void convertEvent(SDL_Event& ev);
 };

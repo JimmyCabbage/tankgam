@@ -75,8 +75,8 @@ void MenuList::useCurrentChoice()
     callback(currChoice);
 }
 
-Menu::Menu(Engine& engine)
-    : engine{ engine }, renderer{ engine.getRenderer() }, currList{ 0 }
+Menu::Menu(Renderer& renderer)
+    : renderer{ renderer }, currList{ 0 }
 {
 }
 

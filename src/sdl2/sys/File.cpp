@@ -9,8 +9,8 @@
 #include "Engine.h"
 #include "Console.h"
 
-FileManager::FileManager(Engine& engine)
-    : console{ engine.getConsole() }
+FileManager::FileManager(Console& console)
+    : console{ console }
 {
 }
 

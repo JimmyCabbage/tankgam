@@ -12,8 +12,8 @@
 #include "sys/File.h"
 #include "Engine.h"
 
-Renderer::Renderer(Engine& engine, std::string_view windowName)
-    : engine{ engine }, fileManager{ engine.getFileManager() },
+Renderer::Renderer(Console& console, FileManager& fileManager, std::string_view windowName)
+    : console{ console }, fileManager{ fileManager },
       width{ 1024 }, height{ 724 },
       gl{}
 {

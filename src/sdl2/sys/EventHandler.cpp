@@ -8,8 +8,8 @@
 #include "sys/Renderer.h"
 #include "Engine.h"
 
-EventHandler::EventHandler(Engine& engine)
-    : engine{ engine }, renderer{ engine.getRenderer() }
+EventHandler::EventHandler(EventQueue& eventQueue)
+    : eventQueue{ eventQueue }
 {
     if (SDL_InitSubSystem(SDL_INIT_EVENTS) != 0)
     {
@@ -27,13 +27,6 @@ void EventHandler::refreshEvents()
     SDL_Event ev;
     while (SDL_PollEvent(&ev))
     {
-        switch (ev.type)
-        {
-        case SDL_QUIT:
-            engine.shutdown();
-            break;
-        }
-        
         convertEvent(ev);
     }
 }
@@ -70,11 +63,13 @@ KeyPressType convertKeycode(SDL_Keycode code)
 
 void EventHandler::convertEvent(SDL_Event& ev)
 {
-    EventQueue& eventQueue = engine.getEventQueue();
-    
     Event newEv{};
     switch (ev.type)
     {
+    case SDL_QUIT:
+        newEv.type = EventType::Quit;
+        eventQueue.pushEvent(newEv);
+        break;
     case SDL_KEYDOWN:
     case SDL_KEYUP:
         if (ev.type == SDL_KEYDOWN)

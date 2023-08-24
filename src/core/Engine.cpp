@@ -11,11 +11,6 @@
 #include "sys/Renderer.h"
 #include "sys/Timer.h"
 #include "Menu.h"
-#include "World.h"
-#include "Thing.h"
-#include "Player.h"
-#include "Renderable.h"
-#include "Thinker.h"
 #include "Event.h"
 
 Engine::Engine()
@@ -25,29 +20,24 @@ Engine::Engine()
     try
     {
         console->log("Init File Subsystem...");
-        fileManager = std::make_unique<FileManager>(*this);
+        fileManager = std::make_unique<FileManager>(*console);
         fileManager->loadAssetsFile("dev.assets");
         fileManager->loadAssetsFile("tank.assets");
         
         console->log("Init Event Subsystem...");
         eventQueue = std::make_unique<EventQueue>();
-        eventHandler = std::make_unique<EventHandler>(*this);
+        eventHandler = std::make_unique<EventHandler>(*eventQueue);
         
         console->log("Init Renderer Subsystem...");
-        renderer = std::make_unique<Renderer>(*this, "src");
-        
-        renderableManager = std::make_unique<RenderableManager>(*this);
-        
-        console->log("Init Thinker Subsystem...");
-        thinkerManager = std::make_unique<ThinkerManager>(*this);
-        
+        renderer = std::make_unique<Renderer>(*console, *fileManager, "src");
+
         console->log("Init Timer Subsystem...");
-        timer = std::make_unique<Timer>(*this);
+        timer = std::make_unique<Timer>();
         
         lastTick = 0;
         
         console->log("Init Menu Subsystem...");
-        menu = std::make_unique<Menu>(*this);
+        menu = std::make_unique<Menu>(*renderer);
         
         const auto mainListCallback = [this](size_t choice) -> void
         {
@@ -65,8 +55,6 @@ Engine::Engine()
         mainList.addChoice("Start Game");
         mainList.addChoice("End Game");
         menu->addList(std::move(mainList));
-        
-        world = std::make_unique<World>(*this);
     }
     catch (const std::exception& e)
     {
@@ -81,10 +69,7 @@ Engine::Engine()
     menuVisible = true;
     
     //playerThing = std::make_unique<Player>(*this);
-    
-    model = renderer->createModel("models/tank/tank_body.txt");
-    jobby = renderer->createModel("models/tank/tank_turret.txt");
-    
+
     console->log("Initialized Engine!");
 }
 
@@ -151,43 +136,13 @@ void Engine::changeState(GameState state)
     case GameState::Level:
         timer->start();
         console->log("Changing state to Level");
-        //menuVisible = false;
+        menuVisible = false;
         gameState = state;
         lastTick = timer->getTicks();
         break;
     default:
         throw std::runtime_error{ "Tried to changeState to an unknown state" };
     }
-}
-
-Console& Engine::getConsole()
-{
-    return *console;
-}
-
-Renderer& Engine::getRenderer()
-{
-    return *renderer;
-}
-
-RenderableManager& Engine::getRenderableManager()
-{
-    return *renderableManager;
-}
-
-FileManager& Engine::getFileManager()
-{
-    return *fileManager;
-}
-
-EventQueue& Engine::getEventQueue()
-{
-    return *eventQueue;
-}
-
-World& Engine::getWorld()
-{
-    return *world;
 }
 
 void Engine::handleEvents()
@@ -197,6 +152,11 @@ void Engine::handleEvents()
     Event ev{};
     while (eventQueue->popEvent(ev))
     {
+        if (consumeEvent(ev))
+        {
+            continue;
+        }
+
         if (menuVisible && menu->consumeEvent(ev))
         {
             continue;
@@ -206,6 +166,16 @@ void Engine::handleEvents()
         {
             continue;
         }
+    }
+}
+
+bool Engine::consumeEvent(const Event& ev)
+{
+    switch (ev.type)
+    {
+    case EventType::Quit:
+        shutdown();
+        break;
     }
 }
 
@@ -262,11 +232,6 @@ void Engine::draw()
     }
     
     const float rotation = -static_cast<float>(lastTick % 360);
-    
-    renderer->drawModel(*model, glm::vec3{ 1.0f }, glm::vec3{ glm::radians(15.0f), glm::radians(rotation), glm::radians(0.0f) }, glm::vec3{ 0.0f, -1.0f, -7.5f });
-    renderer->drawModel(*jobby, glm::vec3{ 1.0f }, glm::vec3{ glm::radians(15.0f), glm::radians(rotation), glm::radians(0.0f) }, glm::vec3{ 0.0f, -1.0f, -7.5f });
-    
-    renderableManager->drawAll();
-    
+
     renderer->endDraw();
 }

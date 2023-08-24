@@ -9,13 +9,12 @@
 
 #include <zip.h>
 
-class Engine;
 class Console;
 
 class FileManager
 {
 public:
-    explicit FileManager(Engine& engine);
+    explicit FileManager(Console& console);
     ~FileManager();
     
     std::vector<char> readFileRaw(std::string_view fileName);

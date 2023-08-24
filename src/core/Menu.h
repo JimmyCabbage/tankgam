@@ -6,7 +6,6 @@
 
 #include "Event.h"
 
-class Engine;
 class Renderer;
 
 using MenuCallback = std::function<void(size_t)>;
@@ -44,7 +43,7 @@ private:
 class Menu
 {
 public:
-    explicit Menu(Engine& engine);
+    explicit Menu(Renderer& renderer);
     ~Menu();
     
     Menu(const Menu&) = delete;
@@ -57,13 +56,10 @@ public:
     void selectList(size_t listNum);
     
     MenuList& currentList();
-    
-public:
+
     void draw();
 
 private:
-    Engine& engine;
-    
     Renderer& renderer;
     
     std::vector<MenuList> lists;

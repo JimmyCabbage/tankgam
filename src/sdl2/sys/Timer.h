@@ -7,7 +7,7 @@ class Engine;
 class Timer
 {
 public:
-    explicit Timer(Engine& engine);
+    Timer();
     ~Timer();
     
     Timer(const Timer&) = delete;
@@ -26,8 +26,6 @@ public:
     static constexpr uint64_t TICK_RATE = 64;
     
 private:
-    Engine& engine;
-    
     bool enabled;
     
     uint64_t startTime;
