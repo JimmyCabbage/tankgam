@@ -107,6 +107,11 @@ bool NetBuf::readFloat(float& v)
 
 bool NetBuf::writeString(std::string_view str)
 {
+    if (str.empty())
+    {
+        writeByte('\0');
+    }
+
     if (!writeBytes(std::span<const unsigned char>
         {
         reinterpret_cast<const unsigned char*>(str.data()),
@@ -116,8 +121,13 @@ bool NetBuf::writeString(std::string_view str)
         return false;
     }
 
-    //write a null terminator just in case this string_view doesn't have a null terminator at the end
-    return writeByte('\0');
+    //write a null terminator if there isn't one
+    if (data[dataWritten - 1] != '\0')
+    {
+        return writeByte('\0');
+    }
+
+    return true;
 }
 
 bool NetBuf::readString(std::string& str)
