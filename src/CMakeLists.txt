@@ -19,7 +19,9 @@ target_sources(tankgam PRIVATE
         sdl2/sys/EventHandler.h sdl2/sys/EventHandler.cpp
         sdl2/sys/File.h sdl2/sys/File.cpp
         sdl2/sys/Timer.h sdl2/sys/Timer.cpp
-        sdl2/sys/File.h sdl2/sys/File.cpp)
+        sdl2/sys/File.h sdl2/sys/File.cpp
+        sdl2/sys/Net.h sdl2/sys/Net.cpp
+        sdl2/sys/NetBuf.h sdl2/sys/NetBuf.cpp)
 
 #we want ALL the warnings
 if(MSVC)

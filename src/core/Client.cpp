@@ -10,11 +10,12 @@
 #include "sys/EventHandler.h"
 #include "sys/Renderer.h"
 #include "sys/Timer.h"
+#include "sys/Net.h"
 #include "Menu.h"
 #include "Event.h"
 
-Client::Client(Console& console)
-    : console{ console }
+Client::Client(Console& console, Net& net)
+    : console{ console }, net{ net }
 {
     try
     {

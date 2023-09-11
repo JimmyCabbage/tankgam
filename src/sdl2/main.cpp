@@ -1,4 +1,5 @@
 #include "sys/Console.h"
+#include "sys/Net.h"
 #include "Server.h"
 #include "Client.h"
 
@@ -7,9 +8,10 @@
 int main(int /*argc*/, char** /*argv*/)
 {
     Console console{};
+    Net net{};
 
-    Server server{ console };
-    Client client{ console };
+    Server server{ console, net };
+    Client client{ console, net };
     
     for (;;)
     {

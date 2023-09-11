@@ -3,9 +3,10 @@
 #include "sys/Console.h"
 #include "sys/File.h"
 #include "sys/Timer.h"
+#include "sys/Net.h"
 
-Server::Server(Console& console)
-    : console{ console }
+Server::Server(Console& console, Net& net)
+    : console{ console }, net{ net }
 {
     try
     {

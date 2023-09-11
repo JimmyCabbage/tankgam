@@ -12,6 +12,7 @@ class Timer;
 class Menu;
 struct Model;
 class EventQueue;
+class Net;
 
 enum class ClientState
 {
@@ -22,7 +23,7 @@ enum class ClientState
 class Client
 {
 public:
-    explicit Client(Console& console);
+    Client(Console& console, Net& net);
     ~Client();
 
     Client(const Client&) = delete;
@@ -40,6 +41,8 @@ public:
 
 private:
     Console& console;
+
+    Net& net;
 
     std::unique_ptr<FileManager> fileManager;
 

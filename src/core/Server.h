@@ -5,11 +5,12 @@
 class Console;
 class FileManager;
 class Timer;
+class Net;
 
 class Server
 {
 public:
-    explicit Server(Console& console);
+    Server(Console& console, Net& net);
     ~Server();
 
     Server(const Server&) = delete;
@@ -21,6 +22,8 @@ public:
 
 private:
     Console& console;
+
+    Net& net;
 
     std::unique_ptr<FileManager> fileManager;
 
