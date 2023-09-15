@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <cstddef>
 #include <array>
 #include <span>
 #include <string_view>
@@ -10,7 +11,7 @@ class NetBuf
 {
 public:
     NetBuf();
-    explicit NetBuf(std::span<const unsigned char> newData);
+    explicit NetBuf(std::span<const std::byte> newData);
     ~NetBuf();
 
     NetBuf(const NetBuf&) = delete;
@@ -19,7 +20,7 @@ public:
     NetBuf(NetBuf&& o) noexcept;
     NetBuf& operator=(NetBuf&& o) noexcept;
 
-    std::span<const unsigned char> getData();
+    std::span<const std::byte> getData();
 
     void resetWrite();
     void resetRead();
@@ -33,14 +34,14 @@ public:
     bool writeString(std::string_view str);
     bool readString(std::string& str);
 
-    bool writeByte(unsigned char byte);
-    bool readByte(unsigned char& byte);
+    bool writeByte(std::byte byte);
+    bool readByte(std::byte& byte);
 
-    bool writeBytes(std::span<const unsigned char> writeData);
-    bool readBytes(std::span<unsigned char> readData);
+    bool writeBytes(std::span<const std::byte> writeData);
+    bool readBytes(std::span<std::byte> readData);
 
 private:
-    std::array<unsigned char, 1024> data;
+    std::array<std::byte, 1024> data;
     size_t dataWritten;
     size_t dataRead;
 

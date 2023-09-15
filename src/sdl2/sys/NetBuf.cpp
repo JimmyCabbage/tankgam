@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <algorithm>
+#include <limits>
 
 #include <fmt/format.h>
 
@@ -10,7 +11,7 @@ NetBuf::NetBuf()
 {
 }
 
-NetBuf::NetBuf(std::span<const unsigned char> newData)
+NetBuf::NetBuf(std::span<const std::byte> newData)
 {
     if (newData.size() > data.size())
     {
@@ -45,9 +46,9 @@ NetBuf& NetBuf::operator=(NetBuf&& o) noexcept
     return *this;
 }
 
-std::span<const unsigned char> NetBuf::getData()
+std::span<const std::byte> NetBuf::getData()
 {
-    return std::span<const unsigned char>
+    return std::span<const std::byte>
     {
         data.begin(), data.begin() + dataWritten
     };
@@ -67,14 +68,14 @@ void NetBuf::resetRead()
 
 bool NetBuf::writeInt32(int32_t v)
 {
-    std::span<unsigned char> byteArray{ reinterpret_cast<unsigned char*>(&v), sizeof(v) };
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
 
     return writeBytes(byteArray);
 }
 
 bool NetBuf::readInt32(int32_t& v)
 {
-    std::span<unsigned char> byteArray{ reinterpret_cast<unsigned char*>(&v), sizeof(v) };
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
 
     if (!readBytes(byteArray))
     {
@@ -87,14 +88,14 @@ bool NetBuf::readInt32(int32_t& v)
 
 bool NetBuf::writeFloat(float v)
 {
-    std::span<unsigned char> byteArray{ reinterpret_cast<unsigned char*>(&v), sizeof(v) };
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
 
     return writeBytes(byteArray);
 }
 
 bool NetBuf::readFloat(float& v)
 {
-    std::span<unsigned char> byteArray{ reinterpret_cast<unsigned char*>(&v), sizeof(v) };
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
 
     if (!readBytes(byteArray))
     {
@@ -109,12 +110,12 @@ bool NetBuf::writeString(std::string_view str)
 {
     if (str.empty())
     {
-        writeByte('\0');
+        return writeByte(std::byte{ '\0' });
     }
 
-    if (!writeBytes(std::span<const unsigned char>
+    if (!writeBytes(std::span<const std::byte>
         {
-        reinterpret_cast<const unsigned char*>(str.data()),
+        reinterpret_cast<const std::byte*>(str.data()),
         str.size()
         }))
     {
@@ -122,9 +123,9 @@ bool NetBuf::writeString(std::string_view str)
     }
 
     //write a null terminator if there isn't one
-    if (data[dataWritten - 1] != '\0')
+    if (data[dataWritten - 1] != std::byte{ '\0' })
     {
-        return writeByte('\0');
+        return writeByte(std::byte{ '\0' });
     }
 
     return true;
@@ -134,7 +135,7 @@ bool NetBuf::readString(std::string& str)
 {
     str.clear();
 
-    unsigned char byte = '\0';
+    std::byte byte{ '\0' };
     do
     {
         if (!readByte(byte))
@@ -143,28 +144,28 @@ bool NetBuf::readString(std::string& str)
         }
 
         str.push_back(static_cast<char>(byte));
-    } while (byte != '\0');
+    } while (byte != std::byte{ '\0' });
 
     return true;
 }
 
-bool NetBuf::writeByte(unsigned char byte)
+bool NetBuf::writeByte(std::byte byte)
 {
-    return writeBytes(std::span<unsigned char>{ &byte, 1 });
+    return writeBytes(std::span<std::byte>{ &byte, 1 });
 }
 
-bool NetBuf::readByte(unsigned char& byte)
+bool NetBuf::readByte(std::byte& byte)
 {
-    if (!readBytes(std::span<unsigned char>{ &byte, 1 }))
+    if (!readBytes(std::span<std::byte>{ &byte, 1 }))
     {
-        byte = -1;
+        byte = std::numeric_limits<std::byte>::max();
         return false;
     }
 
     return true;
 }
 
-bool NetBuf::writeBytes(std::span<const unsigned char> writeData)
+bool NetBuf::writeBytes(std::span<const std::byte> writeData)
 {
     if (!checkWriteSpaceLeft(writeData.size()))
     {
@@ -178,7 +179,7 @@ bool NetBuf::writeBytes(std::span<const unsigned char> writeData)
     return true;
 }
 
-bool NetBuf::readBytes(std::span<unsigned char> readData)
+bool NetBuf::readBytes(std::span<std::byte> readData)
 {
     if (!checkReadSpaceLeft(readData.size()))
     {
