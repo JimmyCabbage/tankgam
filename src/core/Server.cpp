@@ -90,7 +90,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
         return;
     }
 
-    if (str == "Hello World")
+    if (str == "connect")
     {
     }
 }

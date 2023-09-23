@@ -74,7 +74,7 @@ Client::Client(Console& console, Net& net)
 
     console.log("Client: Initialized");
 
-    netChan->outOfBandPrint(NetAddr{NetAddrType::Loopback}, "Hello World");
+    netChan->outOfBandPrint(NetAddr{NetAddrType::Loopback}, "connect");
 }
 
 Client::~Client()
