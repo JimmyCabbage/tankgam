@@ -11,6 +11,7 @@
 #include "sys/Renderer.h"
 #include "sys/Timer.h"
 #include "sys/Net.h"
+#include "sys/NetChan.h"
 #include "Menu.h"
 #include "Event.h"
 
@@ -19,6 +20,8 @@ Client::Client(Console& console, Net& net)
 {
     try
     {
+        netChan = std::make_unique<NetChan>(net, NetSrc::Client);
+
         console.log("Client: Init File Subsystem...");
         fileManager = std::make_unique<FileManager>(console);
         fileManager->loadAssetsFile("dev.assets");
@@ -44,7 +47,8 @@ Client::Client(Console& console, Net& net)
             switch (choice)
             {
             case 0:
-                changeState(ClientState::Game);
+                //TODO: add connection details here
+                //changeState(ClientState::Game);
                 break;
             case 1:
                 shutdown();
@@ -62,13 +66,15 @@ Client::Client(Console& console, Net& net)
         throw e;
     }
 
-    clientState = ClientState::StartScreen;
+    clientState = ClientState::Disconnected;
 
     running = true;
 
     menuVisible = true;
 
     console.log("Client: Initialized");
+
+    netChan->outOfBandPrint(NetAddr{NetAddrType::Loopback}, "Hello World");
 }
 
 Client::~Client()
@@ -125,17 +131,18 @@ void Client::changeState(ClientState state)
 
     switch (state)
     {
-    case ClientState::StartScreen:
+    case ClientState::Disconnected:
         timer->stop();
-        console.log("Client: Changing state to StartScreen");
-        clientState = state;
-        break;
-    case ClientState::Game:
-        timer->start();
-        console.log("Client: Changing state to Game");
+        console.log("Client: Changing state to Disconnected");
         menuVisible = false;
         clientState = state;
-        lastTick = timer->getTicks();
+        break;
+    case ClientState::Connected:
+        timer->start();
+        console.log("Client: Changing state to Connected");
+        menuVisible = false;
+        clientState = state;
+        lastTick = timer->getPassedTicks();
         break;
     default:
         throw std::runtime_error{ "Tried to changeState to an unknown state" };
@@ -183,9 +190,9 @@ void Client::tryRunTicks()
         return;
     }
 
-    if (clientState == ClientState::Game)
+    if (clientState == ClientState::Connected)
     {
-        const uint64_t currTicks = timer->getTicks();
+        const uint64_t currTicks = timer->getPassedTicks();
         const uint64_t ticks = currTicks - lastTick;
         lastTick = currTicks;
 
@@ -210,7 +217,7 @@ void Client::draw()
 
     renderer->drawText("HELLO WORLD ARE YOU THERE", glm::vec2{ 0.0f, 0.0f }, 100.0f);
 
-    if (clientState == ClientState::Game)
+    if (clientState == ClientState::Connected)
     {
         //if (playerId.has_value())
         {

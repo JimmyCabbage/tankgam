@@ -1,4 +1,6 @@
-add_executable(tankgam)
+add_executable(tankgam
+        sdl2/sys/NetChan.h
+        sdl2/sys/NetChan.cpp)
 
 #core source code
 target_sources(tankgam PRIVATE

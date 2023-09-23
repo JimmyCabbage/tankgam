@@ -20,15 +20,19 @@ public:
     void pause();
     
     void unpause();
-    
-    uint64_t getTicks();
+   
+    //get the amount of passed ticks since this was last called
+    uint64_t getPassedTicks();
     
     static constexpr uint64_t TICK_RATE = 64;
-    
+
 private:
     bool enabled;
     
+	//the time when the timer began
     uint64_t startTime;
+	
+	//the last tick that was recieved when getPassedTicks() was called
     uint64_t lastTick;
     
     bool paused;

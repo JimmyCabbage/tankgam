@@ -6,6 +6,9 @@ class Console;
 class FileManager;
 class Timer;
 class Net;
+class NetChan;
+class NetBuf;
+struct NetAddr;
 
 class Server
 {
@@ -24,6 +27,7 @@ private:
     Console& console;
 
     Net& net;
+    std::unique_ptr<NetChan> netChan;
 
     std::unique_ptr<FileManager> fileManager;
 
@@ -32,6 +36,10 @@ private:
     uint64_t lastTick;
 
     bool running;
+
+    void handlePackets();
+
+    void handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr);
 
     void handleEvents();
 

@@ -86,6 +86,26 @@ bool NetBuf::readInt32(int32_t& v)
     return true;
 }
 
+bool NetBuf::writeUint32(uint32_t v)
+{
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
+
+    return writeBytes(byteArray);
+}
+
+bool NetBuf::readUint32(uint32_t& v)
+{
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
+
+    if (!readBytes(byteArray))
+    {
+        v = -1;
+        return false;
+    }
+
+    return true;
+}
+
 bool NetBuf::writeFloat(float v)
 {
     std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
@@ -143,7 +163,10 @@ bool NetBuf::readString(std::string& str)
             return false;
         }
 
-        str.push_back(static_cast<char>(byte));
+        if (byte != std::byte{ '\0' })
+        {
+            str.push_back(static_cast<char>(byte));
+        }
     } while (byte != std::byte{ '\0' });
 
     return true;

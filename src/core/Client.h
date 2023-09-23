@@ -13,11 +13,12 @@ class Menu;
 struct Model;
 class EventQueue;
 class Net;
+class NetChan;
 
 enum class ClientState
 {
-    StartScreen,
-    Game,
+    Disconnected,
+    Connected,
 };
 
 class Client
@@ -43,6 +44,7 @@ private:
     Console& console;
 
     Net& net;
+    std::unique_ptr<NetChan> netChan;
 
     std::unique_ptr<FileManager> fileManager;
 

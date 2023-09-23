@@ -47,7 +47,7 @@ void Timer::unpause()
     paused = false;
 }
 
-uint64_t Timer::getTicks()
+uint64_t Timer::getPassedTicks()
 {
     if (enabled)
     {
