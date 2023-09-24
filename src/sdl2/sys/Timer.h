@@ -16,13 +16,14 @@ public:
     void start();
     
     void stop();
-    
-    void pause();
-    
-    void unpause();
-   
+
+    void setTickOffset(uint64_t tickOffset);
+
     //get the amount of passed ticks since this was last called
     uint64_t getPassedTicks();
+
+    //get the ticks since time started
+    uint64_t getTotalTicks() const;
     
     static constexpr uint64_t TICK_RATE = 64;
 
@@ -34,8 +35,4 @@ private:
 	
 	//the last tick that was recieved when getPassedTicks() was called
     uint64_t lastTick;
-    
-    bool paused;
-    
-    uint64_t pauseOffset;
 };

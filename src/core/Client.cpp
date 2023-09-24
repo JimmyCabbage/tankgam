@@ -15,29 +15,24 @@
 #include "Menu.h"
 #include "Event.h"
 
-Client::Client(Console& console, Net& net)
-    : console{ console }, net{ net }
+Client::Client(Console& console, FileManager& fileManager, Net& net)
+    : console{ console }, fileManager{ fileManager }, net{ net }
 {
+    clientState = ClientState::Disconnected;
+
     try
     {
         netChan = std::make_unique<NetChan>(net, NetSrc::Client);
-
-        console.log("Client: Init File Subsystem...");
-        fileManager = std::make_unique<FileManager>(console);
-        fileManager->loadAssetsFile("dev.assets");
-        fileManager->loadAssetsFile("tank.assets");
 
         console.log("Client: Init Event Subsystem...");
         eventQueue = std::make_unique<EventQueue>();
         eventHandler = std::make_unique<EventHandler>(*eventQueue);
 
         console.log("Client: Init Renderer Subsystem...");
-        renderer = std::make_unique<Renderer>(console, *fileManager, "src");
+        renderer = std::make_unique<Renderer>(console, fileManager, "src");
 
         console.log("Client: Init Timer Subsystem...");
         timer = std::make_unique<Timer>();
-
-        lastTick = 0;
 
         console.log("Client: Init Menu Subsystem...");
         menu = std::make_unique<Menu>(*renderer);
@@ -47,8 +42,7 @@ Client::Client(Console& console, Net& net)
             switch (choice)
             {
             case 0:
-                //TODO: add connection details here
-                //changeState(ClientState::Game);
+                connectToServer(NetAddr{ NetAddrType::Loopback });
                 break;
             case 1:
                 shutdown();
@@ -66,15 +60,11 @@ Client::Client(Console& console, Net& net)
         throw e;
     }
 
-    clientState = ClientState::Disconnected;
-
     running = true;
 
     menuVisible = true;
 
     console.log("Client: Initialized");
-
-    netChan->outOfBandPrint(NetAddr{NetAddrType::Loopback}, "connect");
 }
 
 Client::~Client()
@@ -86,6 +76,8 @@ bool Client::runFrame()
 {
     try
     {
+        handlePackets();
+
         handleEvents();
 
         tryRunTicks();
@@ -109,19 +101,14 @@ void Client::shutdown()
 void Client::showMenu()
 {
     menuVisible = true;
-
-    timer->pause();
-    console.log("Client: Showing Menu");
 }
 
 void Client::hideMenu()
 {
     menuVisible = false;
-
-    timer->unpause();
-    console.log("Client: Hiding Menu");
 }
 
+#if 0
 void Client::changeState(ClientState state)
 {
     if (clientState == state)
@@ -146,6 +133,98 @@ void Client::changeState(ClientState state)
         break;
     default:
         throw std::runtime_error{ "Tried to changeState to an unknown state" };
+    }
+}
+#endif
+
+void Client::connectToServer(NetAddr serverAddr)
+{
+    clientState = ClientState::Connecting;
+    netChan->outOfBandPrint(serverAddr, "client_connect");
+
+    timer->start();
+}
+
+void Client::disconnect()
+{
+    //TODO: complete
+    clientState = ClientState::Disconnected;
+
+    timer->stop();
+}
+
+void Client::handlePackets()
+{
+    NetBuf buf{};
+    NetAddr fromAddr{};
+    while (net.getPacket(NetSrc::Client, buf, fromAddr))
+    {
+        //read the first byte of the msg
+        //if it's -1 then it's an unconnected message
+        if (*reinterpret_cast<const uint32_t*>(buf.getData().data()) == -1)
+        {
+            handleUnconnectedPacket(buf, fromAddr);
+            continue;
+        }
+
+        if (clientState == ClientState::Disconnected)
+        {
+            continue;
+        }
+
+        const NetMessageType msgType = netChan->processHeader(buf);
+        if (msgType == NetMessageType::Unknown)
+        {
+            continue;
+        }
+
+        if (msgType == NetMessageType::Time)
+        {
+            uint64_t prevTime;
+            buf.readUint64(prevTime);
+
+            uint64_t serverTime;
+            buf.readUint64(serverTime);
+
+            const uint64_t roundTripTime = (timer->getTotalTicks() - prevTime);
+            timer->setTickOffset(serverTime + (roundTripTime / 2));
+
+            clientState = ClientState::Connected;
+        }
+    }
+}
+
+void Client::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
+{
+    //read the -1 header
+    {
+        uint32_t byte;
+        buf.readUint32(byte);
+    }
+
+    std::string str;
+    if (!buf.readString(str)) //couldn't read str
+    {
+        return;
+    }
+
+    if (str == "server_connect")
+    {
+        //ignore this connection packet if we're already connected to a server
+        if (clientState == ClientState::Connected && clientState != ClientState::Connecting)
+        {
+            return;
+        }
+
+        netChan->setToAddr(fromAddr);
+
+        //synchronize time
+        const uint64_t oldClientTime = timer->getTotalTicks();
+
+        NetBuf sendBuf{};
+        sendBuf.writeUint64(oldClientTime);
+
+        netChan->sendData(std::move(sendBuf), NetMessageType::Time);
     }
 }
 
@@ -185,16 +264,9 @@ bool Client::consumeEvent(const Event& ev)
 
 void Client::tryRunTicks()
 {
-    if (menuVisible)
-    {
-        return;
-    }
-
     if (clientState == ClientState::Connected)
     {
-        const uint64_t currTicks = timer->getPassedTicks();
-        const uint64_t ticks = currTicks - lastTick;
-        lastTick = currTicks;
+        const uint64_t ticks = timer->getPassedTicks();
 
         if (ticks == 0)
         {
@@ -234,8 +306,6 @@ void Client::draw()
     {
         menu->draw();
     }
-
-    const float rotation = -static_cast<float>(lastTick % 360);
 
     renderer->endDraw();
 }

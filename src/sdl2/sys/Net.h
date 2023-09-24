@@ -9,6 +9,7 @@
 
 enum class NetAddrType
 {
+    Unknown,
     Loopback,
 };
 

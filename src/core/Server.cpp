@@ -6,20 +6,21 @@
 #include "sys/Net.h"
 #include "sys/NetChan.h"
 
-Server::Server(Console& console, Net& net)
-    : console{ console }, net{ net }
+Server::Server(Console& console, FileManager& fileManager, Net& net)
+    : console{ console }, fileManager{ fileManager }, net{ net }
 {
     try
     {
-        netChan = std::make_unique<NetChan>(net, NetSrc::Client);
-
-        console.log("Server: Init File Subsystem...");
-        fileManager = std::make_unique<FileManager>(console);
+        clients.resize(1);
+        for (auto& client : clients)
+        {
+            client.state = ServerClientState::Free;
+            client.netChan = std::make_unique<NetChan>(net, NetSrc::Server);
+        }
 
         console.log("Server: Init Timer Subsystem...");
         timer = std::make_unique<Timer>();
-
-        lastTick = 0;
+        timer->start();
     }
     catch (const std::exception& e)
     {
@@ -72,6 +73,41 @@ void Server::handlePackets()
         if (*reinterpret_cast<const uint32_t*>(buf.getData().data()) == -1)
         {
             handleUnconnectedPacket(buf, fromAddr);
+            continue;
+        }
+
+        ServerClient* theClient = nullptr;
+        for (auto& client : clients)
+        {
+            if (client.state == ServerClientState::Free)
+            {
+                continue;
+            }
+
+            if (client.netChan->getToAddr() != fromAddr)
+            {
+                continue;
+            }
+
+            theClient = &client;
+        }
+
+        const NetMessageType msgType = theClient->netChan->processHeader(buf);
+        if (msgType == NetMessageType::Unknown)
+        {
+            continue;
+        }
+
+        if (msgType == NetMessageType::Time)
+        {
+            uint64_t clientTime;
+            buf.readUint64(clientTime);
+
+            NetBuf sendBuf{};
+            sendBuf.writeUint64(clientTime);
+            sendBuf.writeUint64(timer->getTotalTicks());
+
+            theClient->netChan->sendData(std::move(sendBuf), NetMessageType::Time);
         }
     }
 }
@@ -90,8 +126,29 @@ void Server::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
         return;
     }
 
-    if (str == "connect")
+    if (str == "client_connect")
     {
+        ServerClient* clientNew = nullptr;
+        for (auto& client : clients)
+        {
+            if (client.state != ServerClientState::Free)
+            {
+                continue;
+            }
+
+            clientNew = &client;
+            break;
+        }
+
+        if (!clientNew)
+        {
+            return;
+        }
+
+        clientNew->state = ServerClientState::Connected;
+        clientNew->netChan->setToAddr(fromAddr);
+
+        clientNew->netChan->outOfBandPrint(fromAddr, "server_connect");
     }
 }
 

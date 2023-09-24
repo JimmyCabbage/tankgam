@@ -14,17 +14,20 @@ struct Model;
 class EventQueue;
 class Net;
 class NetChan;
+class NetBuf;
+struct NetAddr;
 
 enum class ClientState
 {
     Disconnected,
+    Connecting,
     Connected,
 };
 
 class Client
 {
 public:
-    Client(Console& console, Net& net);
+    Client(Console& console, FileManager& fileManager, Net& net);
     ~Client();
 
     Client(const Client&) = delete;
@@ -38,15 +41,17 @@ public:
 
     void hideMenu();
 
-    void changeState(ClientState state);
+    //void changeState(ClientState state);
 
 private:
     Console& console;
 
+    FileManager& fileManager;
+
+    ClientState clientState;
+
     Net& net;
     std::unique_ptr<NetChan> netChan;
-
-    std::unique_ptr<FileManager> fileManager;
 
     std::unique_ptr<EventQueue> eventQueue;
 
@@ -56,15 +61,21 @@ private:
 
     std::unique_ptr<Timer> timer;
 
-    uint64_t lastTick;
-
     std::unique_ptr<Menu> menu;
-
-    ClientState clientState;
 
     bool running;
 
     bool menuVisible;
+
+//basic commands
+    void connectToServer(NetAddr serverAddr);
+
+    void disconnect();
+
+//main loop stuff
+    void handlePackets();
+
+    void handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr);
 
     void handleEvents();
 

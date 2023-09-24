@@ -1,4 +1,5 @@
 #include "sys/Console.h"
+#include "sys/File.h"
 #include "sys/Net.h"
 #include "Server.h"
 #include "Client.h"
@@ -8,10 +9,15 @@
 int main(int /*argc*/, char** /*argv*/)
 {
     Console console{};
+
+    FileManager fileManager{ console };
+    fileManager.loadAssetsFile("dev.assets");
+    fileManager.loadAssetsFile("tank.assets");
+
     Net net{};
 
-    Server server{ console, net };
-    Client client{ console, net };
+    Server server{ console, fileManager, net };
+    Client client{ console, fileManager, net };
     
     for (;;)
     {

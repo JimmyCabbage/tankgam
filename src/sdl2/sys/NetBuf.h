@@ -31,6 +31,9 @@ public:
     bool writeUint32(uint32_t v);
     bool readUint32(uint32_t& v);
 
+    bool writeUint64(uint64_t v);
+    bool readUint64(uint64_t& v);
+
     bool writeFloat(float v);
     bool readFloat(float& v);
 

@@ -5,8 +5,7 @@
 #include "SDL.h"
 
 Timer::Timer()
-    : enabled{ false }, startTime{ 0 }, lastTick{ 0 },
-      paused{ false }, pauseOffset{ 0 }
+    : enabled{ false }, startTime{ 0 }, lastTick{ 0 }
 {
     if (SDL_InitSubSystem(SDL_INIT_TIMER) != 0)
     {
@@ -23,9 +22,7 @@ void Timer::start()
 {
     enabled = true;
     startTime = SDL_GetTicks64();
-    lastTick = 0;
-    paused = false;
-    pauseOffset = 0;
+    lastTick = startTime;
 }
 
 void Timer::stop()
@@ -33,31 +30,36 @@ void Timer::stop()
     enabled = false;
     startTime = 0;
     lastTick = 0;
-    paused = false;
-    pauseOffset = 0;
 }
 
-void Timer::pause()
+void Timer::setTickOffset(uint64_t tickOffset)
 {
-    paused = true;
-}
-
-void Timer::unpause()
-{
-    paused = false;
+    startTime = startTime + ((tickOffset / 1000) * Timer::TICK_RATE);
+    lastTick = startTime;
 }
 
 uint64_t Timer::getPassedTicks()
 {
     if (enabled)
     {
-        const uint64_t ticks = SDL_GetTicks64() - startTime - pauseOffset;
-        if (paused)
-        {
-            pauseOffset += ticks - lastTick;
-        }
+        const uint64_t ticks = SDL_GetTicks64() - startTime - lastTick;
         lastTick = ticks;
         
+        return (ticks * Timer::TICK_RATE) / 1000;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+//get the ticks since time started
+uint64_t Timer::getTotalTicks() const
+{
+    if (enabled)
+    {
+        const uint64_t ticks = SDL_GetTicks64() - startTime;
+
         return (ticks * Timer::TICK_RATE) / 1000;
     }
     else

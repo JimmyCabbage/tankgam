@@ -1,19 +1,35 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+
+#include "sys/NetChan.h"
 
 class Console;
 class FileManager;
 class Timer;
 class Net;
-class NetChan;
 class NetBuf;
 struct NetAddr;
+
+enum class ServerClientState
+{
+    Free,
+    Connected,
+    Spawned
+};
+
+struct ServerClient
+{
+    ServerClientState state;
+
+    std::unique_ptr<NetChan> netChan;
+};
 
 class Server
 {
 public:
-    Server(Console& console, Net& net);
+    Server(Console& console, FileManager& fileManager, Net& net);
     ~Server();
 
     Server(const Server&) = delete;
@@ -26,14 +42,12 @@ public:
 private:
     Console& console;
 
-    Net& net;
-    std::unique_ptr<NetChan> netChan;
+    FileManager& fileManager;
 
-    std::unique_ptr<FileManager> fileManager;
+    Net& net;
+    std::vector<ServerClient> clients;
 
     std::unique_ptr<Timer> timer;
-
-    uint64_t lastTick;
 
     bool running;
 
