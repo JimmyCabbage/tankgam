@@ -11,7 +11,8 @@
 #include "sys/Renderer.h"
 #include "sys/Timer.h"
 #include "sys/Net.h"
-#include "sys/NetChan.h"
+#include "NetChan.h"
+#include "NetBuf.h"
 #include "Menu.h"
 #include "Event.h"
 
@@ -80,7 +81,7 @@ bool Client::runFrame()
 
         handleEvents();
 
-        tryRunTicks();
+        //tryRunTicks();
 
         draw();
     }

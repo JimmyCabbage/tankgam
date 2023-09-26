@@ -1,4 +1,4 @@
-#include "sys/NetBuf.h"
+#include "NetBuf.h"
 
 #include <stdexcept>
 #include <algorithm>
@@ -54,12 +54,12 @@ std::span<const std::byte> NetBuf::getData()
     };
 }
 
-void NetBuf::resetWrite()
+void NetBuf::beginWrite()
 {
     dataWritten = 0;
 }
 
-void NetBuf::resetRead()
+void NetBuf::beginRead()
 {
     dataRead = 0;
 }

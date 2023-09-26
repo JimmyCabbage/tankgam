@@ -4,7 +4,7 @@
 #include <string_view>
 
 #include "sys/Net.h"
-#include "sys/NetBuf.h"
+#include "NetBuf.h"
 
 enum class NetMessageType : unsigned char
 {

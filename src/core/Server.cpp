@@ -4,7 +4,8 @@
 #include "sys/File.h"
 #include "sys/Timer.h"
 #include "sys/Net.h"
-#include "sys/NetChan.h"
+#include "NetChan.h"
+#include "NetBuf.h"
 
 Server::Server(Console& console, FileManager& fileManager, Net& net)
     : console{ console }, fileManager{ fileManager }, net{ net }

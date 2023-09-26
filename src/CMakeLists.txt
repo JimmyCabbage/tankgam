@@ -1,13 +1,13 @@
-add_executable(tankgam
-        sdl2/sys/NetChan.h
-        sdl2/sys/NetChan.cpp)
+add_executable(tankgam)
 
 #core source code
 target_sources(tankgam PRIVATE
         core/Menu.h core/Menu.cpp
         core/Event.h core/Event.cpp
         core/Client.h core/Client.cpp
-        core/Server.h core/Server.cpp)
+        core/Server.h core/Server.cpp
+        core/NetChan.h core/NetChan.cpp
+        core/NetBuf.h core/NetBuf.cpp)
 
 #SDL2 specific source code
 target_sources(tankgam PRIVATE
@@ -22,8 +22,7 @@ target_sources(tankgam PRIVATE
         sdl2/sys/File.h sdl2/sys/File.cpp
         sdl2/sys/Timer.h sdl2/sys/Timer.cpp
         sdl2/sys/File.h sdl2/sys/File.cpp
-        sdl2/sys/Net.h sdl2/sys/Net.cpp
-        sdl2/sys/NetBuf.h sdl2/sys/NetBuf.cpp)
+        sdl2/sys/Net.h sdl2/sys/Net.cpp)
 
 #we want ALL the warnings
 if(MSVC)

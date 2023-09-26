@@ -22,8 +22,8 @@ public:
 
     std::span<const std::byte> getData();
 
-    void resetWrite();
-    void resetRead();
+    void beginWrite();
+    void beginRead();
 
     bool writeInt32(int32_t v);
     bool readInt32(int32_t& v);

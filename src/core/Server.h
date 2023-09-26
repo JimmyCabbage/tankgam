@@ -3,13 +3,12 @@
 #include <memory>
 #include <vector>
 
-#include "sys/NetChan.h"
-
 class Console;
 class FileManager;
 class Timer;
 class Net;
 class NetBuf;
+class NetChan;
 struct NetAddr;
 
 enum class ServerClientState
