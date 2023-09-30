@@ -47,7 +47,7 @@ public:
     bool readBytes(std::span<std::byte> readData);
 
 private:
-    std::array<std::byte, 1024> data;
+    std::array<std::byte, 2048> data;
     size_t dataWritten;
     size_t dataRead;
 
