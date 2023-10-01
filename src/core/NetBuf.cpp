@@ -4,14 +4,13 @@
 #include <algorithm>
 #include <limits>
 
-#include <fmt/format.h>
-
 NetBuf::NetBuf()
     : data{}, dataWritten{ 0 }, dataRead{ 0 }
 {
 }
 
 NetBuf::NetBuf(std::span<const std::byte> newData)
+    : data{}
 {
     if (newData.size() > data.size())
     {
@@ -26,6 +25,7 @@ NetBuf::NetBuf(std::span<const std::byte> newData)
 NetBuf::~NetBuf() = default;
 
 NetBuf::NetBuf(NetBuf&& o) noexcept
+    : data{}, dataWritten{ 0 }, dataRead{ 0 }
 {
     std::swap(data, o.data);
     std::swap(dataWritten, o.dataWritten);
