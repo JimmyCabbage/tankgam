@@ -8,27 +8,29 @@
 
 int main(int /*argc*/, char** /*argv*/)
 {
-    Console console{};
-
-    FileManager fileManager{ console };
-    fileManager.loadAssetsFile("dev.assets");
-    fileManager.loadAssetsFile("tank.assets");
-
-    Net net{};
-
-    Server server{ console, fileManager, net };
-    Client client{ console, fileManager, net };
-    
-    for (;;)
     {
-        if (!server.runFrame())
-        {
-            break;
-        }
+        Console console{};
 
-        if (!client.runFrame())
+        FileManager fileManager{console};
+        fileManager.loadAssetsFile("dev.assets");
+        fileManager.loadAssetsFile("tank.assets");
+
+        Net net{};
+
+        Server server{console, fileManager, net};
+        Client client{console, fileManager, net};
+
+        for (;;)
         {
-            break;
+            if (!server.runFrame())
+            {
+                break;
+            }
+
+            if (!client.runFrame())
+            {
+                break;
+            }
         }
     }
     
