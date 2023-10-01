@@ -40,10 +40,11 @@ public:
     bool writeString(std::string_view str);
     bool readString(std::string& str);
 
-    bool writeByte(std::byte byte);
-    bool readByte(std::byte& byte);
+    bool writeUint8(uint8_t byte);
+    bool readUint8(uint8_t& byte);
 
     bool writeBytes(std::span<const std::byte> writeData);
+    bool writeBytes(const std::byte* writeData, size_t writeSize);
     bool readBytes(std::span<std::byte> readData);
 
 private:

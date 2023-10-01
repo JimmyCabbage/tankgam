@@ -150,58 +150,57 @@ bool NetBuf::writeString(std::string_view str)
 {
     if (str.empty())
     {
-        return writeByte(std::byte{ '\0' });
+        return writeUint8('\0');
     }
 
-    if (!writeBytes(std::span<const std::byte>
+    for (const auto c : str)
+    {
+        if (c == '\0')
         {
-        reinterpret_cast<const std::byte*>(str.data()),
-        str.size()
-        }))
-    {
-        return false;
+            break;
+        }
+
+        if (!writeUint8(c))
+        {
+            return false;
+        }
     }
 
-    //write a null terminator if there isn't one
-    if (data[dataWritten - 1] != std::byte{ '\0' })
-    {
-        return writeByte(std::byte{ '\0' });
-    }
-
-    return true;
+    //write out a null terminator
+    return writeUint8('\0');
 }
 
 bool NetBuf::readString(std::string& str)
 {
     str.clear();
 
-    std::byte byte{ '\0' };
+    uint8_t byte{ '\0' };
     do
     {
-        if (!readByte(byte))
+        if (!readUint8(byte))
         {
             return false;
         }
 
-        if (byte != std::byte{ '\0' })
+        if (byte != '\0')
         {
             str.push_back(static_cast<char>(byte));
         }
-    } while (byte != std::byte{ '\0' });
+    } while (byte != '\0');
 
     return true;
 }
 
-bool NetBuf::writeByte(std::byte byte)
+bool NetBuf::writeUint8(std::uint8_t byte)
 {
-    return writeBytes(std::span<std::byte>{ &byte, 1 });
+    return writeBytes(std::span<std::byte>{ reinterpret_cast<std::byte*>(&byte), sizeof(byte) });
 }
 
-bool NetBuf::readByte(std::byte& byte)
+bool NetBuf::readUint8(std::uint8_t& byte)
 {
-    if (!readBytes(std::span<std::byte>{ &byte, 1 }))
+    if (!readBytes(std::span<std::byte>{ reinterpret_cast<std::byte*>(&byte), 1 }))
     {
-        byte = std::numeric_limits<std::byte>::max();
+        byte = std::numeric_limits<uint8_t>::max();
         return false;
     }
 
@@ -220,6 +219,11 @@ bool NetBuf::writeBytes(std::span<const std::byte> writeData)
     dataWritten += writeData.size();
 
     return true;
+}
+
+bool NetBuf::writeBytes(const std::byte* writeData, size_t writeSize)
+{
+    writeBytes(std::span{ writeData, writeSize });
 }
 
 bool NetBuf::readBytes(std::span<std::byte> readData)
