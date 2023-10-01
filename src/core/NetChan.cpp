@@ -12,7 +12,8 @@ NetChan::NetChan(Net& net, NetSrc netSrc, NetAddr toAddr)
     : net{ net }, netSrc{ netSrc }, netAddr{ toAddr },
       outgoingSequenceBuffer{}, outgoingPacketInfoBuffer{},
       outgoingSequence{ 0 }, incomingSequence{ 0 },
-      outgoingReliableSequence{ 0 }, incomingReliableSequence{ 0 }
+      outgoingReliableSequence{ 0 }, incomingReliableSequence{ 0 },
+      trySendReliableCounter{0 }
 {
 }
 
@@ -49,6 +50,17 @@ void NetChan::outOfBand(NetAddr toAddr, std::span<const std::byte> data)
     net.sendPacket(netSrc, std::move(buf), toAddr);
 }
 
+void NetChan::trySendReliable()
+{
+    constexpr size_t RETRY_FREQUENCY = 6;
+    trySendReliableCounter = (trySendReliableCounter + 1) % RETRY_FREQUENCY;
+
+    if (trySendReliableCounter == 0)
+    {
+        sendData(std::span<const std::byte>{}, NetMessageType::SendReliables);
+    }
+}
+
 void NetChan::addReliableData(NetBuf sendBuf, NetMessageType msgType)
 {
     addReliableData(sendBuf.getData(), msgType);
@@ -83,17 +95,17 @@ void NetChan::sendData(NetBuf sendBuf, NetMessageType msgType)
 
 void NetChan::sendData(std::span<const std::byte> data, NetMessageType msgType)
 {
-#if 0
     if (netAddr.type == NetAddrType::Unknown)
     {
         return;
     }
     //check if this is supposed to be a reliable message
-    else
-#endif
-        if (static_cast<uint8_t>(msgType) & 1 << 7)
+    else if (static_cast<uint8_t>(msgType) & 1 << 7)
     {
-        throw std::runtime_error{ "Tried to send reliable message through unreliable messaging" };
+        if (msgType != NetMessageType::SendReliables) //exception
+        {
+            throw std::runtime_error{"Tried to send reliable message through unreliable messaging"};
+        }
     }
 
     NetBuf sendBuf{};

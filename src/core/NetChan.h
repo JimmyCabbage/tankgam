@@ -8,6 +8,7 @@
 #include <vector>
 #include <string_view>
 #include <array>
+#include <numeric>
 
 #include "sys/Net.h"
 #include "NetBuf.h"
@@ -16,7 +17,8 @@
 enum class NetMessageType : uint8_t
 {
     Unknown = 0,
-    Time = 1 | (1 << 7)
+    Time = 1 | (1 << 7),
+    SendReliables = std::numeric_limits<uint8_t>::max(),
 };
 
 class NetChan
@@ -38,6 +40,8 @@ public:
 
     //for sending data without a connection
     void outOfBand(NetAddr toAddr, std::span<const std::byte> data);
+
+    void trySendReliable();
 
     //reliable
     void addReliableData(NetBuf sendBuf, NetMessageType msgType);
@@ -125,4 +129,6 @@ private:
 
     uint32_t outgoingReliableSequence;
     uint32_t incomingReliableSequence;
+
+    size_t trySendReliableCounter;
 };

@@ -100,7 +100,8 @@ void Server::handlePackets()
 
         NetMessageType msgType = NetMessageType::Unknown;
         std::vector<NetBuf> reliableMessages;
-        if (!theClient->netChan->processHeader(buf, msgType, reliableMessages))
+        if (!theClient->netChan->processHeader(buf, msgType, reliableMessages) ||
+            msgType == NetMessageType::Unknown)
         {
             continue;
         }
@@ -122,15 +123,23 @@ void Server::handlePackets()
             handleReliablePacket(reliableMessage, reliableMsgType, *theClient);
         }
 
-        //just to make sure reliable messages get sent (for now)
-        theClient->netChan->sendData(std::span<const std::byte>{}, NetMessageType::Unknown);
-
         if (msgType == NetMessageType::Unknown)
         {
             continue;
         }
 
         //TODO: handle unreliable messages here
+    }
+
+    for (auto& client : clients)
+    {
+        if (client.state == ServerClientState::Free)
+        {
+            continue;
+        }
+
+        //if we don't send any unreliable info
+        client.netChan->trySendReliable();
     }
 }
 
