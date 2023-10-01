@@ -10,6 +10,7 @@ class Net;
 class NetBuf;
 class NetChan;
 struct NetAddr;
+enum class NetMessageType : uint8_t;
 
 enum class ServerClientState
 {
@@ -52,7 +53,9 @@ private:
 
     void handlePackets();
 
-    void handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr);
+    void handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr);
+
+    void handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient);
 
     void handleEvents();
 

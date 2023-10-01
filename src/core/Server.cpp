@@ -93,27 +93,48 @@ void Server::handlePackets()
             theClient = &client;
         }
 
-        const NetMessageType msgType = theClient->netChan->processHeader(buf);
+        if (!theClient)
+        {
+            continue;
+        }
+
+        NetMessageType msgType = NetMessageType::Unknown;
+        std::vector<NetBuf> reliableMessages;
+        if (!theClient->netChan->processHeader(buf, msgType, reliableMessages))
+        {
+            continue;
+        }
+
+        for (auto& reliableMessage : reliableMessages)
+        {
+            //reliable messages have their own type
+            NetMessageType reliableMsgType = NetMessageType::Unknown;
+            {
+                uint8_t tempV;
+                if (!reliableMessage.readUint8(tempV))
+                {
+                    continue;
+                }
+
+                reliableMsgType = static_cast<NetMessageType>(tempV);
+            }
+
+            handleReliablePacket(reliableMessage, reliableMsgType, *theClient);
+        }
+
+        //just to make sure reliable messages get sent (for now)
+        theClient->netChan->sendData(std::span<const std::byte>{}, NetMessageType::Unknown);
+
         if (msgType == NetMessageType::Unknown)
         {
             continue;
         }
 
-        if (msgType == NetMessageType::Time)
-        {
-            uint64_t clientTime;
-            buf.readUint64(clientTime);
-
-            NetBuf sendBuf{};
-            sendBuf.writeUint64(clientTime);
-            sendBuf.writeUint64(timer->getTotalTicks());
-
-            theClient->netChan->sendData(std::move(sendBuf), NetMessageType::Time);
-        }
+        //TODO: handle unreliable messages here
     }
 }
 
-void Server::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
+void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
 {
     //read the -1 header
     {
@@ -129,7 +150,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
 
     if (str == "client_connect")
     {
-        ServerClient* clientNew = nullptr;
+        ServerClient* newClient = nullptr;
         for (auto& client : clients)
         {
             if (client.state != ServerClientState::Free)
@@ -137,19 +158,37 @@ void Server::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
                 continue;
             }
 
-            clientNew = &client;
+            newClient = &client;
             break;
         }
 
-        if (!clientNew)
+        if (!newClient)
         {
             return;
         }
 
-        clientNew->state = ServerClientState::Connected;
-        clientNew->netChan->setToAddr(fromAddr);
+        newClient->state = ServerClientState::Connected;
+        newClient->netChan->setToAddr(fromAddr);
 
-        clientNew->netChan->outOfBandPrint(fromAddr, "server_connect");
+        newClient->netChan->outOfBandPrint(fromAddr, "server_connect");
+    }
+}
+
+void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient)
+{
+    if (msgType == NetMessageType::Time)
+    {
+        uint64_t clientTime;
+        if (!buf.readUint64(clientTime))
+        {
+            return;
+        }
+
+        NetBuf sendBuf{};
+        sendBuf.writeUint64(clientTime);
+        sendBuf.writeUint64(timer->getTotalTicks());
+
+        theClient.netChan->addReliableData(std::move(sendBuf), NetMessageType::Time);
     }
 }
 

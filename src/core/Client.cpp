@@ -173,26 +173,40 @@ void Client::handlePackets()
             continue;
         }
 
-        const NetMessageType msgType = netChan->processHeader(buf);
+        NetMessageType msgType = NetMessageType::Unknown;
+        std::vector<NetBuf> reliableMessages;
+        if (!netChan->processHeader(buf, msgType, reliableMessages))
+        {
+            continue;
+        }
+
+        for (auto& reliableMessage : reliableMessages)
+        {
+            //reliable messages have their own type
+            NetMessageType reliableMsgType = NetMessageType::Unknown;
+            {
+                uint8_t tempV;
+                if (!reliableMessage.readUint8(tempV))
+                {
+                    continue;
+                }
+
+                reliableMsgType = static_cast<NetMessageType>(tempV);
+            }
+
+            handleReliablePacket(reliableMessage, reliableMsgType);
+        }
+
         if (msgType == NetMessageType::Unknown)
         {
             continue;
         }
 
-        if (msgType == NetMessageType::Time)
-        {
-            uint64_t prevTime;
-            buf.readUint64(prevTime);
-
-            uint64_t serverTime;
-            buf.readUint64(serverTime);
-
-            const uint64_t roundTripTime = (timer->getTotalTicks() - prevTime);
-            timer->setTickOffset(serverTime + (roundTripTime / 2));
-
-            clientState = ClientState::Connected;
-        }
+        //TODO: handle unreliable messages here
     }
+
+    //just to make sure reliable messages get sent (for now)
+    netChan->sendData(std::span<const std::byte>{}, NetMessageType::Unknown);
 }
 
 void Client::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
@@ -225,7 +239,24 @@ void Client::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
         NetBuf sendBuf{};
         sendBuf.writeUint64(oldClientTime);
 
-        netChan->sendData(std::move(sendBuf), NetMessageType::Time);
+        netChan->addReliableData(std::move(sendBuf), NetMessageType::Time);
+    }
+}
+
+void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
+{
+    if (msgType == NetMessageType::Time)
+    {
+        uint64_t prevTime;
+        buf.readUint64(prevTime);
+
+        uint64_t serverTime;
+        buf.readUint64(serverTime);
+
+        const uint64_t roundTripTime = (timer->getTotalTicks() - prevTime);
+        timer->setTickOffset(serverTime + (roundTripTime / 2));
+
+        clientState = ClientState::Connected;
     }
 }
 
@@ -259,8 +290,10 @@ bool Client::consumeEvent(const Event& ev)
     {
     case EventType::Quit:
         shutdown();
-        break;
+        return true;
     }
+
+    return false;
 }
 
 void Client::tryRunTicks()
