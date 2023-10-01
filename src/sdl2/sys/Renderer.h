@@ -75,7 +75,7 @@ public:
     
     std::unique_ptr<Model> createModel(std::string_view modelFileName);
     
-    void drawModel(Model& model, glm::vec3 scale, glm::quat rotation, glm::vec3 translate);
+    void drawModel(Model& model, glm::vec3 scale, glm::mat4 rotation, glm::vec3 translate);
     
     void drawText(std::string_view text, glm::vec2 position, float size);
     
