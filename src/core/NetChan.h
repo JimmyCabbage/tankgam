@@ -62,7 +62,7 @@ private:
     NetSrc netSrc;
     NetAddr netAddr;
 
-    static constexpr size_t PACKET_BUFFER_SIZE = 1024;
+    static constexpr size_t PACKET_BUFFER_SIZE = 128;
 
     struct OutPacketInfo
     {
