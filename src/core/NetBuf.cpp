@@ -146,6 +146,96 @@ bool NetBuf::readFloat(float& v)
     return true;
 }
 
+bool NetBuf::writeVec3(const glm::vec3& v)
+{
+    if (!writeFloat(v.x))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.y))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.z))
+    {
+        return false;
+    }
+    
+    return true;
+}
+
+bool NetBuf::readVec3(glm::vec3& v)
+{
+    if (!readFloat(v.x))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.y))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.z))
+    {
+        return false;
+    }
+    
+    return true;
+}
+
+bool NetBuf::writeQuat(const glm::quat& v)
+{
+    if (!writeFloat(v.x))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.y))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.z))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.w))
+    {
+        return false;
+    }
+    
+    return true;
+}
+
+bool NetBuf::readQuat(glm::quat& v)
+{
+    if (!readFloat(v.x))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.y))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.z))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.w))
+    {
+        return false;
+    }
+    
+    return true;
+}
+
 bool NetBuf::writeString(std::string_view str)
 {
     if (str.empty())

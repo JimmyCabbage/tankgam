@@ -7,6 +7,9 @@
 #include <span>
 #include <string_view>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 class NetBuf
 {
 public:
@@ -36,6 +39,12 @@ public:
 
     bool writeFloat(float v);
     bool readFloat(float& v);
+    
+    bool writeVec3(const glm::vec3& v);
+    bool readVec3(glm::vec3& v);
+    
+    bool writeQuat(const glm::quat& v);
+    bool readQuat(glm::quat& v);
 
     bool writeString(std::string_view str);
     bool readString(std::string& str);
