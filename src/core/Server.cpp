@@ -123,7 +123,7 @@ void Server::handlePackets()
             handleReliablePacket(reliableMessage, reliableMsgType, *theClient);
         }
 
-        if (msgType == NetMessageType::Unknown)
+        if (msgType == NetMessageType::SendReliables)
         {
             continue;
         }
