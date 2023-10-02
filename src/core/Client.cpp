@@ -258,6 +258,8 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
         timer->setTickOffset(serverTime + (roundTripTime / 2));
 
         clientState = ClientState::Connected;
+        
+        hideMenu();
     }
 }
 
