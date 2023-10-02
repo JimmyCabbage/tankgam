@@ -217,7 +217,7 @@ std::unique_ptr<Model> Renderer::createModel(std::string_view modelFileName)
     return model;
 }
 
-void Renderer::drawModel(Model& model, glm::vec3 scale, glm::mat4 rotation, glm::vec3 translate)
+void Renderer::drawModel(Model& model, glm::vec3 scale, glm::quat rotation, glm::vec3 translate)
 {
     Shader* shader = nullptr;
     switch (model.shaderType)
