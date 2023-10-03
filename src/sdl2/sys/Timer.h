@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-class Engine;
-
 class Timer
 {
 public:
