@@ -241,6 +241,8 @@ void Client::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
         sendBuf.writeUint64(oldClientTime);
 
         netChan->addReliableData(std::move(sendBuf), NetMessageType::Time);
+        
+        console.logf("Client Send Time: %d", (int)oldClientTime);
     }
 }
 
@@ -255,8 +257,8 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
         buf.readUint64(serverTime);
 
         const uint64_t roundTripTime = (timer->getTotalTicks() - prevTime);
-        timer->setTickOffset(serverTime + (roundTripTime / 2));
-
+        timer->setTickOffset(serverTime + (roundTripTime / 2) + 1);
+        
         clientState = ClientState::Connected;
         
         hideMenu();
