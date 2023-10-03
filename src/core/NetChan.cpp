@@ -217,6 +217,7 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType)
         .sequence = ++outgoingSequence,
         .ack = incomingReliableSequence,
         .ackBits = 0,
+        .numReliableMessages = 0,
         .reliableMessages = {},
     };
 
