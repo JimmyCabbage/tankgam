@@ -129,6 +129,6 @@ private:
 
     uint32_t outgoingReliableSequence;
     uint32_t incomingReliableSequence;
-
-    size_t trySendReliableCounter;
+    
+    bool shouldTrySendReliable;
 };
