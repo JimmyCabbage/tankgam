@@ -1,6 +1,7 @@
 #include "NetChan.h"
 
 #include <vector>
+#include <algorithm>
 #include <stdexcept>
 
 NetChan::NetChan(Net& net, NetSrc netSrc)
@@ -259,7 +260,11 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType)
 
         reliableMessages.push_back(packetInfo);
     }
-
+    
+    //reverse order so that they get it in the correct order
+    //other end executes this in serial, so make sure that they do these in order
+    std::reverse(reliableMessages.begin(), reliableMessages.end());
+    
     header.numReliableMessages = static_cast<uint8_t>(reliableMessages.size());
     header.reliableMessages = std::move(reliableMessages);
 
