@@ -242,14 +242,9 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType)
 
     std::vector<OutPacketInfo*> reliableMessages;
 
-    if (OutPacketInfo* packetInfo = getOutPacketInfo(outgoingReliableSequence); packetInfo && !packetInfo->acked)
-    {
-        reliableMessages.push_back(packetInfo);
-    }
-
     //figure out the reliable messages we need to send
-    for (uint32_t counter = 0, currentSequence = outgoingReliableSequence - 1;
-         counter < 64;
+    for (uint32_t counter = 0, currentSequence = outgoingReliableSequence;
+         counter <= 64;
          counter++, currentSequence--)
     {
         OutPacketInfo* packetInfo = getOutPacketInfo(currentSequence);
