@@ -11,6 +11,7 @@ NetChan::NetChan(Net& net, NetSrc netSrc)
 NetChan::NetChan(Net& net, NetSrc netSrc, NetAddr toAddr)
     : net{ net }, netSrc{ netSrc }, netAddr{ toAddr },
       outgoingSequenceBuffer{}, outgoingPacketInfoBuffer{},
+      incomingSequenceBuffer{}, incomingPacketInfoBuffer{},
       outgoingSequence{ 0 }, incomingSequence{ 0 },
       outgoingReliableSequence{ 0 }, incomingReliableSequence{ 0 },
       shouldTrySendReliable{ true }
