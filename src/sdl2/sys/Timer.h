@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-class Engine;
-
 class Timer
 {
 public:
@@ -29,10 +27,10 @@ public:
 
 private:
     bool enabled;
-    
-	//the time when the timer began
+
+    //the time when the timer began
     uint64_t startTime;
-	
-	//the last tick that was recieved when getPassedTicks() was called
+
+    //the last tick that was recieved when getPassedTicks() was called
     uint64_t lastTick;
 };

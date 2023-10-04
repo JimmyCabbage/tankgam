@@ -326,7 +326,7 @@ void Client::draw()
 {
     renderer->beginDraw();
 
-    renderer->drawText("HELLO WORLD ARE YOU THERE", glm::vec2{ 0.0f, 0.0f }, 100.0f);
+    renderer->drawText("HELLO WORLD", glm::vec2{ 0.0f, 0.0f }, 100.0f);
 
     if (clientState == ClientState::Connected)
     {
