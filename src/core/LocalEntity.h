@@ -7,7 +7,6 @@
 
 struct LocalEntity
 {
-    bool isFree;
     glm::vec3 position;
     glm::quat rotation;
     std::string modelName;

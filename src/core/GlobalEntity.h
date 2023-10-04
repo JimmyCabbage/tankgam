@@ -6,7 +6,7 @@ class NetBuf;
 
 struct GlobalEntity
 {
-    LocalEntity local;
+    LocalEntity* local;
     
     static void serialize(const GlobalEntity& inEntity, NetBuf& outBuf);
     
