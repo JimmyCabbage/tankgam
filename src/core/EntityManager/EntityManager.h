@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <optional>
+#include <cstdint>
 #include <cstring>
 
 #include "GlobalEntity.h"
@@ -15,6 +15,9 @@ class EntityManager
 public:
     EntityManager();
     ~EntityManager();
+    
+    EntityManager(const EntityManager&) = delete;
+    EntityManager& operator=(const EntityManager&) = delete;
     
     EntityId allocateLocalEntity();
     

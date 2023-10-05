@@ -10,7 +10,9 @@ target_sources(tankgam PRIVATE
         core/NetBuf.h core/NetBuf.cpp
         core/LocalEntity.h core/LocalEntity.cpp
         core/GlobalEntity.h core/GlobalEntity.cpp
-        core/EntityManager.h core/EntityManager.cpp)
+        core/EntityManager/ClientEntityManager.h core/EntityManager/ClientEntityManager.cpp
+        core/EntityManager/ServerEntityManager.h core/EntityManager/ServerEntityManager.cpp
+        core/EntityManager/EntityManager.h core/EntityManager/EntityManager.cpp)
 
 #SDL2 specific source code
 target_sources(tankgam PRIVATE
