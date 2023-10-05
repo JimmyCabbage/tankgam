@@ -6,6 +6,27 @@ EntityManager::EntityManager() = default;
 
 EntityManager::~EntityManager() = default;
 
+EntityManager::EntityManager(EntityManager&& o) noexcept
+{
+    std::swap(usedEntities, o.usedEntities);
+    std::swap(localEntities, o.localEntities);
+    std::swap(globalEntities, o.globalEntities);
+}
+
+EntityManager& EntityManager::operator=(EntityManager&& o) noexcept
+{
+    if (&o == this)
+    {
+        return *this;
+    }
+    
+    std::swap(usedEntities, o.usedEntities);
+    std::swap(localEntities, o.localEntities);
+    std::swap(globalEntities, o.globalEntities);
+    
+    return *this;
+}
+
 EntityId EntityManager::allocateLocalEntity()
 {
     for (size_t i = MAX_GLOBAL_ENTITIES; i < MAX_LOCAL_ENTITIES; i++)

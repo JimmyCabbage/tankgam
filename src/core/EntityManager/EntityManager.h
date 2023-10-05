@@ -19,6 +19,9 @@ public:
     EntityManager(const EntityManager&) = delete;
     EntityManager& operator=(const EntityManager&) = delete;
     
+    EntityManager(EntityManager&& o) noexcept;
+    EntityManager& operator=(EntityManager&& o) noexcept;
+    
     EntityId allocateLocalEntity();
     
     void freeLocalEntity(EntityId id);
