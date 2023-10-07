@@ -16,8 +16,8 @@ public:
     EntityManager();
     ~EntityManager();
     
-    EntityManager(const EntityManager&) = delete;
-    EntityManager& operator=(const EntityManager&) = delete;
+    EntityManager(const EntityManager& o);
+    EntityManager& operator=(const EntityManager& o);
     
     EntityManager(EntityManager&& o) noexcept;
     EntityManager& operator=(EntityManager&& o) noexcept;

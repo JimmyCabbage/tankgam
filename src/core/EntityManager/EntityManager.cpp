@@ -6,6 +6,27 @@ EntityManager::EntityManager() = default;
 
 EntityManager::~EntityManager() = default;
 
+EntityManager::EntityManager(const EntityManager& o)
+{
+    std::copy(o.usedEntities.begin(), o.usedEntities.end(), usedEntities.begin());
+    std::copy(o.localEntities.begin(), o.localEntities.end(), localEntities.begin());
+    std::copy(o.globalEntities.begin(), o.globalEntities.end(), globalEntities.begin());
+}
+
+EntityManager& EntityManager::operator=(const EntityManager& o)
+{
+    if (&o == this)
+    {
+        return *this;
+    }
+    
+    std::copy(o.usedEntities.begin(), o.usedEntities.end(), usedEntities.begin());
+    std::copy(o.localEntities.begin(), o.localEntities.end(), localEntities.begin());
+    std::copy(o.globalEntities.begin(), o.globalEntities.end(), globalEntities.begin());
+    
+    return *this;
+}
+
 EntityManager::EntityManager(EntityManager&& o) noexcept
 {
     std::swap(usedEntities, o.usedEntities);
