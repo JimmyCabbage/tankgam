@@ -27,7 +27,10 @@ public:
 
     void beginWrite();
     void beginRead();
-
+    
+    bool writeUint16(uint16_t v);
+    bool readUint16(uint16_t& v);
+    
     bool writeInt32(int32_t v);
     bool readInt32(int32_t& v);
 

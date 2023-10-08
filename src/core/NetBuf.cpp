@@ -66,6 +66,26 @@ void NetBuf::beginRead()
 
 //TODO: handle endianness
 
+bool NetBuf::writeUint16(uint16_t v)
+{
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
+    
+    return writeBytes(byteArray);
+}
+
+bool NetBuf::readUint16(uint16_t& v)
+{
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
+    
+    if (!readBytes(byteArray))
+    {
+        v = -1;
+        return false;
+    }
+    
+    return true;
+}
+
 bool NetBuf::writeInt32(int32_t v)
 {
     std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
@@ -313,7 +333,7 @@ bool NetBuf::writeBytes(std::span<const std::byte> writeData)
 
 bool NetBuf::writeBytes(const std::byte* writeData, size_t writeSize)
 {
-    writeBytes(std::span{ writeData, writeSize });
+    return writeBytes(std::span{ writeData, writeSize });
 }
 
 bool NetBuf::readBytes(std::span<std::byte> readData)
