@@ -1,8 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <array>
+#include <unordered_map>
 
 #include "Event.h"
+#include "EntityManager.h"
 
 class Console;
 class FileManager;
@@ -63,10 +66,23 @@ private:
     std::unique_ptr<Timer> timer;
 
     std::unique_ptr<Menu> menu;
+    
+    uint32_t lastAckedEntityManager;
+    uint32_t currentEntityManager;
+    std::array<uint32_t, EntityManager::NUM_ENTITY_MANAGERS> entityManagerSequences;
+    std::array<bool, EntityManager::NUM_ENTITY_MANAGERS> ackedEntityManagers;
+    std::array<std::unique_ptr<EntityManager>, EntityManager::NUM_ENTITY_MANAGERS> entityManagers;
+    
+    std::unordered_map<std::string, std::unique_ptr<Model>> models;
 
     bool running;
 
     bool menuVisible;
+    
+//entity manager stuff
+    EntityManager* getEntityManager(uint32_t sequence);
+    
+    EntityManager& insertEntityManager(uint32_t sequence);
 
 //basic commands
     void connectToServer(NetAddr serverAddr);
@@ -74,11 +90,15 @@ private:
     void disconnect();
 
 //main loop stuff
+    void nextFrameSettings();
+
     void handlePackets();
 
     void handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr);
 
     void handleReliablePacket(NetBuf& buf, const NetMessageType& msgType);
+    
+    void handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType);
 
     void handleEvents();
 

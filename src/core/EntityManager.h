@@ -3,12 +3,11 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <vector>
 
-#include "GlobalEntity.h"
-#include "LocalEntity.h"
+#include "Entity.h"
 
 using EntityId = uint16_t;
-using NetEntityId = uint16_t;
 
 class EntityManager
 {
@@ -22,19 +21,31 @@ public:
     EntityManager(EntityManager&& o) noexcept;
     EntityManager& operator=(EntityManager&& o) noexcept;
     
+    bool operator==(const EntityManager& o) const;
+    
     EntityId allocateLocalEntity();
     
     void freeLocalEntity(EntityId id);
     
-    NetEntityId nextAvailableGlobalId();
+    void allocateGlobalEntity(EntityId netId);
     
-    EntityId allocateGlobalEntity(NetEntityId netId);
+    EntityId allocateGlobalEntity();
     
-    void freeGlobalEntity(NetEntityId netId);
+    void freeGlobalEntity(EntityId netId);
     
-    NetEntityId convertIdNetToLocal(EntityId id) const;
+    bool isGlobalId(EntityId entityId) const;
     
-    EntityId convertIdLocalToNet(NetEntityId netId) const;
+    bool isLocalId(EntityId entityId) const;
+    
+    std::vector<EntityId> getGlobalEntities() const;
+    
+    std::vector<EntityId> getLocalEntities() const;
+    
+    Entity* getGlobalEntity(EntityId id);
+    
+    Entity* getLocalEntity(EntityId id);
+    
+    static constexpr size_t NUM_ENTITY_MANAGERS = 128;
     
 private:
     //global entities mapped from range of [0, MAX_GLOBAL_ENTITIES)
@@ -44,6 +55,5 @@ private:
     static constexpr size_t MAX_LOCAL_ENTITIES = MAX_GLOBAL_ENTITIES * 2;
     
     std::array<bool, MAX_LOCAL_ENTITIES> usedEntities = {};
-    std::array<LocalEntity, MAX_LOCAL_ENTITIES> localEntities = {};
-    std::array<GlobalEntity, MAX_GLOBAL_ENTITIES> globalEntities = {};
+    std::array<Entity, MAX_LOCAL_ENTITIES> entities = {};
 };

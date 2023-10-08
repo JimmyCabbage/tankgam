@@ -8,11 +8,8 @@ target_sources(tankgam PRIVATE
         core/Server.h core/Server.cpp
         core/NetChan.h core/NetChan.cpp
         core/NetBuf.h core/NetBuf.cpp
-        core/LocalEntity.h core/LocalEntity.cpp
-        core/GlobalEntity.h core/GlobalEntity.cpp
-        core/EntityManager/ClientEntityManager.h core/EntityManager/ClientEntityManager.cpp
-        core/EntityManager/ServerEntityManager.h core/EntityManager/ServerEntityManager.cpp
-        core/EntityManager/EntityManager.h core/EntityManager/EntityManager.cpp)
+        core/Entity.h core/Entity.cpp
+        core/EntityManager.h core/EntityManager.cpp)
 
 #SDL2 specific source code
 target_sources(tankgam PRIVATE
