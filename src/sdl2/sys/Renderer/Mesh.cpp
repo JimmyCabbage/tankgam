@@ -1,6 +1,7 @@
 #include "sys/Renderer/Mesh.h"
 
 #include <vector>
+#include <unordered_map>
 
 #include <fmt/format.h>
 #include "tiny_obj_loader.h"
@@ -9,14 +10,14 @@
 
 Mesh::Mesh(GladGLContext& gl, std::span<const Vertex> vertices)
     : gl{ gl },
-      vao{ 0 }, vbo{ 0 }
+      vao{ 0 }, vbo{ 0 }, ebo{ 0 }
 {
     uploadVertices(vertices);
 }
 
 Mesh::Mesh(GladGLContext& gl, std::istream& istream)
     : gl{ gl },
-      vao{ 0 }, vbo{ 0 }
+      vao{ 0 }, vbo{ 0 }, ebo{ 0 }
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -70,18 +71,21 @@ Mesh::Mesh(GladGLContext& gl, std::istream& istream)
 
 Mesh::~Mesh()
 {
+    gl.DeleteBuffers(1, &ebo);
     gl.DeleteBuffers(1, &vbo);
     gl.DeleteVertexArrays(1, &vao);
 }
 
 Mesh::Mesh(Mesh&& o) noexcept
     : gl{ o.gl },
-      vao{ o.vao }, vbo{ o.vbo },
-      numVertices{ o.numVertices }
+      vao{ o.vao }, vbo{ o.vbo }, ebo{ o.ebo },
+      numVertices{ o.numVertices }, numIndicies{ o.numIndicies }
 {
     o.vao = 0;
     o.vbo = 0;
+    o.ebo = 0;
     o.numVertices = 0;
+    o.numIndicies = 0;
 }
 
 Mesh& Mesh::operator=(Mesh&& o) noexcept
@@ -95,11 +99,15 @@ Mesh& Mesh::operator=(Mesh&& o) noexcept
     
     vao = o.vao;
     vbo = o.vbo;
+    ebo = o.ebo;
     numVertices = o.numVertices;
+    numIndicies = o.numIndicies;
     
     o.vao = 0;
     o.vbo = 0;
+    o.ebo = 0;
     o.numVertices = 0;
+    o.numIndicies = 0;
     
     return *this;
 }
@@ -109,13 +117,31 @@ void Mesh::draw(GLenum mode)
     if (vao)
     {
         gl.BindVertexArray(vao);
-        gl.DrawArrays(mode, 0, numVertices);
+        gl.DrawElements(mode, numIndicies, GL_UNSIGNED_INT, nullptr);
+        //gl.DrawArrays(mode, 0, numVertices);
     }
 }
 
 void Mesh::uploadVertices(std::span<const Vertex> vertices)
 {
-    numVertices = static_cast<GLsizei>(vertices.size());
+    std::vector<Vertex> realVertices;
+    std::vector<GLuint> indices;
+    {
+        std::unordered_map<Vertex, GLuint> uniqueVertices;
+        for (Vertex vertex : vertices)
+        {
+            if (uniqueVertices.count(vertex) == 0)
+            {
+                uniqueVertices[vertex] = static_cast<GLuint>(realVertices.size());
+                realVertices.push_back(vertex);
+            }
+            
+            indices.push_back(uniqueVertices[vertex]);
+        }
+    }
+    
+    numVertices = static_cast<GLsizei>(realVertices.size());
+    numIndicies = static_cast<GLsizei>(indices.size());
     
     gl.GenVertexArrays(1, &vao);
     gl.BindVertexArray(vao);
@@ -123,8 +149,15 @@ void Mesh::uploadVertices(std::span<const Vertex> vertices)
     gl.GenBuffers(1, &vbo);
     gl.BindBuffer(GL_ARRAY_BUFFER, vbo);
     gl.BufferData(GL_ARRAY_BUFFER,
-                  static_cast<GLsizeiptr>(sizeof(Vertex) * vertices.size()),
-                  vertices.data(),
+                  static_cast<GLsizeiptr>(sizeof(Vertex) * realVertices.size()),
+                  realVertices.data(),
+                  GL_STATIC_DRAW);
+    
+    gl.GenBuffers(1, &ebo);
+    gl.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    gl.BufferData(GL_ELEMENT_ARRAY_BUFFER,
+                  static_cast<GLsizeiptr>(sizeof(GLuint) * indices.size()),
+                  indices.data(),
                   GL_STATIC_DRAW);
     
     gl.VertexAttribPointer(0, 3,
