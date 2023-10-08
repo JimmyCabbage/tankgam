@@ -437,8 +437,9 @@ void Client::tryRunTicks()
 {
     if (clientState == ClientState::Connected)
     {
-        const uint64_t ticks = timer->getPassedTicks();
-
+        const uint64_t totalTicks = timer->getTotalTicks();
+        const uint64_t ticks = totalTicks - lastTick;
+        
         if (ticks == 0)
         {
             return;
@@ -451,6 +452,8 @@ void Client::tryRunTicks()
                 //    thing->think();
             }
         }
+        
+        lastTick = totalTicks;
     }
 }
 

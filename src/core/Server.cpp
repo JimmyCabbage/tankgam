@@ -345,6 +345,26 @@ void Server::handleEvents()
 
 void Server::tryRunTicks()
 {
+#if 0
+    const uint64_t totalTicks = timer->getTotalTicks();
+    const uint64_t ticks = totalTicks - lastTick;
+    
+    if (ticks == 0)
+    {
+        return;
+    }
+    
+    for (uint64_t i = 0; i < ticks; i++)
+    {
+        //for (auto& [id, thing] : things)
+        {
+            //    thing->think();
+        }
+    }
+    
+    lastTick = totalTicks;
+#endif
+    
     if (bleh)
     {
         EntityManager* entityManager = getEntityManager(currentEntityManager);

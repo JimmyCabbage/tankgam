@@ -79,6 +79,8 @@ private:
 
     bool menuVisible;
     
+    uint64_t lastTick;
+    
 //entity manager stuff
     EntityManager* getEntityManager(uint32_t sequence);
     
