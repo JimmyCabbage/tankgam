@@ -356,6 +356,7 @@ void Server::tryRunTicks()
     
     for (uint64_t i = 0; i < ticks; i++)
     {
+        currentTick = lastTick + i;
         //for (auto& [id, thing] : things)
         {
             //    thing->think();

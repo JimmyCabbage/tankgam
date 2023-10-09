@@ -435,26 +435,29 @@ bool Client::consumeEvent(const Event& ev)
 
 void Client::tryRunTicks()
 {
-    if (clientState == ClientState::Connected)
+    if (clientState != ClientState::Connected)
     {
-        const uint64_t totalTicks = timer->getTotalTicks();
-        const uint64_t ticks = totalTicks - lastTick;
-        
-        if (ticks == 0)
-        {
-            return;
-        }
-
-        for (uint64_t i = 0; i < ticks; i++)
-        {
-            //for (auto& [id, thing] : things)
-            {
-                //    thing->think();
-            }
-        }
-        
-        lastTick = totalTicks;
+        return;
     }
+    
+    const uint64_t totalTicks = timer->getTotalTicks();
+    const uint64_t ticks = totalTicks - lastTick;
+    
+    if (ticks == 0)
+    {
+        return;
+    }
+    
+    for (uint64_t i = 0; i < ticks; i++)
+    {
+        currentTick = lastTick + i;
+        //for (auto& [id, thing] : things)
+        {
+        //    thing->think();
+        }
+    }
+    
+    lastTick = totalTicks;
 }
 
 void Client::draw()

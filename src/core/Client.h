@@ -80,6 +80,7 @@ private:
     bool menuVisible;
     
     uint64_t lastTick;
+    uint64_t currentTick;
     
 //entity manager stuff
     EntityManager* getEntityManager(uint32_t sequence);
