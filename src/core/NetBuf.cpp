@@ -66,6 +66,26 @@ void NetBuf::beginRead()
 
 //TODO: handle endianness
 
+bool NetBuf::writeUint16(uint16_t v)
+{
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
+    
+    return writeBytes(byteArray);
+}
+
+bool NetBuf::readUint16(uint16_t& v)
+{
+    std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
+    
+    if (!readBytes(byteArray))
+    {
+        v = -1;
+        return false;
+    }
+    
+    return true;
+}
+
 bool NetBuf::writeInt32(int32_t v)
 {
     std::span<std::byte> byteArray{ reinterpret_cast<std::byte*>(&v), sizeof(v) };
@@ -146,6 +166,96 @@ bool NetBuf::readFloat(float& v)
     return true;
 }
 
+bool NetBuf::writeVec3(const glm::vec3& v)
+{
+    if (!writeFloat(v.x))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.y))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.z))
+    {
+        return false;
+    }
+    
+    return true;
+}
+
+bool NetBuf::readVec3(glm::vec3& v)
+{
+    if (!readFloat(v.x))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.y))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.z))
+    {
+        return false;
+    }
+    
+    return true;
+}
+
+bool NetBuf::writeQuat(const glm::quat& v)
+{
+    if (!writeFloat(v.x))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.y))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.z))
+    {
+        return false;
+    }
+    
+    if (!writeFloat(v.w))
+    {
+        return false;
+    }
+    
+    return true;
+}
+
+bool NetBuf::readQuat(glm::quat& v)
+{
+    if (!readFloat(v.x))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.y))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.z))
+    {
+        return false;
+    }
+    
+    if (!readFloat(v.w))
+    {
+        return false;
+    }
+    
+    return true;
+}
+
 bool NetBuf::writeString(std::string_view str)
 {
     if (str.empty())
@@ -223,7 +333,7 @@ bool NetBuf::writeBytes(std::span<const std::byte> writeData)
 
 bool NetBuf::writeBytes(const std::byte* writeData, size_t writeSize)
 {
-    writeBytes(std::span{ writeData, writeSize });
+    return writeBytes(std::span{ writeData, writeSize });
 }
 
 bool NetBuf::readBytes(std::span<std::byte> readData)

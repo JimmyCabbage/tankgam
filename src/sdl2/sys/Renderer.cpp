@@ -31,8 +31,8 @@ Renderer::Renderer(Console& console, FileManager& fileManager, std::string_view 
     
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, SDL_TRUE);
     SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, SDL_TRUE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
     
@@ -217,7 +217,7 @@ std::unique_ptr<Model> Renderer::createModel(std::string_view modelFileName)
     return model;
 }
 
-void Renderer::drawModel(Model& model, glm::vec3 scale, glm::mat4 rotation, glm::vec3 translate)
+void Renderer::drawModel(Model& model, glm::vec3 scale, glm::quat rotation, glm::vec3 translate)
 {
     Shader* shader = nullptr;
     switch (model.shaderType)

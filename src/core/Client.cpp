@@ -15,6 +15,7 @@
 #include "NetBuf.h"
 #include "Menu.h"
 #include "Event.h"
+#include "EntityManager.h"
 
 Client::Client(Console& console, FileManager& fileManager, Net& net)
     : console{ console }, fileManager{ fileManager }, net{ net }
@@ -77,6 +78,8 @@ bool Client::runFrame()
 {
     try
     {
+        nextFrameSettings();
+        
         handlePackets();
 
         handleEvents();
@@ -138,6 +141,32 @@ void Client::changeState(ClientState state)
 }
 #endif
 
+EntityManager* Client::getEntityManager(uint32_t sequence)
+{
+    const size_t realSequence = static_cast<size_t>(sequence) % EntityManager::NUM_ENTITY_MANAGERS;
+    if (entityManagerSequences[realSequence] == sequence)
+    {
+        return &*entityManagers[realSequence];
+    }
+    
+    return nullptr;
+}
+
+EntityManager& Client::insertEntityManager(uint32_t sequence)
+{
+    const size_t realSequence = static_cast<size_t>(sequence) % EntityManager::NUM_ENTITY_MANAGERS;
+    entityManagerSequences[realSequence] = sequence;
+    
+    if (EntityManager* otherManager = getEntityManager(sequence - 1); otherManager)
+    {
+        entityManagers[realSequence] = std::make_unique<EntityManager>(*otherManager);
+        return *entityManagers[realSequence];
+    }
+    
+    entityManagers[realSequence] = std::make_unique<EntityManager>();
+    return *entityManagers[realSequence];
+}
+
 void Client::connectToServer(NetAddr serverAddr)
 {
     clientState = ClientState::Connecting;
@@ -152,6 +181,17 @@ void Client::disconnect()
     clientState = ClientState::Disconnected;
 
     timer->stop();
+}
+
+void Client::nextFrameSettings()
+{
+    if (clientState != ClientState::Connected)
+    {
+        return;
+    }
+    
+    currentEntityManager++;
+    insertEntityManager(currentEntityManager);
 }
 
 void Client::handlePackets()
@@ -202,8 +242,8 @@ void Client::handlePackets()
         {
             continue;
         }
-
-        //TODO: handle unreliable messages here
+        
+        handleUnreliablePacket(buf, msgType);
     }
 
     //if we never sent a reliable
@@ -240,14 +280,25 @@ void Client::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
         NetBuf sendBuf{};
         sendBuf.writeUint64(oldClientTime);
 
-        netChan->addReliableData(std::move(sendBuf), NetMessageType::Time);
+        netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
+        
+        //prepare entity managers
+        lastAckedEntityManager = 0;
+        currentEntityManager = 0;
+        for (size_t i = 0; i < EntityManager::NUM_ENTITY_MANAGERS; i++)
+        {
+            entityManagerSequences[i] = 0;
+            ackedEntityManagers[i] = false;
+            entityManagers[i] = std::make_unique<EntityManager>();
+        }
     }
 }
 
 void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
 {
-    if (msgType == NetMessageType::Time)
+    if (msgType == NetMessageType::Synchronize)
     {
+        //time stuff
         uint64_t prevTime;
         buf.readUint64(prevTime);
 
@@ -255,9 +306,94 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
         buf.readUint64(serverTime);
 
         const uint64_t roundTripTime = (timer->getTotalTicks() - prevTime);
-        timer->setTickOffset(serverTime + (roundTripTime / 2));
-
+        timer->setTickOffset(serverTime + (roundTripTime / 2) + 1);
+        
+        //entity manager stuff
+        buf.readUint32(currentEntityManager);
+        EntityManager& entityManager = insertEntityManager(currentEntityManager);
+        
+        uint32_t numEntities;
+        buf.readUint32(numEntities);
+        for (uint32_t i = 0; i < numEntities; i++)
+        {
+            EntityId netEntityId;
+            buf.readUint16(netEntityId);
+            
+            entityManager.allocateGlobalEntity(netEntityId);
+            Entity* entity = entityManager.getGlobalEntity(netEntityId);
+            if (!entity)
+            {
+                throw std::runtime_error{ "This should never happen (global entity not available!!!?!?!??)" };
+            }
+            
+            Entity::deserialize(*entity, buf);
+        }
+        
         clientState = ClientState::Connected;
+        
+        hideMenu();
+    }
+    else if (msgType == NetMessageType::CreateEntity)
+    {
+        uint32_t entityManagerNum;
+        buf.readUint32(entityManagerNum);
+        
+        EntityManager* entityManager = getEntityManager(entityManagerNum);
+        if (!entityManager)
+        {
+            return;
+        }
+        
+        EntityId netEntityId;
+        buf.readUint16(netEntityId);
+        
+        entityManager->allocateGlobalEntity(netEntityId);
+        Entity* newEntity = entityManager->getGlobalEntity(netEntityId);
+        
+        Entity::deserialize(*newEntity, buf);
+        
+        models[newEntity->modelName] = renderer->createModel(newEntity->modelName);
+    }
+    else if (msgType == NetMessageType::DestroyEntity)
+    {
+        uint32_t entityManagerNum;
+        buf.readUint32(entityManagerNum);
+        
+        EntityManager* entityManager = getEntityManager(entityManagerNum);
+        if (!entityManager)
+        {
+            return;
+        }
+        
+        EntityId netEntityId;
+        buf.readUint16(netEntityId);
+        
+        entityManager->freeGlobalEntity(netEntityId);
+    }
+}
+
+void Client::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType)
+{
+    if (msgType == NetMessageType::EntitySynchronize)
+    {
+        EntityManager* entityManager = getEntityManager(currentEntityManager);
+        
+        uint32_t numEntities;
+        buf.readUint32(numEntities);
+        
+        for (uint32_t i = 0; i < numEntities; i++)
+        {
+            EntityId globalId;
+            buf.readUint16(globalId);
+            
+            Entity* entity = entityManager->getGlobalEntity(globalId);
+            if (!entity)
+            {
+                continue;
+            }
+            
+            Entity::deserialize(*entity, buf);
+        }
     }
 }
 
@@ -299,41 +435,45 @@ bool Client::consumeEvent(const Event& ev)
 
 void Client::tryRunTicks()
 {
-    if (clientState == ClientState::Connected)
+    if (clientState != ClientState::Connected)
     {
-        const uint64_t ticks = timer->getPassedTicks();
-
-        if (ticks == 0)
+        return;
+    }
+    
+    const uint64_t totalTicks = timer->getTotalTicks();
+    const uint64_t ticks = totalTicks - lastTick;
+    
+    if (ticks == 0)
+    {
+        return;
+    }
+    
+    for (uint64_t i = 0; i < ticks; i++)
+    {
+        currentTick = lastTick + i;
+        //for (auto& [id, thing] : things)
         {
-            return;
-        }
-
-        for (uint64_t i = 0; i < ticks; i++)
-        {
-            //for (auto& [id, thing] : things)
-            {
-                //    thing->think();
-            }
+        //    thing->think();
         }
     }
+    
+    lastTick = totalTicks;
 }
 
 void Client::draw()
 {
     renderer->beginDraw();
 
-    renderer->drawText("HELLO WORLD ARE YOU THERE", glm::vec2{ 0.0f, 0.0f }, 100.0f);
+    renderer->drawText("HELLO WORLD", glm::vec2{ 0.0f, 0.0f }, 100.0f);
 
     if (clientState == ClientState::Connected)
     {
-        //if (playerId.has_value())
+        EntityManager* m = getEntityManager(currentEntityManager);
+        auto entities = m->getGlobalEntities();
+        for (auto entity : entities)
         {
-            //things[playerId]
-        }
-
-        //for (auto& [id, thing] : things)
-        {
-            //    thing->draw();
+            Entity* e = m->getGlobalEntity(entity);
+            renderer->drawModel(*models[e->modelName], glm::vec3{1.0f}, e->rotation, e->position);
         }
     }
 

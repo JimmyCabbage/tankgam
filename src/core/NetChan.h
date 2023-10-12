@@ -17,7 +17,10 @@
 enum class NetMessageType : uint8_t
 {
     Unknown = 0,
-    Time = 1 | (1 << 7),
+    EntitySynchronize = 1,
+    Synchronize = 1 | (1 << 7),
+    CreateEntity = 2 | (1 << 7),
+    DestroyEntity = 3 | (1 << 7),
     SendReliables = std::numeric_limits<uint8_t>::max(),
 };
 
@@ -129,6 +132,6 @@ private:
 
     uint32_t outgoingReliableSequence;
     uint32_t incomingReliableSequence;
-
-    size_t trySendReliableCounter;
+    
+    bool shouldTrySendReliable;
 };

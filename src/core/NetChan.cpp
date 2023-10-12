@@ -1,6 +1,7 @@
 #include "NetChan.h"
 
 #include <vector>
+#include <algorithm>
 #include <stdexcept>
 
 NetChan::NetChan(Net& net, NetSrc netSrc)
@@ -11,9 +12,10 @@ NetChan::NetChan(Net& net, NetSrc netSrc)
 NetChan::NetChan(Net& net, NetSrc netSrc, NetAddr toAddr)
     : net{ net }, netSrc{ netSrc }, netAddr{ toAddr },
       outgoingSequenceBuffer{}, outgoingPacketInfoBuffer{},
+      incomingSequenceBuffer{}, incomingPacketInfoBuffer{},
       outgoingSequence{ 0 }, incomingSequence{ 0 },
       outgoingReliableSequence{ 0 }, incomingReliableSequence{ 0 },
-      trySendReliableCounter{0 }
+      shouldTrySendReliable{ true }
 {
 }
 
@@ -52,12 +54,38 @@ void NetChan::outOfBand(NetAddr toAddr, std::span<const std::byte> data)
 
 void NetChan::trySendReliable()
 {
-    constexpr size_t RETRY_FREQUENCY = 6;
-    trySendReliableCounter = (trySendReliableCounter + 1) % RETRY_FREQUENCY;
-
-    if (trySendReliableCounter == 0)
+    const bool reliable = shouldTrySendReliable;
+    shouldTrySendReliable = true;
+    
+    //if we already sent a reliable message recently
+    if (!reliable)
     {
-        sendData(std::span<const std::byte>{}, NetMessageType::SendReliables);
+        return;
+    }
+    
+    bool unacked = false;
+    
+    //search if there's any reliable messages to send
+    for (uint32_t counter = 0, currentSequence = outgoingReliableSequence;
+         counter <= 64;
+         counter++, currentSequence--)
+    {
+        OutPacketInfo* packetInfo = getOutPacketInfo(currentSequence);
+        if (!packetInfo || packetInfo->acked)
+        {
+            continue;
+        }
+        
+        if (!packetInfo->acked)
+        {
+            unacked = true;
+            break;
+        }
+    }
+    
+    if (unacked)
+    {
+        sendData(std::span<const std::byte> {}, NetMessageType::SendReliables);
     }
 }
 
@@ -114,6 +142,8 @@ void NetChan::sendData(std::span<const std::byte> data, NetMessageType msgType)
     sendBuf.writeBytes(data);
 
     net.sendPacket(netSrc, std::move(sendBuf), netAddr);
+    
+    shouldTrySendReliable = false; //we sent some reliable data with this packet, don't try again this cycle
 }
 
 bool NetChan::processHeader(NetBuf& inBuf, NetMessageType& outType, std::vector<NetBuf>& outReliableMessages)
@@ -189,6 +219,7 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType)
         .sequence = ++outgoingSequence,
         .ack = incomingReliableSequence,
         .ackBits = 0,
+        .numReliableMessages = 0,
         .reliableMessages = {},
     };
 
@@ -211,14 +242,9 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType)
 
     std::vector<OutPacketInfo*> reliableMessages;
 
-    if (OutPacketInfo* packetInfo = getOutPacketInfo(outgoingReliableSequence); packetInfo && !packetInfo->acked)
-    {
-        reliableMessages.push_back(packetInfo);
-    }
-
     //figure out the reliable messages we need to send
-    for (uint32_t counter = 0, currentSequence = outgoingReliableSequence - 1;
-         counter < 64;
+    for (uint32_t counter = 0, currentSequence = outgoingReliableSequence;
+         counter <= 64;
          counter++, currentSequence--)
     {
         OutPacketInfo* packetInfo = getOutPacketInfo(currentSequence);
@@ -229,7 +255,11 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType)
 
         reliableMessages.push_back(packetInfo);
     }
-
+    
+    //reverse order so that they get it in the correct order
+    //other end executes this in serial, so make sure that they do these in order
+    std::reverse(reliableMessages.begin(), reliableMessages.end());
+    
     header.numReliableMessages = static_cast<uint8_t>(reliableMessages.size());
     header.reliableMessages = std::move(reliableMessages);
 

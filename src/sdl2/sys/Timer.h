@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-class Engine;
-
 class Timer
 {
 public:
@@ -19,9 +17,6 @@ public:
 
     void setTickOffset(uint64_t tickOffset);
 
-    //get the amount of passed ticks since this was last called
-    uint64_t getPassedTicks();
-
     //get the ticks since time started
     uint64_t getTotalTicks() const;
     
@@ -29,10 +24,7 @@ public:
 
 private:
     bool enabled;
-    
-	//the time when the timer began
+
+    //the time when the timer began
     uint64_t startTime;
-	
-	//the last tick that was recieved when getPassedTicks() was called
-    uint64_t lastTick;
 };

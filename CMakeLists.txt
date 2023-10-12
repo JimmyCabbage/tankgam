@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(glm REQUIRED)
 find_package(SDL2 2.0.8 REQUIRED)
-find_package(OpenGL REQUIRED)
 find_package(libzip REQUIRED)
 
 add_subdirectory(src)
