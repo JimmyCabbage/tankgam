@@ -28,7 +28,9 @@ private:
     
     GLuint vao;
     GLuint vbo;
+    GLuint ebo;
     GLsizei numVertices;
+    GLsizei numIndicies;
     
     void uploadVertices(std::span<const Vertex> vertices);
 };

@@ -38,7 +38,7 @@ target_compile_features(tankgam PUBLIC cxx_std_20)
 set_target_properties(tankgam PROPERTIES CXX_EXTENSIONS OFF)
 
 #linking various external files
-target_link_libraries(tankgam PRIVATE SDL2::SDL2main OpenGL::GL SDL2::SDL2 glm::glm libzip::zip)
+target_link_libraries(tankgam PRIVATE SDL2::SDL2main SDL2::SDL2 glm::glm libzip::zip)
 
 #move up some directories to be up
 target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core")
