@@ -308,7 +308,7 @@ void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, Se
         EntityManager* entityManager = getEntityManager(currentEntityManager);
         if (!entityManager)
         {
-            throw std::runtime_error{ "This should never happen (entity manager not available!!!?!?!??)" };
+            throw std::runtime_error{ "This should never happen (entity manager not available?!)" };
         }
         
         std::vector<EntityId> globalEntities = entityManager->getGlobalEntities();
@@ -318,7 +318,7 @@ void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, Se
             Entity* globalEntity = entityManager->getGlobalEntity(entityId);
             if (!globalEntity)
             {
-                throw std::runtime_error{ "This should never happen (global entity not available!!!?!?!??)" };
+                throw std::runtime_error{ "This should never happen (global entity not available?!)" };
             }
             
             sendBuf.writeUint16(entityId);
