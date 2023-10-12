@@ -169,7 +169,7 @@ void EntityManager::freeGlobalEntity(EntityId netId)
 
 bool EntityManager::isGlobalId(EntityId entityId) const
 {
-    if (!(entityId >= 0 || entityId <= MAX_GLOBAL_ENTITIES))
+    if (entityId > MAX_GLOBAL_ENTITIES)
     {
         return false;
     }
@@ -186,7 +186,7 @@ bool EntityManager::isGlobalId(EntityId entityId) const
 
 bool EntityManager::isLocalId(EntityId entityId) const
 {
-    if (!(entityId >= MAX_GLOBAL_ENTITIES || entityId <= MAX_LOCAL_ENTITIES))
+    if (entityId < MAX_GLOBAL_ENTITIES || entityId > MAX_LOCAL_ENTITIES)
     {
         return false;
     }
