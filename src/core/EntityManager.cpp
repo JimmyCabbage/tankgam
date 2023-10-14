@@ -6,6 +6,7 @@ EntityManager::EntityManager() = default;
 
 EntityManager::~EntityManager() = default;
 
+#ifdef ENTITY_MANAGER_COPY_CONSTRUCTOR
 EntityManager::EntityManager(const EntityManager& o)
 {
     std::copy(o.usedEntities.begin(), o.usedEntities.end(), usedEntities.begin());
@@ -24,6 +25,7 @@ EntityManager& EntityManager::operator=(const EntityManager& o)
     
     return *this;
 }
+#endif
 
 EntityManager::EntityManager(EntityManager&& o) noexcept
 {
