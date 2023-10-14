@@ -14,9 +14,11 @@ class EntityManager
 public:
     EntityManager();
     ~EntityManager();
-    
+
+#ifdef ENTITY_MANAGER_COPY_CONSTRUCTOR
     EntityManager(const EntityManager& o);
     EntityManager& operator=(const EntityManager& o);
+#endif
     
     EntityManager(EntityManager&& o) noexcept;
     EntityManager& operator=(EntityManager&& o) noexcept;
@@ -32,6 +34,8 @@ public:
     EntityId allocateGlobalEntity();
     
     void freeGlobalEntity(EntityId netId);
+    
+    bool doesEntityExist(EntityId entityId) const;
     
     bool isGlobalId(EntityId entityId) const;
     

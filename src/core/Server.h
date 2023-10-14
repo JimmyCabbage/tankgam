@@ -27,9 +27,8 @@ struct ServerClient
     ServerClientState state;
 
     std::unique_ptr<NetChan> netChan;
-
-    uint32_t lastAckedEntityManager;
-    std::array<bool, EntityManager::NUM_ENTITY_MANAGERS> ackedEntityManagers;
+    
+    uint64_t lastRecievedTime;
 };
 
 class Server
@@ -55,36 +54,29 @@ private:
 
     std::unique_ptr<Timer> timer;
     
-    uint32_t currentEntityManager;
-    std::array<uint32_t, EntityManager::NUM_ENTITY_MANAGERS> entityManagerSequences;
-    std::array<std::unique_ptr<EntityManager>, EntityManager::NUM_ENTITY_MANAGERS> entityManagers;
+    std::unique_ptr<EntityManager> entityManager;
 
     bool running;
-    
-    bool bleh = false;
     
     uint64_t lastTick;
     uint64_t currentTick;
     
-//entity manager stuff
-    EntityManager* getEntityManager(uint32_t sequence);
-    
-    EntityManager& insertEntityManager(uint32_t sequence);
+    float rotationAmount = 0.0f;
     
     EntityId allocateGlobalEntity(Entity globalEntity);
     
     void freeGlobalEntity(EntityId netEntityId);
     
+    void freeClient(ServerClient& client);
+    
 //main loop stuff
-    void nextFrameSettings();
-
     void handlePackets();
 
     void handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr);
 
-    void handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient);
+    void handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client);
     
-    void handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient);
+    void handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client);
 
     void handleEvents();
 
