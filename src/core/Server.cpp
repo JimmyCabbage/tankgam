@@ -26,6 +26,9 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
         timer->start();
         
         entityManager = std::make_unique<EntityManager>();
+        
+        allocateGlobalEntity(Entity{ glm::vec3{ 0.0f, -2.5f, -7.0f }, glm::identity<glm::quat>(), "models/tank/tank_body.txt" });
+        allocateGlobalEntity(Entity{ glm::vec3{ 0.0f, -2.5f, -7.0f }, glm::identity<glm::quat>(), "models/tank/tank_turret.txt" });
     }
     catch (const std::exception& e)
     {
@@ -109,6 +112,13 @@ void Server::freeGlobalEntity(EntityId netEntityId)
     }
 }
 
+void Server::freeClient(ServerClient& client)
+{
+    client.state = ServerClientState::Free;
+    client.netChan = std::make_unique<NetChan>(net, NetSrc::Server);
+    client.lastRecievedTime = 0;
+}
+
 void Server::handlePackets()
 {
     NetBuf buf{};
@@ -123,30 +133,28 @@ void Server::handlePackets()
             continue;
         }
 
-        ServerClient* theClient = nullptr;
-        for (auto& client : clients)
+        ServerClient* client = nullptr;
+        for (size_t i = 0; i < clients.size(); i++)
         {
-            if (client.state == ServerClientState::Free)
+            ServerClient& currentClient = clients[i];
+            if (currentClient.state == ServerClientState::Free || currentClient.netChan->getToAddr() != fromAddr)
             {
                 continue;
             }
 
-            if (client.netChan->getToAddr() != fromAddr)
-            {
-                continue;
-            }
-
-            theClient = &client;
+            client = &currentClient;
         }
 
-        if (!theClient)
+        if (!client)
         {
             continue;
         }
-
+        
+        client->lastRecievedTime = timer->getTotalTicks();
+        
         NetMessageType msgType = NetMessageType::Unknown;
         std::vector<NetBuf> reliableMessages;
-        if (!theClient->netChan->processHeader(buf, msgType, reliableMessages) ||
+        if (!client->netChan->processHeader(buf, msgType, reliableMessages) ||
             msgType == NetMessageType::Unknown)
         {
             continue;
@@ -166,7 +174,7 @@ void Server::handlePackets()
                 reliableMsgType = static_cast<NetMessageType>(tempV);
             }
 
-            handleReliablePacket(reliableMessage, reliableMsgType, *theClient);
+            handleReliablePacket(reliableMessage, reliableMsgType, *client);
         }
 
         if (msgType == NetMessageType::SendReliables)
@@ -174,7 +182,7 @@ void Server::handlePackets()
             continue;
         }
         
-        handleUnreliablePacket(buf, msgType, *theClient);
+        handleUnreliablePacket(buf, msgType, *client);
     }
 
     for (auto& client : clients)
@@ -182,6 +190,12 @@ void Server::handlePackets()
         if (client.state == ServerClientState::Free)
         {
             continue;
+        }
+        
+        //client timeout
+        if (client.lastRecievedTime + Timer::TICK_RATE * 10 < timer->getTotalTicks())
+        {
+            freeClient(client);
         }
 
         //if we don't send any unreliable info
@@ -224,12 +238,13 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
 
         newClient->state = ServerClientState::Connected;
         newClient->netChan->setToAddr(fromAddr);
+        newClient->lastRecievedTime = timer->getTotalTicks();
 
         newClient->netChan->outOfBandPrint(fromAddr, "server_connect");
     }
 }
 
-void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient)
+void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client)
 {
     if (msgType == NetMessageType::Synchronize)
     {
@@ -257,19 +272,19 @@ void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, Se
             Entity::serialize(*globalEntity, sendBuf);
         }
         
-        theClient.netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
-        
-        allocateGlobalEntity(Entity{ glm::vec3{ 0.0f, -2.5f, -7.0f }, glm::identity<glm::quat>(), "models/tank/tank_body.txt" });
-        allocateGlobalEntity(Entity{ glm::vec3{ 0.0f, -2.5f, -7.0f }, glm::identity<glm::quat>(), "models/tank/tank_turret.txt" });
-        bleh = true;
+        client.netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
     }
 }
 
-void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient)
+void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client)
 {
     if (msgType == NetMessageType::PlayerCommand)
     {
         rotationAmount += 5.0f;
+    }
+    else if (msgType == NetMessageType::Disconnect)
+    {
+        freeClient(client);
     }
 }
 
@@ -301,12 +316,9 @@ void Server::tryRunTicks()
     lastTick = totalTicks;
 #endif
     
-    if (bleh)
-    {
-        Entity* entity = entityManager->getGlobalEntity(0);
-        glm::mat4 d = glm::rotate(glm::mat4{1.0f}, glm::radians(std::fmod(rotationAmount, 360.0f)), glm::vec3{0.0f, 1.0f, 0.0f});
-        entity->rotation = glm::quat_cast(d);
-    }
+    Entity* entity = entityManager->getGlobalEntity(0);
+    glm::mat4 d = glm::rotate(glm::mat4{1.0f}, glm::radians(std::fmod(rotationAmount, 360.0f)), glm::vec3{0.0f, 1.0f, 0.0f});
+    entity->rotation = glm::quat_cast(d);
 }
 
 void Server::sendPackets()

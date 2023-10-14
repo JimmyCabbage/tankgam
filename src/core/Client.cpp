@@ -99,6 +99,8 @@ bool Client::runFrame()
 
 void Client::shutdown()
 {
+    disconnect();
+    
     running = false;
 }
 
@@ -151,10 +153,19 @@ void Client::connectToServer(NetAddr serverAddr)
 
 void Client::disconnect()
 {
-    //TODO: complete
+    if (clientState == ClientState::Disconnected)
+    {
+        return;
+    }
+    
+    netChan->sendData(NetBuf{}, NetMessageType::Disconnect);
     clientState = ClientState::Disconnected;
 
     timer->stop();
+    
+    netChan = std::make_unique<NetChan>(net, NetSrc::Client);
+    
+    showMenu();
 }
 
 void Client::handlePackets()
@@ -273,7 +284,7 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
             
             if (!entityManager->doesEntityExist(netEntityId))
             {
-                continue;
+                entityManager->allocateGlobalEntity(netEntityId);
             }
             
             Entity* entity = entityManager->getGlobalEntity(netEntityId);
@@ -283,6 +294,11 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
             }
             
             Entity::deserialize(*entity, buf);
+            
+            if (!models.contains(entity->modelName))
+            {
+                models[entity->modelName] = renderer->createModel(entity->modelName);
+            }
         }
         
         clientState = ClientState::Connected;
@@ -299,7 +315,10 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
         
         Entity::deserialize(*newEntity, buf);
         
-        models[newEntity->modelName] = renderer->createModel(newEntity->modelName);
+        if (!models.contains(newEntity->modelName))
+        {
+            models[newEntity->modelName] = renderer->createModel(newEntity->modelName);
+        }
     }
     else if (msgType == NetMessageType::DestroyEntity)
     {
@@ -325,10 +344,16 @@ void Client::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType)
             Entity* entity = entityManager->getGlobalEntity(globalId);
             if (!entity)
             {
-                continue;
+                entityManager->allocateGlobalEntity(globalId);
+                entity = entityManager->getGlobalEntity(globalId);
             }
             
             Entity::deserialize(*entity, buf);
+            
+            if (!models.contains(entity->modelName))
+            {
+                models[entity->modelName] = renderer->createModel(entity->modelName);
+            }
         }
     }
 }
@@ -373,6 +398,9 @@ bool Client::consumeEvent(const Event& ev)
         {
         case KeyPressType::DownArrow:
             commands.emplace();
+            break;
+        case KeyPressType::Escape:
+            disconnect();
             break;
         }
     }

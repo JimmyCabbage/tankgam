@@ -27,6 +27,8 @@ struct ServerClient
     ServerClientState state;
 
     std::unique_ptr<NetChan> netChan;
+    
+    uint64_t lastRecievedTime;
 };
 
 class Server
@@ -56,8 +58,6 @@ private:
 
     bool running;
     
-    bool bleh = false;
-    
     uint64_t lastTick;
     uint64_t currentTick;
     
@@ -67,14 +67,16 @@ private:
     
     void freeGlobalEntity(EntityId netEntityId);
     
+    void freeClient(ServerClient& client);
+    
 //main loop stuff
     void handlePackets();
 
     void handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr);
 
-    void handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient);
+    void handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client);
     
-    void handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient);
+    void handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client);
 
     void handleEvents();
 

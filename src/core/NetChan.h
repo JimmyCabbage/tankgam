@@ -19,6 +19,7 @@ enum class NetMessageType : uint8_t
     Unknown = 0,
     EntitySynchronize = 1,
     PlayerCommand = 2,
+    Disconnect = 3,
     Synchronize = 1 | (1 << 7),
     CreateEntity = 2 | (1 << 7),
     DestroyEntity = 3 | (1 << 7),
