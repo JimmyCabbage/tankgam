@@ -27,9 +27,6 @@ struct ServerClient
     ServerClientState state;
 
     std::unique_ptr<NetChan> netChan;
-
-    uint32_t lastAckedEntityManager;
-    std::array<bool, EntityManager::NUM_ENTITY_MANAGERS> ackedEntityManagers;
 };
 
 class Server
@@ -55,9 +52,7 @@ private:
 
     std::unique_ptr<Timer> timer;
     
-    uint32_t currentEntityManager;
-    std::array<uint32_t, EntityManager::NUM_ENTITY_MANAGERS> entityManagerSequences;
-    std::array<std::unique_ptr<EntityManager>, EntityManager::NUM_ENTITY_MANAGERS> entityManagers;
+    std::unique_ptr<EntityManager> entityManager;
 
     bool running;
     
@@ -66,18 +61,11 @@ private:
     uint64_t lastTick;
     uint64_t currentTick;
     
-//entity manager stuff
-    EntityManager* getEntityManager(uint32_t sequence);
-    
-    EntityManager& insertEntityManager(uint32_t sequence);
-    
     EntityId allocateGlobalEntity(Entity globalEntity);
     
     void freeGlobalEntity(EntityId netEntityId);
     
 //main loop stuff
-    void nextFrameSettings();
-
     void handlePackets();
 
     void handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr);

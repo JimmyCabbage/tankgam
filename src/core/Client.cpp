@@ -78,8 +78,6 @@ bool Client::runFrame()
 {
     try
     {
-        nextFrameSettings();
-        
         handlePackets();
 
         handleEvents();
@@ -141,32 +139,6 @@ void Client::changeState(ClientState state)
 }
 #endif
 
-EntityManager* Client::getEntityManager(uint32_t sequence)
-{
-    const size_t realSequence = static_cast<size_t>(sequence) % EntityManager::NUM_ENTITY_MANAGERS;
-    if (entityManagerSequences[realSequence] == sequence)
-    {
-        return &*entityManagers[realSequence];
-    }
-    
-    return nullptr;
-}
-
-EntityManager& Client::insertEntityManager(uint32_t sequence)
-{
-    const size_t realSequence = static_cast<size_t>(sequence) % EntityManager::NUM_ENTITY_MANAGERS;
-    entityManagerSequences[realSequence] = sequence;
-    
-    if (EntityManager* otherManager = getEntityManager(sequence - 1); otherManager)
-    {
-        entityManagers[realSequence] = std::make_unique<EntityManager>(*otherManager);
-        return *entityManagers[realSequence];
-    }
-    
-    entityManagers[realSequence] = std::make_unique<EntityManager>();
-    return *entityManagers[realSequence];
-}
-
 void Client::connectToServer(NetAddr serverAddr)
 {
     clientState = ClientState::Connecting;
@@ -181,17 +153,6 @@ void Client::disconnect()
     clientState = ClientState::Disconnected;
 
     timer->stop();
-}
-
-void Client::nextFrameSettings()
-{
-    if (clientState != ClientState::Connected)
-    {
-        return;
-    }
-    
-    currentEntityManager++;
-    insertEntityManager(currentEntityManager);
 }
 
 void Client::handlePackets()
@@ -282,15 +243,8 @@ void Client::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
 
         netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
         
-        //prepare entity managers
-        lastAckedEntityManager = 0;
-        currentEntityManager = 0;
-        for (size_t i = 0; i < EntityManager::NUM_ENTITY_MANAGERS; i++)
-        {
-            entityManagerSequences[i] = 0;
-            ackedEntityManagers[i] = false;
-            entityManagers[i] = std::make_unique<EntityManager>();
-        }
+        //prepare entity manager
+        entityManager = std::make_unique<EntityManager>();
     }
 }
 
@@ -308,10 +262,6 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
         const uint64_t roundTripTime = (timer->getTotalTicks() - prevTime);
         timer->setTickOffset(serverTime + (roundTripTime / 2) + 1);
         
-        //entity manager stuff
-        buf.readUint32(currentEntityManager);
-        EntityManager& entityManager = insertEntityManager(currentEntityManager);
-        
         uint32_t numEntities;
         buf.readUint32(numEntities);
         for (uint32_t i = 0; i < numEntities; i++)
@@ -319,8 +269,12 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
             EntityId netEntityId;
             buf.readUint16(netEntityId);
             
-            entityManager.allocateGlobalEntity(netEntityId);
-            Entity* entity = entityManager.getGlobalEntity(netEntityId);
+            if (!entityManager->doesEntityExist(netEntityId))
+            {
+                continue;
+            }
+            
+            Entity* entity = entityManager->getGlobalEntity(netEntityId);
             if (!entity)
             {
                 throw std::runtime_error{ "This should never happen (global entity not available?!)" };
@@ -335,15 +289,6 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
     }
     else if (msgType == NetMessageType::CreateEntity)
     {
-        uint32_t entityManagerNum;
-        buf.readUint32(entityManagerNum);
-        
-        EntityManager* entityManager = getEntityManager(entityManagerNum);
-        if (!entityManager)
-        {
-            return;
-        }
-        
         EntityId netEntityId;
         buf.readUint16(netEntityId);
         
@@ -356,15 +301,6 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
     }
     else if (msgType == NetMessageType::DestroyEntity)
     {
-        uint32_t entityManagerNum;
-        buf.readUint32(entityManagerNum);
-        
-        EntityManager* entityManager = getEntityManager(entityManagerNum);
-        if (!entityManager)
-        {
-            return;
-        }
-        
         EntityId netEntityId;
         buf.readUint16(netEntityId);
         
@@ -376,8 +312,6 @@ void Client::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType)
 {
     if (msgType == NetMessageType::EntitySynchronize)
     {
-        EntityManager* entityManager = getEntityManager(currentEntityManager);
-        
         uint32_t numEntities;
         buf.readUint32(numEntities);
         
@@ -468,11 +402,10 @@ void Client::draw()
 
     if (clientState == ClientState::Connected)
     {
-        EntityManager* m = getEntityManager(currentEntityManager);
-        auto entities = m->getGlobalEntities();
+        auto entities = entityManager->getGlobalEntities();
         for (auto entity : entities)
         {
-            Entity* e = m->getGlobalEntity(entity);
+            Entity* e = entityManager->getGlobalEntity(entity);
             renderer->drawModel(*models[e->modelName], glm::vec3{1.0f}, e->rotation, e->position);
         }
     }
