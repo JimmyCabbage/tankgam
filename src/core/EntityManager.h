@@ -33,6 +33,8 @@ public:
     
     void freeGlobalEntity(EntityId netId);
     
+    bool doesEntityExist(EntityId entityId) const;
+    
     bool isGlobalId(EntityId entityId) const;
     
     bool isLocalId(EntityId entityId) const;

@@ -167,6 +167,11 @@ void EntityManager::freeGlobalEntity(EntityId netId)
     usedEntities[realId] = false;
 }
 
+bool EntityManager::doesEntityExist(EntityId entityId) const
+{
+    return usedEntities[entityId];
+}
+
 bool EntityManager::isGlobalId(EntityId entityId) const
 {
     if (entityId > MAX_GLOBAL_ENTITIES)
