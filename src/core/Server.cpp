@@ -75,10 +75,6 @@ EntityId Server::allocateGlobalEntity(Entity globalEntity)
     Entity* newEntity = entityManager->getGlobalEntity(netEntityId);
     *newEntity = globalEntity;
     
-    NetBuf sendBuf{};
-    sendBuf.writeUint16(netEntityId);
-    Entity::serialize(*newEntity, sendBuf);
-    
     for (auto& client : clients)
     {
         if (client.state == ServerClientState::Free)
@@ -86,6 +82,9 @@ EntityId Server::allocateGlobalEntity(Entity globalEntity)
             continue;
         }
         
+        NetBuf sendBuf{};
+        sendBuf.writeUint16(netEntityId);
+        Entity::serialize(*newEntity, sendBuf);
         client.netChan->addReliableData(std::move(sendBuf), NetMessageType::CreateEntity);
     }
     
@@ -270,7 +269,7 @@ void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, 
 {
     if (msgType == NetMessageType::PlayerCommand)
     {
-        rotationAmount += 1.0f;
+        rotationAmount += 5.0f;
     }
 }
 
