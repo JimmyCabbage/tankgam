@@ -84,6 +84,8 @@ bool Client::runFrame()
 
         //tryRunTicks();
 
+        sendPackets();
+        
         draw();
     }
     catch (const std::exception& e)
@@ -362,6 +364,17 @@ bool Client::consumeEvent(const Event& ev)
     case EventType::Quit:
         shutdown();
         return true;
+    case EventType::KeyDown:
+        if (clientState != ClientState::Connected)
+        {
+            break;
+        }
+        switch (static_cast<KeyPressType>(ev.data1))
+        {
+        case KeyPressType::DownArrow:
+            commands.emplace();
+            break;
+        }
     }
 
     return false;
@@ -392,6 +405,20 @@ void Client::tryRunTicks()
     }
     
     lastTick = totalTicks;
+}
+
+void Client::sendPackets()
+{
+    if (clientState == ClientState::Disconnected)
+    {
+        return;
+    }
+    
+    while (!commands.empty())
+    {
+        netChan->sendData(NetBuf{}, NetMessageType::PlayerCommand);
+        commands.pop();
+    }
 }
 
 void Client::draw()

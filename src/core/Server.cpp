@@ -268,7 +268,10 @@ void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, Se
 
 void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient)
 {
-
+    if (msgType == NetMessageType::PlayerCommand)
+    {
+        rotationAmount += 1.0f;
+    }
 }
 
 void Server::handleEvents()
@@ -302,7 +305,7 @@ void Server::tryRunTicks()
     if (bleh)
     {
         Entity* entity = entityManager->getGlobalEntity(0);
-        glm::mat4 d = glm::rotate(glm::mat4{1.0f}, glm::radians(std::fmod((float)timer->getTotalTicks(), 360.0f)), glm::vec3{0.0f, 1.0f, 0.0f});
+        glm::mat4 d = glm::rotate(glm::mat4{1.0f}, glm::radians(std::fmod(rotationAmount, 360.0f)), glm::vec3{0.0f, 1.0f, 0.0f});
         entity->rotation = glm::quat_cast(d);
     }
 }

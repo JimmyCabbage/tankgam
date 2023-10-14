@@ -3,9 +3,11 @@
 #include <memory>
 #include <array>
 #include <unordered_map>
+#include <queue>
 
 #include "Event.h"
 #include "EntityManager.h"
+#include "PlayerCommand.h"
 
 class Console;
 class FileManager;
@@ -78,6 +80,8 @@ private:
     uint64_t lastTick;
     uint64_t currentTick;
     
+    std::queue<PlayerCommand> commands;
+    
 //basic commands
     void connectToServer(NetAddr serverAddr);
 
@@ -97,6 +101,8 @@ private:
     bool consumeEvent(const Event& ev);
 
     void tryRunTicks();
+    
+    void sendPackets();
 
     void draw();
 };

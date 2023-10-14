@@ -61,6 +61,8 @@ private:
     uint64_t lastTick;
     uint64_t currentTick;
     
+    float rotationAmount = 0.0f;
+    
     EntityId allocateGlobalEntity(Entity globalEntity);
     
     void freeGlobalEntity(EntityId netEntityId);
