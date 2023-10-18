@@ -1,2 +1,5 @@
 add_subdirectory(tankgam)
-add_subdirectory(tankgam-editor)
+
+if(BUILD_EDITOR)
+    add_subdirectory(tankgam-editor)
+endif(BUILD_EDITOR)
