@@ -4,6 +4,17 @@
 
 #include "SDL.h"
 
+//since the 64 bit api of the tick system in sdl2 is only available past 2.0.18
+//add this inbetween function to get it working on old sdl2 versions
+static inline uint64_t GetTicks()
+{
+#if SDL_VERSION_ATLEAST(2, 0, 18)
+    return SDL_GetTicks64();
+#else
+    return static_cast<uint64_t>(SDL_GetTicks());
+#endif
+}
+
 Timer::Timer()
     : enabled{ false }, startTime{ 0 }
 {
@@ -21,7 +32,7 @@ Timer::~Timer()
 void Timer::start()
 {
     enabled = true;
-    startTime = SDL_GetTicks64();
+    startTime = GetTicks();
 }
 
 void Timer::stop()
@@ -40,7 +51,7 @@ uint64_t Timer::getTotalTicks() const
 {
     if (enabled)
     {
-        const uint64_t ticks = SDL_GetTicks64() - startTime;
+        const uint64_t ticks = GetTicks() - startTime;
 
         return (ticks * Timer::TICK_RATE) / 1000;
     }
