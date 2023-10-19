@@ -1,4 +1,5 @@
-qt_add_executable(tankgam-editor qt6/main.cpp)
+qt_add_executable(tankgam-editor qt6/main.cpp
+        qt6/WorldEditor.h qt6/WorldEditor.cpp)
 
 #we want ALL the warnings
 if(MSVC)
