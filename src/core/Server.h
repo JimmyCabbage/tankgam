@@ -67,7 +67,7 @@ private:
     
     void freeGlobalEntity(EntityId netEntityId);
     
-    void freeClient(ServerClient& client);
+    void disconnectClient(ServerClient& client);
     
 //main loop stuff
     void handlePackets();

@@ -112,9 +112,9 @@ void Server::freeGlobalEntity(EntityId netEntityId)
     }
 }
 
-void Server::freeClient(ServerClient& client)
+void Server::disconnectClient(ServerClient& client)
 {
-    console.logf("Server: Freeing client from %d", (int)client.netChan->getToAddr().port);
+    console.logf("Server: Disconnect client from %d", (int)client.netChan->getToAddr().port);
     
     client.state = ServerClientState::Free;
     client.netChan = std::make_unique<NetChan>(net, NetSrc::Server);
@@ -197,7 +197,7 @@ void Server::handlePackets()
         //client timeout
         if (client.lastRecievedTime + Timer::TICK_RATE * 10 < timer->getTotalTicks())
         {
-            freeClient(client);
+            disconnectClient(client);
         }
 
         //if we don't send any unreliable info
@@ -290,7 +290,7 @@ void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, 
     }
     else if (msgType == NetMessageType::Disconnect)
     {
-        freeClient(client);
+        disconnectClient(client);
     }
 }
 
