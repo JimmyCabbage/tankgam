@@ -1,54 +1,56 @@
-#include "sys/Net.h"
+#include "sys/NetLoopback.h"
 
 #include <stdexcept>
 #include <algorithm>
 
-Net::Net()
+#include "Net.h"
+
+NetLoopback::NetLoopback(bool /* initClient */, bool /* initServer */)
     : clientLoopback{ {}, 0, 0 }, serverLoopback{ {}, 0, 0 }
 {
 }
 
-Net::~Net() = default;
+NetLoopback::~NetLoopback() = default;
 
-bool Net::getPacket(NetSrc src, NetBuf& buf, NetAddr& fromAddr)
+bool NetLoopback::getPacket(const NetSrc& src, NetBuf& buf, NetAddr& fromAddr)
 {
-    NetLoopback& loop = getLoopback(src);
-
+    NetLoopbackBuf& loop = getLoopback(src);
+    
     //if more messages were sent than could be stored in the loopback buffer
     if (loop.send - loop.recv > loop.msgs.size())
     {
         //limit to the most recent of the loopback buffer
         loop.recv = loop.send - loop.msgs.size();
     }
-
+    
     //nothing sent we haven't checked
     if (loop.recv >= loop.send)
     {
         return false;
     }
-
+    
     //get the message's index
     //also increase the number of msgs we've read
     const size_t i = loop.recv++ % loop.msgs.size();
-
+    
     buf = std::move(loop.msgs[i]);
     fromAddr.type = NetAddrType::Loopback;
-
+    
     return true;
 }
 
-void Net::sendPacket(NetSrc src, NetBuf buf, NetAddr /*toAddr*/)
+void NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& /*toAddr*/)
 {
-    NetLoopback& loop = getOppositeLoopback(src);
-
+    NetLoopbackBuf& loop = getOppositeLoopback(src);
+    
     //get the next available message's index
     //also make the index increment
     const size_t i = loop.send++ % loop.msgs.size();
-
+    
     loop.msgs[i] = std::move(buf);
 }
 
-NetLoopback& Net::getLoopback(NetSrc src)
+NetLoopbackBuf& NetLoopback::getLoopback(const NetSrc& src)
 {
     if (src == NetSrc::Client)
     {
@@ -58,11 +60,11 @@ NetLoopback& Net::getLoopback(NetSrc src)
     {
         return serverLoopback;
     }
-
+    
     throw std::runtime_error{ "getLoopback: Unknown NetSrc type" };
 }
 
-NetLoopback& Net::getOppositeLoopback(NetSrc src)
+NetLoopbackBuf& NetLoopback::getOppositeLoopback(const NetSrc& src)
 {
     if (src == NetSrc::Client)
     {
@@ -72,6 +74,6 @@ NetLoopback& Net::getOppositeLoopback(NetSrc src)
     {
         return clientLoopback;
     }
-
+    
     throw std::runtime_error{ "getOppositeLoopback: Unknown NetSrc type" };
 }

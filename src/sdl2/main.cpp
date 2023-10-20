@@ -1,12 +1,12 @@
 #include "sys/Console.h"
 #include "sys/File.h"
-#include "sys/Net.h"
+#include "Net.h"
 #include "Server.h"
 #include "Client.h"
 
 #include "SDL.h"
 
-int main(int /*argc*/, char** /*argv*/)
+int main(int argc, char** argv)
 {
     {
         Console console{};
@@ -14,22 +14,64 @@ int main(int /*argc*/, char** /*argv*/)
         FileManager fileManager{console};
         fileManager.loadAssetsFile("dev.assets");
         fileManager.loadAssetsFile("tank.assets");
-
-        Net net{};
-
-        Server server{console, fileManager, net};
-        Client client{console, fileManager, net};
-
-        for (;;)
+        
+        bool onlyClient = false;
+        bool onlyServer = false;
+        if (argc > 1)
         {
-            if (!server.runFrame())
+            if (strcmp(argv[1], "--client") == 0)
             {
-                break;
+                onlyClient = true;
             }
-
-            if (!client.runFrame())
+            
+            if (strcmp(argv[1], "--server") == 0)
             {
-                break;
+                onlyServer = true;
+            }
+        }
+        
+        Net net{ !onlyServer, !onlyClient };
+
+        if (!onlyClient && !onlyServer)
+        {
+            Server server{console, fileManager, net};
+            Client client{console, fileManager, net};
+            
+            for (;;)
+            {
+                if (!server.runFrame())
+                {
+                    break;
+                }
+                
+                if (!client.runFrame())
+                {
+                    break;
+                }
+            }
+        }
+        else if (onlyClient)
+        {
+            Client client{console, fileManager, net};
+            
+            for (;;)
+            {
+                if (!client.runFrame())
+                {
+                    break;
+                }
+            }
+        }
+        else if (onlyServer)
+        {
+            Server server{console, fileManager, net};
+            
+            for (;;)
+            {
+                if (!server.runFrame())
+                {
+                    break;
+                }
             }
         }
     }
