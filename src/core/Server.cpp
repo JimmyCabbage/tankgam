@@ -14,7 +14,7 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
 {
     try
     {
-        clients.resize(1);
+        clients.resize(2);
         for (auto& client : clients)
         {
             client.state = ServerClientState::Free;
@@ -114,6 +114,8 @@ void Server::freeGlobalEntity(EntityId netEntityId)
 
 void Server::freeClient(ServerClient& client)
 {
+    console.logf("Server: Freeing client from %d", (int)client.netChan->getToAddr().port);
+    
     client.state = ServerClientState::Free;
     client.netChan = std::make_unique<NetChan>(net, NetSrc::Server);
     client.lastRecievedTime = 0;
@@ -233,6 +235,8 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
 
         if (!newClient)
         {
+            NetChan tempNetChan{ net, NetSrc::Server };
+            tempNetChan.outOfBandPrint(fromAddr, "server_noroom");
             return;
         }
 
@@ -241,6 +245,8 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
         newClient->lastRecievedTime = timer->getTotalTicks();
 
         newClient->netChan->outOfBandPrint(fromAddr, "server_connect");
+        
+        console.logf("Server: New client connecting from %d", (int)fromAddr.port);
     }
 }
 

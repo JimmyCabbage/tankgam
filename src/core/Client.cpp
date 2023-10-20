@@ -44,7 +44,7 @@ Client::Client(Console& console, FileManager& fileManager, Net& net)
             switch (choice)
             {
             case 0:
-                connectToServer(NetAddr{ NetAddrType::Loopback });
+                connectToServer(NetAddr{ NetAddrType::Unix });
                 break;
             case 1:
                 shutdown();

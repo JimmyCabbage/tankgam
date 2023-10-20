@@ -11,6 +11,12 @@ target_sources(tankgam PRIVATE
         core/Entity.h core/Entity.cpp
         core/EntityManager.h core/EntityManager.cpp)
 
+#linux specific source code
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    target_sources(tankgam PRIVATE
+            linux/sys/Net.h linux/sys/Net.cpp)
+endif()
+
 #SDL2 specific source code
 target_sources(tankgam PRIVATE
         sdl2/main.cpp
@@ -23,11 +29,10 @@ target_sources(tankgam PRIVATE
         sdl2/sys/EventHandler.h sdl2/sys/EventHandler.cpp
         sdl2/sys/File.h sdl2/sys/File.cpp
         sdl2/sys/Timer.h sdl2/sys/Timer.cpp
-        sdl2/sys/File.h sdl2/sys/File.cpp
-        sdl2/sys/Net.h sdl2/sys/Net.cpp)
+        sdl2/sys/File.h sdl2/sys/File.cpp)
 
 #we want ALL the warnings
-if(MSVC)
+if(${MSVC})
     target_compile_options(tankgam PRIVATE /W4)
 else()
     target_compile_options(tankgam PRIVATE -Wall -Wextra -Wpedantic)
@@ -43,6 +48,9 @@ target_link_libraries(tankgam PRIVATE SDL2::SDL2main SDL2::SDL2 glm::glm libzip:
 #move up some directories to be up
 target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core")
 target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/sdl2")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/linux")
+endif()
 
 #glad2 files
 target_sources(tankgam PRIVATE "${CMAKE_SOURCE_DIR}/external/glad2/src/gl.c")

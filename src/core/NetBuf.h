@@ -59,8 +59,10 @@ public:
     bool writeBytes(const std::byte* writeData, size_t writeSize);
     bool readBytes(std::span<std::byte> readData);
 
+    static constexpr size_t MAX_BYTES = 1024;
+    
 private:
-    std::array<std::byte, 1024> data;
+    std::array<std::byte, MAX_BYTES> data;
     size_t dataWritten;
     size_t dataRead;
 
