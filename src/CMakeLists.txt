@@ -16,14 +16,12 @@ target_sources(tankgam PRIVATE
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(tankgam PRIVATE
             linux/sys/NetLoopback.h linux/sys/NetLoopback.cpp)
-    message("Im good")
 endif()
 
 #windows specific source code
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(tankgam PRIVATE
             win32/sys/NetLoopback.h win32/sys/NetLoopback.cpp)
-    message("HELP")
 endif()
 
 
