@@ -7,38 +7,21 @@
 
 #include "NetBuf.h"
 
-enum class NetAddrType
-{
-    Unknown,
-    Unix,
-};
+struct NetAddr;
+enum class NetSrc;
 
-struct NetAddr
-{
-    NetAddrType type;
-    uint16_t port;
-
-    auto operator<=>(const NetAddr&) const = default;
-};
-
-enum class NetSrc
-{
-    Client,
-    Server,
-};
-
-class Net
+class NetLoopback
 {
 public:
-    Net(bool initClient = true, bool initServer = true);
-    ~Net();
-
-    Net(const Net&) = delete;
-    Net& operator=(const Net&) = delete;
-
-    bool getPacket(NetSrc src, NetBuf& buf, NetAddr& fromAddr);
-    void sendPacket(NetSrc src, NetBuf buf, NetAddr toAddr);
-
+    NetLoopback(bool initClient = true, bool initServer = true);
+    ~NetLoopback();
+    
+    NetLoopback(const NetLoopback&) = delete;
+    NetLoopback& operator=(const NetLoopback&) = delete;
+    
+    bool getPacket(const NetSrc& src, NetBuf& buf, NetAddr& fromAddr);
+    void sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAddr);
+    
 private:
     bool initClient;
     bool initServer;
@@ -60,6 +43,6 @@ private:
     bool getPacketServer(NetBuf& buf, NetAddr& fromAddr);
     bool getPacketClient(NetBuf& buf, NetAddr& fromAddr);
     
-    void sendPacketServer(NetBuf buf, NetAddr toAddr);
-    void sendPacketClient(NetBuf buf, NetAddr toAddr);
+    void sendPacketServer(NetBuf buf, const NetAddr& toAddr);
+    void sendPacketClient(NetBuf buf, const NetAddr& toAddr);
 };

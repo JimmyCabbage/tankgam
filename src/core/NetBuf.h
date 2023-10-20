@@ -23,7 +23,7 @@ public:
     NetBuf(NetBuf&& o) noexcept;
     NetBuf& operator=(NetBuf&& o) noexcept;
 
-    std::span<const std::byte> getData();
+    std::span<const std::byte> getData() const;
 
     void beginWrite();
     void beginRead();

@@ -5,7 +5,7 @@
 #include "sys/Console.h"
 #include "sys/File.h"
 #include "sys/Timer.h"
-#include "sys/Net.h"
+#include "Net.h"
 #include "NetChan.h"
 #include "NetBuf.h"
 

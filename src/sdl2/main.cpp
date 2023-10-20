@@ -1,6 +1,6 @@
 #include "sys/Console.h"
 #include "sys/File.h"
-#include "sys/Net.h"
+#include "Net.h"
 #include "Server.h"
 #include "Client.h"
 

@@ -9,13 +9,23 @@ target_sources(tankgam PRIVATE
         core/NetChan.h core/NetChan.cpp
         core/NetBuf.h core/NetBuf.cpp
         core/Entity.h core/Entity.cpp
-        core/EntityManager.h core/EntityManager.cpp)
+        core/EntityManager.h core/EntityManager.cpp
+        core/Net.h core/Net.cpp)
 
 #linux specific source code
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(tankgam PRIVATE
-            linux/sys/Net.h linux/sys/Net.cpp)
+            linux/sys/NetLoopback.h linux/sys/NetLoopback.cpp)
+    message("Im good")
 endif()
+
+#windows specific source code
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_sources(tankgam PRIVATE
+            win32/sys/NetLoopback.h win32/sys/NetLoopback.cpp)
+    message("HELP")
+endif()
+
 
 #SDL2 specific source code
 target_sources(tankgam PRIVATE
@@ -50,6 +60,9 @@ target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core")
 target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/sdl2")
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/linux")
+endif()
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/win32")
 endif()
 
 #glad2 files

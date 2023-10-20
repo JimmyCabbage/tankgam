@@ -1,4 +1,4 @@
-#include "sys/Net.h"
+#include "sys/NetLoopback.h"
 
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -14,7 +14,9 @@
 
 #include <fmt/format.h>
 
-Net::Net(bool initClient, bool initServer)
+#include "Net.h"
+
+NetLoopback::NetLoopback(bool initClient, bool initServer)
     : initClient{ initClient }, initServer{ initServer },
       serverSocket{ -1 }, clientSocket{ -1 }
 {
@@ -23,7 +25,7 @@ Net::Net(bool initClient, bool initServer)
         std::random_device dev;
         std::mt19937 rng{ dev() };
         std::uniform_int_distribution<std::mt19937::result_type> dist
-		{
+        {
             1,
             std::numeric_limits<uint16_t>::max()
         };
@@ -43,7 +45,7 @@ Net::Net(bool initClient, bool initServer)
         
         //make the directory if it doesn't exist
         if (struct stat st = {};
-            stat(runDir.c_str(), &st) == -1)
+        stat(runDir.c_str(), &st) == -1)
         {
             mkdir(runDir.c_str(), 0700);
         }
@@ -86,7 +88,7 @@ Net::Net(bool initClient, bool initServer)
     }
 }
 
-Net::~Net()
+NetLoopback::~NetLoopback()
 {
     if (initClient)
     {
@@ -103,7 +105,7 @@ Net::~Net()
     }
 }
 
-bool Net::getPacket(NetSrc src, NetBuf& buf, NetAddr& fromAddr)
+bool NetLoopback::getPacket(const NetSrc& src, NetBuf& buf, NetAddr& fromAddr)
 {
     if (src == NetSrc::Server)
     {
@@ -113,7 +115,7 @@ bool Net::getPacket(NetSrc src, NetBuf& buf, NetAddr& fromAddr)
     return getPacketClient(buf, fromAddr);
 }
 
-void Net::sendPacket(NetSrc src, NetBuf buf, NetAddr toAddr)
+void NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAddr)
 {
     if (src == NetSrc::Server)
     {
@@ -124,24 +126,24 @@ void Net::sendPacket(NetSrc src, NetBuf buf, NetAddr toAddr)
     sendPacketServer(std::move(buf), toAddr);
 }
 
-std::string Net::getServerName()
+std::string NetLoopback::getServerName()
 {
     return runDir + "/server-socket";
 }
 
-std::string Net::getClientName(uint16_t port)
+std::string NetLoopback::getClientName(uint16_t port)
 {
     return runDir + "/client-socket" + std::to_string(port);
 }
 
-uint16_t Net::getPortFromClientName(const std::string& clientName)
+uint16_t NetLoopback::getPortFromClientName(const std::string& clientName)
 {
     const std::string port = clientName.substr((runDir + "/client-socket").size());
     
     return static_cast<uint16_t>(std::stoi(port));
 }
 
-struct sockaddr_un Net::getServerSockAddr()
+struct sockaddr_un NetLoopback::getServerSockAddr()
 {
     struct sockaddr_un serverAddr =
     {
@@ -152,7 +154,7 @@ struct sockaddr_un Net::getServerSockAddr()
     return serverAddr;
 }
 
-struct sockaddr_un Net::getClientSockAddr(uint16_t port)
+struct sockaddr_un NetLoopback::getClientSockAddr(uint16_t port)
 {
     struct sockaddr_un clientAddr =
     {
@@ -163,7 +165,7 @@ struct sockaddr_un Net::getClientSockAddr(uint16_t port)
     return clientAddr;
 }
 
-bool Net::getPacketServer(NetBuf& buf, NetAddr& fromAddr)
+bool NetLoopback::getPacketServer(NetBuf& buf, NetAddr& fromAddr)
 {
     struct sockaddr_un clientAddr{};
     socklen_t clientAddrLen = sizeof(struct sockaddr_un);
@@ -193,13 +195,13 @@ bool Net::getPacketServer(NetBuf& buf, NetAddr& fromAddr)
     
     buf.writeBytes(std::span<std::byte>{ data.data(), static_cast<size_t>(recvData) });
     
-    fromAddr.type = NetAddrType::Unix;
+    fromAddr.type = NetAddrType::Loopback;
     fromAddr.port = getPortFromClientName(clientAddr.sun_path);
     
     return true;
 }
 
-bool Net::getPacketClient(NetBuf& buf, NetAddr& fromAddr)
+bool NetLoopback::getPacketClient(NetBuf& buf, NetAddr& fromAddr)
 {
     struct sockaddr_un serverAddr;
     socklen_t serverAddrLen = sizeof(struct sockaddr_un);
@@ -229,13 +231,13 @@ bool Net::getPacketClient(NetBuf& buf, NetAddr& fromAddr)
     
     buf.writeBytes(std::span<std::byte>{ data.data(), static_cast<size_t>(recvData) });
     
-    fromAddr.type = NetAddrType::Unix;
+    fromAddr.type = NetAddrType::Loopback;
     fromAddr.port = 0;
     
     return true;
 }
 
-void Net::sendPacketServer(NetBuf buf, NetAddr toAddr)
+void NetLoopback::sendPacketServer(NetBuf buf, const NetAddr& toAddr)
 {
     const struct sockaddr_un serverAddr = getServerSockAddr();
     
@@ -248,7 +250,7 @@ void Net::sendPacketServer(NetBuf buf, NetAddr toAddr)
     }
 }
 
-void Net::sendPacketClient(NetBuf buf, NetAddr toAddr)
+void NetLoopback::sendPacketClient(NetBuf buf, const NetAddr& toAddr)
 {
     const struct sockaddr_un clientAddr = getClientSockAddr(toAddr.port);
     
@@ -260,4 +262,3 @@ void Net::sendPacketClient(NetBuf buf, NetAddr toAddr)
         throw std::runtime_error {fmt::format("Client sento err: {}", errno)};
     }
 }
-

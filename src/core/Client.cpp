@@ -10,7 +10,7 @@
 #include "sys/EventHandler.h"
 #include "sys/Renderer.h"
 #include "sys/Timer.h"
-#include "sys/Net.h"
+#include "Net.h"
 #include "NetChan.h"
 #include "NetBuf.h"
 #include "Menu.h"
@@ -44,7 +44,7 @@ Client::Client(Console& console, FileManager& fileManager, Net& net)
             switch (choice)
             {
             case 0:
-                connectToServer(NetAddr{ NetAddrType::Unix });
+                connectToServer(NetAddr{ NetAddrType::Loopback, 0 });
                 break;
             case 1:
                 shutdown();
