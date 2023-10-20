@@ -223,7 +223,7 @@ bool NetLoopback::getPacketClient(NetBuf& buf, NetAddr& fromAddr)
     {
         if (errno != EAGAIN && errno != EWOULDBLOCK)
         {
-            throw std::runtime_error{ "Failure" };
+            throw std::runtime_error{ fmt::format("Failure: {}", strerror(errno)) };
         }
         
         return false;
@@ -246,7 +246,7 @@ void NetLoopback::sendPacketServer(NetBuf buf, const NetAddr& toAddr)
     if (sendto(clientSocket, data.data(), data.size(), 0,
                reinterpret_cast<const struct sockaddr*>(&serverAddr), sizeof(struct sockaddr_un)) == -1)
     {
-        throw std::runtime_error{ "Server sento err" };
+        throw std::runtime_error{ fmt::format("Server sento err: {}", strerror(errno)) };
     }
 }
 
@@ -259,6 +259,6 @@ void NetLoopback::sendPacketClient(NetBuf buf, const NetAddr& toAddr)
     if (sendto(serverSocket, data.data(), data.size(), 0,
                reinterpret_cast<const struct sockaddr*>(&clientAddr), sizeof(struct sockaddr_un)) == -1)
     {
-        throw std::runtime_error {fmt::format("Client sento err: {}", errno)};
+        throw std::runtime_error{ fmt::format("Client sento err: {}", strerror(errno)) };
     }
 }
