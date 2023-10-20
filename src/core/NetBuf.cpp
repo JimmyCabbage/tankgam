@@ -46,7 +46,7 @@ NetBuf& NetBuf::operator=(NetBuf&& o) noexcept
     return *this;
 }
 
-std::span<const std::byte> NetBuf::getData()
+std::span<const std::byte> NetBuf::getData() const
 {
     return std::span<const std::byte>
     {

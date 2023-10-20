@@ -6,6 +6,7 @@ EntityManager::EntityManager() = default;
 
 EntityManager::~EntityManager() = default;
 
+#ifdef ENTITY_MANAGER_COPY_CONSTRUCTOR
 EntityManager::EntityManager(const EntityManager& o)
 {
     std::copy(o.usedEntities.begin(), o.usedEntities.end(), usedEntities.begin());
@@ -24,6 +25,7 @@ EntityManager& EntityManager::operator=(const EntityManager& o)
     
     return *this;
 }
+#endif
 
 EntityManager::EntityManager(EntityManager&& o) noexcept
 {
@@ -167,9 +169,14 @@ void EntityManager::freeGlobalEntity(EntityId netId)
     usedEntities[realId] = false;
 }
 
+bool EntityManager::doesEntityExist(EntityId entityId) const
+{
+    return usedEntities[entityId];
+}
+
 bool EntityManager::isGlobalId(EntityId entityId) const
 {
-    if (!(entityId >= 0 || entityId <= MAX_GLOBAL_ENTITIES))
+    if (entityId > MAX_GLOBAL_ENTITIES)
     {
         return false;
     }
@@ -186,7 +193,7 @@ bool EntityManager::isGlobalId(EntityId entityId) const
 
 bool EntityManager::isLocalId(EntityId entityId) const
 {
-    if (!(entityId >= MAX_GLOBAL_ENTITIES || entityId <= MAX_LOCAL_ENTITIES))
+    if (entityId < MAX_GLOBAL_ENTITIES || entityId > MAX_LOCAL_ENTITIES)
     {
         return false;
     }

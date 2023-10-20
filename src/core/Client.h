@@ -3,9 +3,11 @@
 #include <memory>
 #include <array>
 #include <unordered_map>
+#include <queue>
 
 #include "Event.h"
 #include "EntityManager.h"
+#include "PlayerCommand.h"
 
 class Console;
 class FileManager;
@@ -67,11 +69,7 @@ private:
 
     std::unique_ptr<Menu> menu;
     
-    uint32_t lastAckedEntityManager;
-    uint32_t currentEntityManager;
-    std::array<uint32_t, EntityManager::NUM_ENTITY_MANAGERS> entityManagerSequences;
-    std::array<bool, EntityManager::NUM_ENTITY_MANAGERS> ackedEntityManagers;
-    std::array<std::unique_ptr<EntityManager>, EntityManager::NUM_ENTITY_MANAGERS> entityManagers;
+    std::unique_ptr<EntityManager> entityManager;
     
     std::unordered_map<std::string, std::unique_ptr<Model>> models;
 
@@ -82,19 +80,14 @@ private:
     uint64_t lastTick;
     uint64_t currentTick;
     
-//entity manager stuff
-    EntityManager* getEntityManager(uint32_t sequence);
+    std::queue<PlayerCommand> commands;
     
-    EntityManager& insertEntityManager(uint32_t sequence);
-
 //basic commands
     void connectToServer(NetAddr serverAddr);
 
     void disconnect();
 
 //main loop stuff
-    void nextFrameSettings();
-
     void handlePackets();
 
     void handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr);
@@ -108,6 +101,8 @@ private:
     bool consumeEvent(const Event& ev);
 
     void tryRunTicks();
+    
+    void sendPackets();
 
     void draw();
 };

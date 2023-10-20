@@ -5,7 +5,7 @@
 #include "sys/Console.h"
 #include "sys/File.h"
 #include "sys/Timer.h"
-#include "sys/Net.h"
+#include "Net.h"
 #include "NetChan.h"
 #include "NetBuf.h"
 
@@ -14,7 +14,7 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
 {
     try
     {
-        clients.resize(1);
+        clients.resize(2);
         for (auto& client : clients)
         {
             client.state = ServerClientState::Free;
@@ -25,12 +25,10 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
         timer = std::make_unique<Timer>();
         timer->start();
         
-        currentEntityManager = 0;
-        for (size_t i = 0; i < EntityManager::NUM_ENTITY_MANAGERS; i++)
-        {
-            entityManagerSequences[i] = 0;
-            entityManagers[i] = std::make_unique<EntityManager>();
-        }
+        entityManager = std::make_unique<EntityManager>();
+        
+        allocateGlobalEntity(Entity{ glm::vec3{ 0.0f, -2.5f, -7.0f }, glm::identity<glm::quat>(), "models/tank/tank_body.txt" });
+        allocateGlobalEntity(Entity{ glm::vec3{ 0.0f, -2.5f, -7.0f }, glm::identity<glm::quat>(), "models/tank/tank_turret.txt" });
     }
     catch (const std::exception& e)
     {
@@ -52,8 +50,6 @@ bool Server::runFrame()
 {
     try
     {
-        nextFrameSettings();
-        
         handlePackets();
 
         handleEvents();
@@ -76,48 +72,11 @@ void Server::shutdown()
     running = false;
 }
 
-EntityManager* Server::getEntityManager(uint32_t sequence)
-{
-    const size_t realSequence = static_cast<size_t>(sequence) % EntityManager::NUM_ENTITY_MANAGERS;
-    if (entityManagerSequences[realSequence] == sequence)
-    {
-        return &*entityManagers[realSequence];
-    }
-    
-    return nullptr;
-}
-
-EntityManager& Server::insertEntityManager(uint32_t sequence)
-{
-    const size_t realSequence = static_cast<size_t>(sequence) % EntityManager::NUM_ENTITY_MANAGERS;
-    entityManagerSequences[realSequence] = sequence;
-    
-    if (EntityManager* otherManager = getEntityManager(sequence - 1); otherManager)
-    {
-        entityManagers[realSequence] = std::make_unique<EntityManager>(*otherManager);
-        return *entityManagers[realSequence];
-    }
-    
-    entityManagers[realSequence] = std::make_unique<EntityManager>();
-    return *entityManagers[realSequence];
-}
-
 EntityId Server::allocateGlobalEntity(Entity globalEntity)
 {
-    EntityManager* entityManager = getEntityManager(currentEntityManager);
-    if (!entityManager)
-    {
-        throw std::runtime_error{ "EntityManager not available in allocateGlobalEntity" };
-    }
-    
     EntityId netEntityId = entityManager->allocateGlobalEntity();
     Entity* newEntity = entityManager->getGlobalEntity(netEntityId);
     *newEntity = globalEntity;
-    
-    NetBuf sendBuf{};
-    sendBuf.writeUint32(currentEntityManager);
-    sendBuf.writeUint16(netEntityId);
-    Entity::serialize(*newEntity, sendBuf);
     
     for (auto& client : clients)
     {
@@ -126,6 +85,9 @@ EntityId Server::allocateGlobalEntity(Entity globalEntity)
             continue;
         }
         
+        NetBuf sendBuf{};
+        sendBuf.writeUint16(netEntityId);
+        Entity::serialize(*newEntity, sendBuf);
         client.netChan->addReliableData(std::move(sendBuf), NetMessageType::CreateEntity);
     }
     
@@ -134,16 +96,9 @@ EntityId Server::allocateGlobalEntity(Entity globalEntity)
 
 void Server::freeGlobalEntity(EntityId netEntityId)
 {
-    EntityManager* entityManager = getEntityManager(currentEntityManager);
-    if (!entityManager)
-    {
-        throw std::runtime_error{ "EntityManager not available in freeGlobalEntity" };
-    }
-    
     entityManager->freeGlobalEntity(netEntityId);
     
     NetBuf sendBuf{};
-    sendBuf.writeUint32(currentEntityManager);
     sendBuf.writeUint16(netEntityId);
     
     for (auto& client : clients)
@@ -157,10 +112,13 @@ void Server::freeGlobalEntity(EntityId netEntityId)
     }
 }
 
-void Server::nextFrameSettings()
+void Server::freeClient(ServerClient& client)
 {
-    currentEntityManager++;
-    insertEntityManager(currentEntityManager);
+    console.logf("Server: Freeing client from %d", (int)client.netChan->getToAddr().port);
+    
+    client.state = ServerClientState::Free;
+    client.netChan = std::make_unique<NetChan>(net, NetSrc::Server);
+    client.lastRecievedTime = 0;
 }
 
 void Server::handlePackets()
@@ -177,30 +135,28 @@ void Server::handlePackets()
             continue;
         }
 
-        ServerClient* theClient = nullptr;
-        for (auto& client : clients)
+        ServerClient* client = nullptr;
+        for (size_t i = 0; i < clients.size(); i++)
         {
-            if (client.state == ServerClientState::Free)
+            ServerClient& currentClient = clients[i];
+            if (currentClient.state == ServerClientState::Free || currentClient.netChan->getToAddr() != fromAddr)
             {
                 continue;
             }
 
-            if (client.netChan->getToAddr() != fromAddr)
-            {
-                continue;
-            }
-
-            theClient = &client;
+            client = &currentClient;
         }
 
-        if (!theClient)
+        if (!client)
         {
             continue;
         }
-
+        
+        client->lastRecievedTime = timer->getTotalTicks();
+        
         NetMessageType msgType = NetMessageType::Unknown;
         std::vector<NetBuf> reliableMessages;
-        if (!theClient->netChan->processHeader(buf, msgType, reliableMessages) ||
+        if (!client->netChan->processHeader(buf, msgType, reliableMessages) ||
             msgType == NetMessageType::Unknown)
         {
             continue;
@@ -220,7 +176,7 @@ void Server::handlePackets()
                 reliableMsgType = static_cast<NetMessageType>(tempV);
             }
 
-            handleReliablePacket(reliableMessage, reliableMsgType, *theClient);
+            handleReliablePacket(reliableMessage, reliableMsgType, *client);
         }
 
         if (msgType == NetMessageType::SendReliables)
@@ -228,7 +184,7 @@ void Server::handlePackets()
             continue;
         }
         
-        handleUnreliablePacket(buf, msgType, *theClient);
+        handleUnreliablePacket(buf, msgType, *client);
     }
 
     for (auto& client : clients)
@@ -236,6 +192,12 @@ void Server::handlePackets()
         if (client.state == ServerClientState::Free)
         {
             continue;
+        }
+        
+        //client timeout
+        if (client.lastRecievedTime + Timer::TICK_RATE * 10 < timer->getTotalTicks())
+        {
+            freeClient(client);
         }
 
         //if we don't send any unreliable info
@@ -273,23 +235,22 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
 
         if (!newClient)
         {
+            NetChan tempNetChan{ net, NetSrc::Server };
+            tempNetChan.outOfBandPrint(fromAddr, "server_noroom");
             return;
         }
 
         newClient->state = ServerClientState::Connected;
         newClient->netChan->setToAddr(fromAddr);
+        newClient->lastRecievedTime = timer->getTotalTicks();
 
         newClient->netChan->outOfBandPrint(fromAddr, "server_connect");
         
-        newClient->lastAckedEntityManager = 0;
-        for (size_t i = 0; i < EntityManager::NUM_ENTITY_MANAGERS; i++)
-        {
-            newClient->ackedEntityManagers[i] = false;
-        }
+        console.logf("Server: New client connecting from %d", (int)fromAddr.port);
     }
 }
 
-void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient)
+void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client)
 {
     if (msgType == NetMessageType::Synchronize)
     {
@@ -303,14 +264,6 @@ void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, Se
         sendBuf.writeUint64(clientTime);
         sendBuf.writeUint64(timer->getTotalTicks());
         
-        sendBuf.writeUint32(currentEntityManager);
-        
-        EntityManager* entityManager = getEntityManager(currentEntityManager);
-        if (!entityManager)
-        {
-            throw std::runtime_error{ "This should never happen (entity manager not available!!!?!?!??)" };
-        }
-        
         std::vector<EntityId> globalEntities = entityManager->getGlobalEntities();
         sendBuf.writeUint32(static_cast<uint32_t>(globalEntities.size()));
         for (EntityId entityId : globalEntities)
@@ -318,24 +271,27 @@ void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, Se
             Entity* globalEntity = entityManager->getGlobalEntity(entityId);
             if (!globalEntity)
             {
-                throw std::runtime_error{ "This should never happen (global entity not available!!!?!?!??)" };
+                throw std::runtime_error{ "This should never happen (global entity not available?!)" };
             }
             
             sendBuf.writeUint16(entityId);
             Entity::serialize(*globalEntity, sendBuf);
         }
         
-        theClient.netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
-        
-        allocateGlobalEntity(Entity{ glm::vec3{ 0.0f, -2.5f, -7.0f }, glm::identity<glm::quat>(), "models/tank/tank_body.txt" });
-        allocateGlobalEntity(Entity{ glm::vec3{ 0.0f, -2.5f, -7.0f }, glm::identity<glm::quat>(), "models/tank/tank_turret.txt" });
-        bleh = true;
+        client.netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
     }
 }
 
-void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& theClient)
+void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client)
 {
-
+    if (msgType == NetMessageType::PlayerCommand)
+    {
+        rotationAmount += 5.0f;
+    }
+    else if (msgType == NetMessageType::Disconnect)
+    {
+        freeClient(client);
+    }
 }
 
 void Server::handleEvents()
@@ -366,13 +322,9 @@ void Server::tryRunTicks()
     lastTick = totalTicks;
 #endif
     
-    if (bleh)
-    {
-        EntityManager* entityManager = getEntityManager(currentEntityManager);
-        Entity* entity = entityManager->getGlobalEntity(0);
-        glm::mat4 d = glm::rotate(glm::mat4{1.0f}, glm::radians(std::fmod((float)timer->getTotalTicks(), 360.0f)), glm::vec3{0.0f, 1.0f, 0.0f});
-        entity->rotation = glm::quat_cast(d);
-    }
+    Entity* entity = entityManager->getGlobalEntity(0);
+    glm::mat4 d = glm::rotate(glm::mat4{1.0f}, glm::radians(std::fmod(rotationAmount, 360.0f)), glm::vec3{0.0f, 1.0f, 0.0f});
+    entity->rotation = glm::quat_cast(d);
 }
 
 void Server::sendPackets()
@@ -384,32 +336,18 @@ void Server::sendPackets()
             continue;
         }
         
-        EntityManager* currentManager = getEntityManager(currentEntityManager);
-        EntityManager* lastManager = getEntityManager(client.lastAckedEntityManager);
+        NetBuf sendBuf{};
         
-        //we can delta diff this
-#if 0
-        if (lastManager && (*currentManager != *lastManager))
+        const std::vector<EntityId> globalEntities = entityManager->getGlobalEntities();
+        sendBuf.writeUint32(static_cast<uint32_t>(globalEntities.size()));
+        for (EntityId globalId : globalEntities)
         {
+            sendBuf.writeUint16(globalId);
+            
+            Entity* entity = entityManager->getGlobalEntity(globalId);
+            Entity::serialize(*entity, sendBuf);
+        }
         
-        }
-        //we have to resend everything
-        else
-#endif
-        {
-            NetBuf sendBuf{};
-            
-            const std::vector<EntityId> globalEntities = currentManager->getGlobalEntities();
-            sendBuf.writeUint32(static_cast<uint32_t>(globalEntities.size()));
-            for (EntityId globalId : globalEntities)
-            {
-                sendBuf.writeUint16(globalId);
-                
-                Entity* entity = currentManager->getGlobalEntity(globalId);
-                Entity::serialize(*entity, sendBuf);
-            }
-            
-            client.netChan->sendData(std::move(sendBuf), NetMessageType::EntitySynchronize);
-        }
+        client.netChan->sendData(std::move(sendBuf), NetMessageType::EntitySynchronize);
     }
 }
