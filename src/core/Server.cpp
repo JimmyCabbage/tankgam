@@ -98,15 +98,15 @@ void Server::freeGlobalEntity(EntityId netEntityId)
 {
     entityManager->freeGlobalEntity(netEntityId);
     
-    NetBuf sendBuf{};
-    sendBuf.writeUint16(netEntityId);
-    
     for (auto& client : clients)
     {
         if (client.state != ServerClientState::Free)
         {
             continue;
         }
+        
+        NetBuf sendBuf{};
+        sendBuf.writeUint16(netEntityId);
         
         client.netChan->addReliableData(std::move(sendBuf), NetMessageType::DestroyEntity);
     }
