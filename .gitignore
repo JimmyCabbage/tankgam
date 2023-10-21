@@ -1,5 +1,5 @@
 .*
-src/core/Version.h
+src/tankgam/core/Version.h
 !/.gitignore
 cmake-build*
 build*
