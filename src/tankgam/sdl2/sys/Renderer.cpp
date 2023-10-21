@@ -5,9 +5,9 @@
 
 #include <fmt/format.h>
 
-#include "sys/Renderer/Shader.h"
-#include "sys/Renderer/Mesh.h"
-#include "sys/Renderer/Texture.h"
+#include "gl/Shader.h"
+#include "gl/Mesh.h"
+#include "gl/Texture.h"
 #include "sys/Renderer/TextRenderer.h"
 #include "sys/File.h"
 

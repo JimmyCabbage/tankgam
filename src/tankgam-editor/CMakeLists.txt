@@ -29,6 +29,9 @@ set_target_properties(tankgam-editor PROPERTIES
         MACOSX_BUNDLE ON
 )
 
+#linking various internal files
+target_link_libraries(tankgam-editor PRIVATE tankgam-gl)
+
 #linking various external libraries
 target_link_libraries(tankgam-editor PRIVATE Qt::Core Qt::Gui Qt::Widgets glm::glm)
 
