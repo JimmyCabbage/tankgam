@@ -1,5 +1,6 @@
 qt_add_executable(tankgam-editor qt6/main.cpp
-        qt6/WorldEditor.h qt6/WorldEditor.cpp)
+        qt6/WorldEditorWindow.h qt6/WorldEditorWindow.cpp
+        qt6/ViewportWindow.h qt6/ViewportWindow.cpp)
 
 #we want ALL the warnings
 if(MSVC)
@@ -23,3 +24,7 @@ target_link_libraries(tankgam-editor PRIVATE Qt::Core Qt::Gui Qt::Widgets)
 
 #move up some directories to be up
 target_include_directories(tankgam-editor PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/qt6")
+
+#glad2 files
+target_sources(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/glad2/src/gl.c")
+target_include_directories(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/glad2/include")

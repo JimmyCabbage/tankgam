@@ -1,13 +1,13 @@
 #include <QApplication>
 
-#include "WorldEditor.h"
+#include "WorldEditorWindow.h"
 
 int main(int argc, char* argv[])
 {
     QApplication app{ argc, argv };
     
-    WorldEditor worldEditor{};
-    worldEditor.show();
+    WorldEditorWindow worldEditorWindow{};
+    worldEditorWindow.show();
     
     return QApplication::exec();
 }
