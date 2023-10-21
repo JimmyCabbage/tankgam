@@ -10,7 +10,7 @@
 #include <array>
 #include <numeric>
 
-#include "sys/Net.h"
+#include "Net.h"
 #include "NetBuf.h"
 
 //bit 7 is set if it's a reliable message

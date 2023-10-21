@@ -5,7 +5,7 @@
 #include "sys/Console.h"
 #include "sys/File.h"
 #include "sys/Timer.h"
-#include "sys/Net.h"
+#include "Net.h"
 #include "NetChan.h"
 #include "NetBuf.h"
 
@@ -14,7 +14,7 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
 {
     try
     {
-        clients.resize(1);
+        clients.resize(2);
         for (auto& client : clients)
         {
             client.state = ServerClientState::Free;
@@ -98,9 +98,6 @@ void Server::freeGlobalEntity(EntityId netEntityId)
 {
     entityManager->freeGlobalEntity(netEntityId);
     
-    NetBuf sendBuf{};
-    sendBuf.writeUint16(netEntityId);
-    
     for (auto& client : clients)
     {
         if (client.state != ServerClientState::Free)
@@ -108,12 +105,17 @@ void Server::freeGlobalEntity(EntityId netEntityId)
             continue;
         }
         
+        NetBuf sendBuf{};
+        sendBuf.writeUint16(netEntityId);
+        
         client.netChan->addReliableData(std::move(sendBuf), NetMessageType::DestroyEntity);
     }
 }
 
-void Server::freeClient(ServerClient& client)
+void Server::disconnectClient(ServerClient& client)
 {
+    console.logf("Server: Disconnect client from %d", (int)client.netChan->getToAddr().port);
+    
     client.state = ServerClientState::Free;
     client.netChan = std::make_unique<NetChan>(net, NetSrc::Server);
     client.lastRecievedTime = 0;
@@ -195,7 +197,7 @@ void Server::handlePackets()
         //client timeout
         if (client.lastRecievedTime + Timer::TICK_RATE * 10 < timer->getTotalTicks())
         {
-            freeClient(client);
+            disconnectClient(client);
         }
 
         //if we don't send any unreliable info
@@ -233,6 +235,8 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
 
         if (!newClient)
         {
+            NetChan tempNetChan{ net, NetSrc::Server };
+            tempNetChan.outOfBandPrint(fromAddr, "server_noroom");
             return;
         }
 
@@ -241,6 +245,8 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
         newClient->lastRecievedTime = timer->getTotalTicks();
 
         newClient->netChan->outOfBandPrint(fromAddr, "server_connect");
+        
+        console.logf("Server: New client connecting from %d", (int)fromAddr.port);
     }
 }
 
@@ -284,7 +290,7 @@ void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, 
     }
     else if (msgType == NetMessageType::Disconnect)
     {
-        freeClient(client);
+        disconnectClient(client);
     }
 }
 

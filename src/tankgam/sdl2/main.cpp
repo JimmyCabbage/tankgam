@@ -1,33 +1,65 @@
 #include "sys/Console.h"
 #include "sys/File.h"
-#include "sys/Net.h"
+#include "Net.h"
 #include "Server.h"
 #include "Client.h"
+#include "Version.h"
 
 #include "SDL.h"
 
-int main(int /*argc*/, char** /*argv*/)
+int main(int argc, char** argv)
 {
     {
         Console console{};
+        console.logf("tankgam engine version %s", TANKGAM_VERSION);
 
         FileManager fileManager{console};
         fileManager.loadAssetsFile("dev.assets");
         fileManager.loadAssetsFile("tank.assets");
-
-        Net net{};
-
-        Server server{console, fileManager, net};
-        Client client{console, fileManager, net};
-
+        
+        bool initClient = false;
+        bool initServer = false;
+        if (argc > 1)
+        {
+            if (strcmp(argv[1], "--client") == 0)
+            {
+                initClient = true;
+            }
+            if (strcmp(argv[1], "--server") == 0)
+            {
+                initServer = true;
+            }
+        }
+        
+        if (!initClient && !initServer)
+        {
+            initClient = true;
+            initServer = true;
+        }
+        
+        Net net{ initClient, initServer };
+        
+        std::unique_ptr<Server> server;
+        std::unique_ptr<Client> client;
+        
+        if (initServer)
+        {
+            server = std::make_unique<Server>(console, fileManager, net);
+        }
+        
+        if (initClient)
+        {
+            client = std::make_unique<Client>(console, fileManager, net);
+        }
+        
         for (;;)
         {
-            if (!server.runFrame())
+            if (server && !server->runFrame())
             {
                 break;
             }
-
-            if (!client.runFrame())
+            
+            if (client && !client->runFrame())
             {
                 break;
             }
