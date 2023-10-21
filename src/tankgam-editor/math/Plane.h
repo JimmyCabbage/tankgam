@@ -19,4 +19,14 @@ struct Plane
     static std::optional<glm::vec3> intersectPlanes(const Plane& plane1, const Plane& plane2, const Plane& plane3);
     
     static std::optional<glm::vec3> intersectRay(const Plane& plane, glm::vec3 rayOrigin, glm::vec3 rayDirection);
+    
+    enum class Classification
+    {
+        Coincident,
+        Back,
+        Front,
+        Spanning
+    };
+    
+    static Classification classifyPoint(const Plane& plane, glm::vec3 point);
 };

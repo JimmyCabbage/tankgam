@@ -82,3 +82,21 @@ std::optional<glm::vec3> Plane::intersectRay(const Plane& plane, glm::vec3 rayOr
     const float t = -(glm::dot(plane.normal, rayOrigin) + plane.distance) / denom;
     return rayOrigin + (t * rayDirection);
 }
+
+Plane::Classification Plane::classifyPoint(const Plane& plane, glm::vec3 point)
+{
+    constexpr float planeThickness = 0.01f;
+
+#if 0
+    const float distance = glm::dot(plane.normal, point);
+
+    if (distance > plane.distance + planeThickness) return Classification::Front;
+    if (distance < plane.distance - planeThickness) return Classification::Back;
+    return Classification::Coincident;
+#else
+    const float distance = glm::dot(plane.normal, point) + plane.distance;
+    if (distance >  planeThickness) return Classification::Front;
+    if (distance < -planeThickness) return Classification::Back;
+    return Classification::Coincident;
+#endif
+}
