@@ -1,5 +1,10 @@
 add_executable(tankgam)
 
+configure_file(
+        "${PROJECT_SOURCE_DIR}/src/core/Version.h.in"
+        "${PROJECT_SOURCE_DIR}/src/core/Version.h"
+)
+
 #core source code
 target_sources(tankgam PRIVATE
         core/Menu.h core/Menu.cpp
@@ -10,7 +15,8 @@ target_sources(tankgam PRIVATE
         core/NetBuf.h core/NetBuf.cpp
         core/Entity.h core/Entity.cpp
         core/EntityManager.h core/EntityManager.cpp
-        core/Net.h core/Net.cpp)
+        core/Net.h core/Net.cpp
+        core/Version.h)
 
 #linux specific source code
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

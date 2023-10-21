@@ -1,4 +1,5 @@
 .*
+src/core/Version.h
 !/.gitignore
 cmake-build*
 build*

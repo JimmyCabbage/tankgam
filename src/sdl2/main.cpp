@@ -3,6 +3,7 @@
 #include "Net.h"
 #include "Server.h"
 #include "Client.h"
+#include "Version.h"
 
 #include "SDL.h"
 
@@ -10,68 +11,57 @@ int main(int argc, char** argv)
 {
     {
         Console console{};
+        console.logf("tankgam engine version %s", TANKGAM_VERSION);
 
         FileManager fileManager{console};
         fileManager.loadAssetsFile("dev.assets");
         fileManager.loadAssetsFile("tank.assets");
         
-        bool onlyClient = false;
-        bool onlyServer = false;
+        bool initClient = false;
+        bool initServer = false;
         if (argc > 1)
         {
             if (strcmp(argv[1], "--client") == 0)
             {
-                onlyClient = true;
+                initClient = true;
             }
-            
             if (strcmp(argv[1], "--server") == 0)
             {
-                onlyServer = true;
+                initServer = true;
             }
         }
         
-        Net net{ !onlyServer, !onlyClient };
-
-        if (!onlyClient && !onlyServer)
+        if (!initClient && !initServer)
         {
-            Server server{console, fileManager, net};
-            Client client{console, fileManager, net};
-            
-            for (;;)
-            {
-                if (!server.runFrame())
-                {
-                    break;
-                }
-                
-                if (!client.runFrame())
-                {
-                    break;
-                }
-            }
+            initClient = true;
+            initServer = true;
         }
-        else if (onlyClient)
+        
+        Net net{ initClient, initServer };
+        
+        std::unique_ptr<Server> server;
+        std::unique_ptr<Client> client;
+        
+        if (initServer)
         {
-            Client client{console, fileManager, net};
-            
-            for (;;)
-            {
-                if (!client.runFrame())
-                {
-                    break;
-                }
-            }
+            server = std::make_unique<Server>(console, fileManager, net);
         }
-        else if (onlyServer)
+        
+        if (initClient)
         {
-            Server server{console, fileManager, net};
-            
-            for (;;)
+            client = std::make_unique<Client>(console, fileManager, net);
+        }
+        
+        for (;;)
+        {
+            if (server && !server->runFrame())
             {
-                if (!server.runFrame())
-                {
-                    break;
-                }
+                break;
+            }
+            
+            if (client && !client->runFrame())
+            {
+                break;
             }
         }
     }
