@@ -5,6 +5,7 @@
 #include <QPushButton>
 
 #include "ViewportWindow.h"
+#include "Editor.h"
 
 class WorldEditorWindow : public QWidget
 {
@@ -15,6 +16,8 @@ public:
     ~WorldEditorWindow() override;
     
 private:
+    Editor editor;
+    
     QVBoxLayout* mainLayout;
     QPushButton* pushButton;
     ViewportWindow* viewportWindow;

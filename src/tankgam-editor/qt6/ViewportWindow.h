@@ -1,15 +1,18 @@
 #pragma once
 
 #include <glad/gl.h>
+
 #include <QWindow>
 #include <QOpenGLContext>
+
+class Viewport;
 
 class ViewportWindow : public QWindow
 {
     Q_OBJECT
     
 public:
-    explicit ViewportWindow(QWindow* parent = nullptr);
+    ViewportWindow(Viewport& viewport, QWindow* parent = nullptr);
     ~ViewportWindow() override;
     
 public slots:
@@ -24,6 +27,8 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
     
 private:
+    Viewport& viewport;
+    
     QOpenGLContext* context;
     GladGLContext gl;
     
@@ -31,8 +36,4 @@ private:
     int height;
     
     void loadGL();
-    
-    void initGL();
-    
-    void render();
 };

@@ -2,14 +2,20 @@
 
 #include <QResizeEvent>
 
-ViewportWindow::ViewportWindow(QWindow* parent)
+#include "Viewport.h"
+
+ViewportWindow::ViewportWindow(Viewport& viewport, QWindow* parent)
     : QWindow{ parent },
+      viewport{ viewport },
       context{ nullptr }
 {
     setSurfaceType(QSurface::SurfaceType::OpenGLSurface);
 }
 
-ViewportWindow::~ViewportWindow() = default;
+ViewportWindow::~ViewportWindow()
+{
+    viewport.removeGL();
+}
 
 void ViewportWindow::renderLater()
 {
@@ -48,10 +54,10 @@ void ViewportWindow::renderNow()
     {
         loadGL();
         
-        initGL();
+        viewport.initGL(gl, width, height);
     }
     
-    render();
+    viewport.render();
     
     context->swapBuffers(this);
 }
@@ -88,6 +94,8 @@ void ViewportWindow::resizeEvent(QResizeEvent* event)
     {
         gl.Viewport(0, 0, width, height);
     }
+    
+    viewport.changeSize(width, height);
 }
 
 void ViewportWindow::loadGL()
@@ -102,15 +110,4 @@ void ViewportWindow::loadGL()
     {
         throw std::runtime_error{ "Failed to get OpenGL functions" };
     }
-}
-
-void ViewportWindow::initGL()
-{
-    gl.Enable(GL_DEPTH_TEST);
-    gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-}
-
-void ViewportWindow::render()
-{
-    gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

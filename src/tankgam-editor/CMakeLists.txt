@@ -5,7 +5,8 @@ qt_add_executable(tankgam-editor
 
 #internal logic stuff
 target_sources(tankgam-editor PRIVATE
-        logic/Map.h logic/Map.cpp)
+        logic/Viewport.h logic/Viewport.cpp
+        logic/Editor.h logic/Editor.cpp)
 
 #math stuff
 target_sources(tankgam-editor PRIVATE
