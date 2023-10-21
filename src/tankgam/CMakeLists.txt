@@ -1,8 +1,8 @@
 add_executable(tankgam)
 
 configure_file(
-        "${PROJECT_SOURCE_DIR}/src/tankgam/core/Version.h.in"
-        "${PROJECT_SOURCE_DIR}/src/tankgam/core/Version.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/core/Version.h.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/core/Version.h"
 )
 
 #core source code
