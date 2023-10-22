@@ -5,11 +5,13 @@ WorldEditorWindow::WorldEditorWindow(QWidget* parent)
 {
     mainLayout = new QVBoxLayout{ this };
     
-    pushButton = new QPushButton{ "HELP", this };
+    pushButton = new QPushButton{ "Refresh 3D View", this };
     mainLayout->addWidget(pushButton);
     
     viewportWindow = new ViewportWindow{ editor.getViewport(), nullptr };
     mainLayout->addWidget(QWidget::createWindowContainer(viewportWindow));
+    
+    connect(pushButton, &QPushButton::pressed, viewportWindow, &ViewportWindow::renderNow);
     
     setLayout(mainLayout);
     

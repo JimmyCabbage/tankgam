@@ -7,6 +7,7 @@ qt_add_executable(tankgam-editor
 target_sources(tankgam-editor PRIVATE
         logic/Brush.h logic/Brush.cpp
         logic/Viewport.h logic/Viewport.cpp
+        logic/ViewportCamera.h logic/ViewportCamera.cpp
         logic/Editor.h logic/Editor.cpp)
 
 #math stuff

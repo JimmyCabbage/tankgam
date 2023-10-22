@@ -36,7 +36,7 @@ void ViewportWindow::renderNow()
     if (!context)
     {
         QSurfaceFormat format;
-        format.setVersion(3, 3);
+        format.setVersion(4, 2);
         format.setProfile(QSurfaceFormat::OpenGLContextProfile::CoreProfile);
         
         context = new QOpenGLContext{ this };

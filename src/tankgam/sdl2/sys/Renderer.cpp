@@ -264,7 +264,7 @@ void Renderer::createGLShaders()
 {
     //text shader
     {
-        constexpr std::string_view vertexCode = R"(#version 330 core
+        constexpr std::string_view VERTEX_CODE = R"(#version 330 core
                 layout (location = 0) in vec3 aPos;
                 layout (location = 1) in vec3 aColor;
                 layout (location = 2) in vec3 aNormal;
@@ -284,7 +284,7 @@ void Renderer::createGLShaders()
                     vTexCoord = aTexCoord;
                 })";
         
-        constexpr std::string_view fragmentCode = R"(#version 330 core
+        constexpr std::string_view FRAGMENT_CODE = R"(#version 330 core
                 in vec3 vColor;
                 in vec2 vTexCoord;
 
@@ -303,12 +303,12 @@ void Renderer::createGLShaders()
                     FragColor = diffuseColor * vec4(vColor, 1.0f);
                 })";
         
-        textShader = std::make_unique<Shader>(gl, vertexCode, fragmentCode);
+        textShader = std::make_unique<Shader>(gl, VERTEX_CODE, FRAGMENT_CODE);
     }
     
     //model shader
     {
-        constexpr std::string_view vertexCode = R"(#version 330 core
+        constexpr std::string_view VERTEX_CODE = R"(#version 330 core
                 layout (location = 0) in vec3 aPos;
                 layout (location = 1) in vec3 aColor;
                 layout (location = 2) in vec3 aNormal;
@@ -328,7 +328,7 @@ void Renderer::createGLShaders()
                     vTexCoord = aTexCoord;
                 })";
         
-        constexpr std::string_view fragmentCode = R"(#version 330 core
+        constexpr std::string_view FRAGMENT_CODE = R"(#version 330 core
                 in vec3 vColor;
                 in vec2 vTexCoord;
 
@@ -343,7 +343,7 @@ void Renderer::createGLShaders()
                     FragColor = diffuseColor * vec4(vColor, 1.0f);
                 })";
         
-        modelShader = std::make_unique<Shader>(gl, vertexCode, fragmentCode);
+        modelShader = std::make_unique<Shader>(gl, VERTEX_CODE, FRAGMENT_CODE);
     }
 }
 
