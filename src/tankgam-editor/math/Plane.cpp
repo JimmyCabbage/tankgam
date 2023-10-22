@@ -12,15 +12,20 @@ bool Plane::isValidPlane(const Plane& plane)
 
 Plane Plane::fromVertices(std::span<const glm::vec3> vertices)
 {
-    const glm::vec3 A = vertices[1] - vertices[0];
-    const glm::vec3 B = vertices[2] - vertices[1];
+    return Plane::fromVertices(vertices[0], vertices[1], vertices[2]);
+}
+
+Plane Plane::fromVertices(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3)
+{
+    const glm::vec3 A = v2 - v1;
+    const glm::vec3 B = v3 - v2;
     
     const glm::vec3 normal = glm::normalize(glm::cross(A, B));
     
     const Plane plane
     {
         .normal = normal,
-        .distance = -glm::dot(normal, vertices[0])
+        .distance = -glm::dot(normal, v1)
     };
     
     return plane;

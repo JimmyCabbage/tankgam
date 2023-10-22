@@ -1,17 +1,17 @@
 #include "Viewport.h"
 
-Viewport::Viewport()
-    : gl{ nullptr }
+Viewport::Viewport(Editor& editor)
+    : editor{ editor }, gl{ nullptr }
 {
 }
 
 Viewport::~Viewport() = default;
 
-void Viewport::initGL(GladGLContext& glf, int iwidth, int iheight)
+void Viewport::initGL(GladGLContext& glf, int width, int height)
 {
     gl = &glf;
-    width = iwidth;
-    height = iheight;
+    this->width = width;
+    this->height = height;
     
     gl->Enable(GL_DEPTH_TEST);
     gl->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -32,8 +32,8 @@ void Viewport::render()
     gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Viewport::changeSize(int iwidth, int iheight)
+void Viewport::changeSize(int width, int height)
 {
-    width = iwidth;
-    height = iheight;
+    this->width = width;
+    this->height = height;
 }

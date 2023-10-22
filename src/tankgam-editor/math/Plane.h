@@ -16,6 +16,8 @@ struct Plane
     
     static Plane fromVertices(std::span<const glm::vec3> vertices);
     
+    static Plane fromVertices(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3);
+    
     static std::optional<glm::vec3> intersectPlanes(const Plane& plane1, const Plane& plane2, const Plane& plane3);
     
     static std::optional<glm::vec3> intersectRay(const Plane& plane, glm::vec3 rayOrigin, glm::vec3 rayDirection);

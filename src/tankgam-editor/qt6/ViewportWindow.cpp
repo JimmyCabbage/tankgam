@@ -2,6 +2,8 @@
 
 #include <QResizeEvent>
 
+#include <fmt/format.h>
+
 #include "Viewport.h"
 
 ViewportWindow::ViewportWindow(Viewport& viewport, QWindow* parent)
@@ -96,6 +98,16 @@ void ViewportWindow::resizeEvent(QResizeEvent* event)
     }
     
     viewport.changeSize(width, height);
+}
+
+void ViewportWindow::mousePressEvent(QMouseEvent* event)
+{
+
+}
+
+void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
+{
+
 }
 
 void ViewportWindow::loadGL()

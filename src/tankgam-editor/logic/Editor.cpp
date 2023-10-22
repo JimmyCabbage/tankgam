@@ -1,6 +1,9 @@
 #include "Editor.h"
 
-Editor::Editor() = default;
+Editor::Editor()
+    : viewport{ *this }
+{
+}
 
 Editor::~Editor() = default;
 

@@ -5,6 +5,7 @@ qt_add_executable(tankgam-editor
 
 #internal logic stuff
 target_sources(tankgam-editor PRIVATE
+        logic/Brush.h logic/Brush.cpp
         logic/Viewport.h logic/Viewport.cpp
         logic/Editor.h logic/Editor.cpp)
 
@@ -43,3 +44,7 @@ target_include_directories(tankgam-editor PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/q
 #glad2 files
 target_sources(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/glad2/src/gl.c")
 target_include_directories(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/glad2/include")
+
+#fmt files
+target_sources(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/fmt/src/format.cc")
+target_include_directories(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/fmt/include")
