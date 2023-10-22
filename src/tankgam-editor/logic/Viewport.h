@@ -47,7 +47,13 @@ public:
         std::unique_ptr<Mesh> gridMesh;
     };
     
+    void zoomInCamera();
+    
+    void zoomOutCamera();
+    
 private:
+    void zoomCamera(float amount);
+    
     void createViewport(ViewportType type, glm::ivec2 offset);
     
 public:
@@ -63,6 +69,8 @@ private:
     GladGLContext* gl;
     int width;
     int height;
+    int viewportWidth;
+    int viewportHeight;
     
     std::unique_ptr<Shader> defaultShader;
     std::unique_ptr<Shader> brushShader;

@@ -8,6 +8,7 @@
 
 Viewport::Viewport(Editor& editor)
     : editor{ editor }, gl{ nullptr },
+      width{ 0 }, height{ 0 }, viewportWidth{ 0 }, viewportHeight{ 0 },
       currentViewport{ nullptr }
 {
 }
@@ -59,6 +60,8 @@ void Viewport::initGL(GladGLContext& glf, int width, int height)
     gl = &glf;
     this->width = width;
     this->height = height;
+    viewportWidth = width / 2;
+    viewportHeight = height / 2;
     
     gl->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
@@ -150,6 +153,36 @@ void Viewport::createShaders()
                 })";
     
     noProjShader = std::make_unique<Shader>(*gl, NO_PROJ_VERT, DEFAULT_PROJ_FRAG);
+}
+
+void Viewport::zoomInCamera()
+{
+    if (!currentViewport)
+    {
+        return;
+    }
+    
+    zoomCamera(currentViewport->zoom / 5.0f);
+}
+
+void Viewport::zoomOutCamera()
+{
+    if (!currentViewport)
+    {
+        return;
+    }
+    
+    zoomCamera(-currentViewport->zoom / 5.0f);
+}
+
+void Viewport::zoomCamera(float amount)
+{
+    if (!currentViewport)
+    {
+        return;
+    }
+    
+    currentViewport->zoom = std::clamp(currentViewport->zoom + amount, 1.0f, 1000.0f);
 }
 
 static ViewportCamera setupCamera(Viewport::ViewportType type)
@@ -314,15 +347,15 @@ void Viewport::render()
         }
         else if (viewport.type == ViewportType::Front)
         {
-            viewport.offset = { width, 0 };
+            viewport.offset = { viewportWidth, 0 };
         }
         else if (viewport.type == ViewportType::Side)
         {
-            viewport.offset = { 0, height };
+            viewport.offset = { 0, viewportHeight };
         }
         else if (viewport.type == ViewportType::Projection)
         {
-            viewport.offset = { width, height };
+            viewport.offset = { viewportWidth, viewportHeight };
         }
     }
     
@@ -332,21 +365,21 @@ void Viewport::render()
     //draw all viewports
     for (auto& viewport : viewportDatas)
     {
-        gl->Viewport(viewport.offset.x, -viewport.offset.y + height, width, height);
+        gl->Viewport(viewport.offset.x, -viewport.offset.y + viewportHeight, viewportWidth, viewportHeight);
         
         glm::mat4 projViewMatrix{ 1.0f };
         if (viewport.type == ViewportType::Projection)
         {
-            projViewMatrix = glm::perspective(glm::radians(90.0f), float(width) / float(height), 0.1f, 10000.0f);
+            projViewMatrix = glm::perspective(glm::radians(90.0f), float(viewportWidth) / float(viewportHeight), 0.1f, 10000.0f);
         }
         else
         {
             const float zoom = viewport.zoom / 100.0f;
             
-            const float left = -float(width);
-            const float right = float(width);
-            const float down = -float(height);
-            const float up = float(height);
+            const float left = -float(viewportWidth);
+            const float right = float(viewportWidth);
+            const float down = -float(viewportHeight);
+            const float up = float(viewportHeight);
             
             projViewMatrix = glm::ortho(left / zoom, right / zoom, down / zoom, up / zoom,
                                         0.1f, 100000.0f);

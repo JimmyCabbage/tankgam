@@ -110,6 +110,21 @@ void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
 
 }
 
+void ViewportWindow::keyPressEvent(QKeyEvent* event)
+{
+    switch (event->key())
+    {
+    case Qt::Key::Key_BracketLeft:
+        viewport.zoomOutCamera();
+        renderNow();
+        break;
+    case Qt::Key::Key_BracketRight:
+        viewport.zoomInCamera();
+        renderNow();
+        break;
+    }
+}
+
 void ViewportWindow::loadGL()
 {
     const auto glProcAddress = [](void* userptr, const char* name) -> GLADapiproc
