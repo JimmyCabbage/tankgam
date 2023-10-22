@@ -57,6 +57,14 @@ private:
     void createViewport(ViewportType type, glm::ivec2 offset);
     
 public:
+    void clickLeftStart(int x, int y);
+    
+    void clickLeftEnd(int x, int y);
+    
+private:
+    ViewportData& chooseViewportMouse(glm::ivec2 omouse);
+    
+public:
     void removeGL();
     
     void render();

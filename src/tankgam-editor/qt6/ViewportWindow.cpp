@@ -102,12 +102,20 @@ void ViewportWindow::resizeEvent(QResizeEvent* event)
 
 void ViewportWindow::mousePressEvent(QMouseEvent* event)
 {
-
+    const auto& pos = event->pos();
+    const int x = pos.x();
+    const int y = pos.y();
+    
+    viewport.clickLeftStart(x, y);
 }
 
 void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
 {
-
+    const auto& pos = event->pos();
+    const int x = pos.x();
+    const int y = pos.y();
+    
+    viewport.clickLeftEnd(x, y);
 }
 
 void ViewportWindow::keyPressEvent(QKeyEvent* event)

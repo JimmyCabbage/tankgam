@@ -316,6 +316,46 @@ void Viewport::createViewport(ViewportType type, glm::ivec2 offset)
     viewportDatas.push_back(std::move(viewport));
 }
 
+void Viewport::clickLeftStart(int x, int y)
+{
+    if (!currentViewport)
+    {
+        return;
+    }
+    
+    currentViewport = &chooseViewportMouse({ x, y });
+}
+
+void Viewport::clickLeftEnd(int x, int y)
+{
+    if (!currentViewport)
+    {
+        return;
+    }
+    
+    currentViewport = &chooseViewportMouse({ x, y });
+}
+
+Viewport::ViewportData& Viewport::chooseViewportMouse(glm::ivec2 omouse)
+{
+    const glm::ivec2 clampedMouse = glm::clamp(omouse, { 0, 0 }, { viewportWidth * 2, viewportHeight * 2 });
+    
+    for (auto& viewport : viewportDatas)
+    {
+        const bool inX = clampedMouse.x >= viewport.offset.x &&
+                         clampedMouse.x <= viewport.offset.x + viewportWidth;
+        const bool inY = clampedMouse.y >= viewport.offset.y &&
+                         clampedMouse.y <= viewport.offset.y + viewportHeight;
+        
+        if (inX && inY)
+        {
+            return viewport;
+        }
+    }
+    
+    throw std::runtime_error("Clicked outside of viewport");
+}
+
 void Viewport::removeGL()
 {
     currentViewport = nullptr;
