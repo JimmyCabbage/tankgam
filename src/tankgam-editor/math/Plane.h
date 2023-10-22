@@ -5,8 +5,8 @@
 
 #include <glm/glm.hpp>
 
-//plane equation is
-//normal.x(x) + normal.y(y) + normal.z(z) + distance = 0
+// plane equation is
+// normal.x(x) + normal.y(y) + normal.z(z) + distance = 0
 struct Plane
 {
     glm::vec3 normal;
