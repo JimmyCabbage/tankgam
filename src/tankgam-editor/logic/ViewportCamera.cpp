@@ -10,6 +10,8 @@ ViewportCamera::ViewportCamera(glm::vec3 position, glm::vec3 front, glm::vec3 ri
 {
 }
 
+ViewportCamera::~ViewportCamera() = default;
+
 void ViewportCamera::move(Direction dir)
 {
     constexpr float vel = 128.0f;

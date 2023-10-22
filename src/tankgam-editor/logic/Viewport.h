@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>
@@ -24,6 +25,32 @@ private:
     void createShaders();
     
 public:
+    enum class ViewportType
+    {
+        Top,
+        Front,
+        Side,
+        Projection
+    };
+    
+    struct ViewportData
+    {
+        ViewportType type;
+        glm::ivec2 offset;
+        float zoom;
+        
+        glm::mat4 inverseProjViewMatrix;
+        ViewportCamera camera;
+        
+        glm::ivec2 lastClick;
+        
+        std::unique_ptr<Mesh> gridMesh;
+    };
+    
+private:
+    void createViewport(ViewportType type, glm::ivec2 offset);
+    
+public:
     void removeGL();
     
     void render();
@@ -43,23 +70,6 @@ private:
     
     std::unique_ptr<Mesh> borderMesh;
     
-    enum class ViewportType
-    {
-        Top,
-        Front,
-        Side,
-        Projection
-    };
-    
-    struct ViewportData
-    {
-        ViewportType type;
-        glm::ivec2 offset;
-        float zoom;
-        
-        glm::mat4 inverseProjViewMatrix;
-        ViewportCamera camera;
-        
-        glm::ivec2 lastClick;
-    };
+    std::vector<ViewportData> viewportDatas;
+    ViewportData* currentViewport;
 };
