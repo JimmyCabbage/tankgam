@@ -14,6 +14,8 @@ struct Plane
     
     static bool isValidPlane(const Plane& plane);
     
+    static Plane fromVertexAndNormal(glm::vec3 vertex, glm::vec3 normal);
+    
     static Plane fromVertices(std::span<const glm::vec3> vertices);
     
     static Plane fromVertices(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3);

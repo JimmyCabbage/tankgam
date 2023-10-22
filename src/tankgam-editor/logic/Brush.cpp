@@ -3,19 +3,19 @@
 #include <array>
 
 Brush::Brush(std::string textureName, glm::vec3 beginVec, glm::vec3 endVec)
-    : textureName{ std::move(textureName) }
+    : textureName{ std::move(textureName) }, planes{}
 {
     const glm::vec3 up{ 0.0f, 1.0f, 0.0f };
     const glm::vec3 right{ 1.0f, 0.0f, 0.0f };
     const glm::vec3 back{ 0.0f, 0.0f, 1.0f };
     
-    planes.push_back(Plane::fromVertices(beginVec, beginVec + up, beginVec + right));
-    planes.push_back(Plane::fromVertices(beginVec, beginVec + up, beginVec + back));
-    planes.push_back(Plane::fromVertices(beginVec, beginVec + back, beginVec + right));
+    planes.push_back(Plane::fromVertexAndNormal(beginVec, up));
+    planes.push_back(Plane::fromVertexAndNormal(beginVec, right));
+    planes.push_back(Plane::fromVertexAndNormal(beginVec, back));
     
-    planes.push_back(Plane::fromVertices(endVec, endVec + up, endVec + right));
-    planes.push_back(Plane::fromVertices(endVec, endVec + up, endVec + back));
-    planes.push_back(Plane::fromVertices(endVec, endVec + back, endVec + right));
+    planes.push_back(Plane::fromVertexAndNormal(endVec, -up));
+    planes.push_back(Plane::fromVertexAndNormal(endVec, -right));
+    planes.push_back(Plane::fromVertexAndNormal(endVec, -back));
 }
 
 Brush::~Brush() = default;

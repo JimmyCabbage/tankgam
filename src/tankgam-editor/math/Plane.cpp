@@ -10,6 +10,17 @@ bool Plane::isValidPlane(const Plane& plane)
     return true;
 }
 
+Plane Plane::fromVertexAndNormal(glm::vec3 vertex, glm::vec3 normal)
+{
+    const Plane plane
+    {
+        .normal = normal,
+        .distance = -glm::dot(normal, vertex)
+    };
+    
+    return plane;
+}
+
 Plane Plane::fromVertices(std::span<const glm::vec3> vertices)
 {
     return Plane::fromVertices(vertices[0], vertices[1], vertices[2]);
