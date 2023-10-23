@@ -19,11 +19,13 @@ public:
     explicit Viewport(Editor& editor);
     ~Viewport();
     
+    //when map state is changed
+    void update();
+    
     void initGL(GladGLContext& glf, int width, int height);
     
-private:
-    void createShaders();
-    
+    void quitGL();
+
 public:
     enum class ViewportType
     {
@@ -33,6 +35,12 @@ public:
         Projection
     };
     
+private:
+    void createShaders();
+    
+    void createViewport(ViewportType type, glm::ivec2 offset);
+    
+public:
     struct ViewportData
     {
         ViewportType type;
@@ -47,14 +55,32 @@ public:
         std::unique_ptr<Mesh> gridMesh;
     };
     
+    enum class MoveDir
+    {
+        Forward,
+        Back,
+        Left,
+        Right,
+        Up,
+        Down
+    };
+    
+    void moveCamera(MoveDir moveDir);
+    
+    enum class TurnDir
+    {
+        Left,
+        Right
+    };
+    
+    void turnCamera(TurnDir turnDir);
+    
     void zoomInCamera();
     
     void zoomOutCamera();
     
 private:
     void zoomCamera(float amount);
-    
-    void createViewport(ViewportType type, glm::ivec2 offset);
     
 public:
     void clickLeftStart(int x, int y);
@@ -65,8 +91,6 @@ private:
     ViewportData& chooseViewportMouse(glm::ivec2 omouse);
     
 public:
-    void removeGL();
-    
     void render();
     
     void changeSize(int width, int height);
@@ -88,4 +112,6 @@ private:
     
     std::vector<ViewportData> viewportDatas;
     ViewportData* currentViewport;
+    
+    std::vector<Mesh> brushMeshes;
 };

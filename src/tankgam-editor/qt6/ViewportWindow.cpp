@@ -14,10 +14,7 @@ ViewportWindow::ViewportWindow(Viewport& viewport, QWindow* parent)
     setSurfaceType(QSurface::SurfaceType::OpenGLSurface);
 }
 
-ViewportWindow::~ViewportWindow()
-{
-    viewport.removeGL();
-}
+ViewportWindow::~ViewportWindow() = default;
 
 void ViewportWindow::renderLater()
 {
@@ -43,9 +40,10 @@ void ViewportWindow::renderNow()
         context->setFormat(format);
         context->create();
         
-        const QSize windowSize = size();
-        width = windowSize.width();
-        height = windowSize.height();
+        QObject::connect(context, &QOpenGLContext::aboutToBeDestroyed, this, &ViewportWindow::quitOpenGL);
+        
+        viewportWidth = width();
+        viewportHeight = height();
         
         needsInitialize = true;
     }
@@ -56,12 +54,17 @@ void ViewportWindow::renderNow()
     {
         loadGL();
         
-        viewport.initGL(gl, width, height);
+        viewport.initGL(gl, viewportWidth, viewportHeight);
     }
     
     viewport.render();
     
     context->swapBuffers(this);
+}
+
+void ViewportWindow::quitOpenGL()
+{
+    viewport.quitGL();
 }
 
 bool ViewportWindow::event(QEvent* event)
@@ -89,15 +92,10 @@ void ViewportWindow::exposeEvent(QExposeEvent* event)
 void ViewportWindow::resizeEvent(QResizeEvent* event)
 {
     const QSize& size = event->size();
-    width = size.width();
-    height = size.height();
+    viewportWidth = size.width();
+    viewportHeight = size.height();
     
-    if (context)
-    {
-        gl.Viewport(0, 0, width, height);
-    }
-    
-    viewport.changeSize(width, height);
+    viewport.changeSize(viewportWidth, viewportHeight);
 }
 
 void ViewportWindow::mousePressEvent(QMouseEvent* event)
@@ -116,10 +114,14 @@ void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
     const int y = pos.y();
     
     viewport.clickLeftEnd(x, y);
+    
+    renderNow();
 }
 
 void ViewportWindow::keyPressEvent(QKeyEvent* event)
 {
+    bool shouldRedraw = true;
+    
     switch (event->key())
     {
     case Qt::Key::Key_BracketLeft:
@@ -130,6 +132,38 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
         viewport.zoomInCamera();
         renderNow();
         break;
+    case Qt::Key::Key_W:
+        viewport.moveCamera(Viewport::MoveDir::Forward);
+        break;
+    case Qt::Key::Key_S:
+        viewport.moveCamera(Viewport::MoveDir::Back);
+        break;
+    case Qt::Key::Key_A:
+        viewport.moveCamera(Viewport::MoveDir::Left);
+        break;
+    case Qt::Key::Key_D:
+        viewport.moveCamera(Viewport::MoveDir::Right);
+        break;
+    case Qt::Key::Key_Up:
+        viewport.moveCamera(Viewport::MoveDir::Up);
+        break;
+    case Qt::Key::Key_Down:
+        viewport.moveCamera(Viewport::MoveDir::Down);
+        break;
+    case Qt::Key::Key_Left:
+        viewport.turnCamera(Viewport::TurnDir::Left);
+        break;
+    case Qt::Key::Key_Right:
+        viewport.turnCamera(Viewport::TurnDir::Right);
+        break;
+    default:
+        shouldRedraw = false;
+        break;
+    }
+    
+    if (shouldRedraw)
+    {
+        renderNow();
     }
 }
 

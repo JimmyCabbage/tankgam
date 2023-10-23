@@ -18,6 +18,8 @@ public:
 public slots:
     void renderLater();
     void renderNow();
+    
+    void quitOpenGL();
 
 protected:
     bool event(QEvent* event) override;
@@ -38,8 +40,8 @@ private:
     QOpenGLContext* context;
     GladGLContext gl;
     
-    int width;
-    int height;
+    int viewportWidth;
+    int viewportHeight;
     
     void loadGL();
 };

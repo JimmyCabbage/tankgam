@@ -67,23 +67,13 @@ std::optional<glm::vec3> Plane::intersectPlanes(const Plane& plane1, const Plane
     
     //magic from a math webpage i found https://songho.ca/math/plane/plane.html#intersect_3planes
     //i originally did it algebraically since i havent had a math education
-    const glm::mat3 normalMatrix
-    {
-        plane1.normal,
-        plane2.normal,
-        plane3.normal
-    };
+    const glm::vec3 v1 = -plane1.distance * glm::cross(plane2.normal, plane3.normal);
+    const glm::vec3 v2 = -plane2.distance * glm::cross(plane3.normal, plane1.normal);
+    const glm::vec3 v3 = -plane3.distance * glm::cross(plane1.normal, plane2.normal);
+    const float denominator = glm::dot(plane1.normal, glm::cross(plane2.normal, plane3.normal));
     
-    const glm::mat3 inverseNormalMatrix = glm::inverse(normalMatrix);
+    const glm::vec3 intersection = (v1 + v2 + v3) / denominator;
     
-    const glm::vec3 distanceVec
-    {
-        -plane1.distance,
-        -plane2.distance,
-        -plane3.distance,
-    };
-    
-    const glm::vec3 intersection = inverseNormalMatrix * distanceVec;
     return intersection;
 }
 

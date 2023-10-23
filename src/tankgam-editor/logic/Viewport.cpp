@@ -5,6 +5,8 @@
 #include <gl/Vertex.h>
 
 #include "Common.h"
+#include "Editor.h"
+#include "Brush.h"
 
 Viewport::Viewport(Editor& editor)
     : editor{ editor }, gl{ nullptr },
@@ -55,13 +57,175 @@ static std::array<Vertex, 12> generateBorders()
     return verticies;
 }
 
+static glm::vec3 centerOfVerticies(std::span<const glm::vec3> verticies)
+{
+    glm::vec3 centroid{};
+    for (const auto& point : verticies)
+    {
+        centroid += point;
+    }
+    centroid /= float(verticies.size());
+    
+    return centroid;
+}
+
+static void sortVerticiesClockwise(const glm::vec3& normal, std::vector<glm::vec3>& verticies)
+{
+    const glm::vec3 centroid = centerOfVerticies(verticies);
+    
+    using IndexedAngle = std::pair<int, float>;
+    
+    std::vector<IndexedAngle> angles;
+    for (size_t i = 0; i < verticies.size(); i++)
+    {
+        angles.emplace_back(0, 0.0f);
+    }
+    
+    const glm::vec3 frontOfCenter = centroid + normal;
+    
+    const glm::vec3& referencePoint = verticies[0];
+    const glm::vec3 referenceVector = referencePoint - centroid;
+    
+    const auto liesOnRightSide = [&frontOfCenter, &referencePoint, &centroid](const glm::vec3& point)
+    {
+        return glm::dot((frontOfCenter - point), glm::cross(centroid - point, referencePoint - point)) < 0.0f;
+    };
+    
+    for (size_t i = 1; i < verticies.size(); i++)
+    {
+        const float sinSign = liesOnRightSide(verticies[i]) ? 1.0f : -1.0f;
+        const glm::vec3 vector = verticies[i] - centroid;
+        const float sinAlpha = glm::length(glm::cross(referenceVector, vector));
+        const float cosAlpha = glm::dot(referenceVector, vector);
+        const float alpha = std::atan2(sinSign * sinAlpha, cosAlpha);
+        angles[i].second = alpha;
+        angles[i].first = int(i);
+    }
+    
+    std::sort(angles.begin(), angles.end(), [](const IndexedAngle& a, const IndexedAngle& b)
+    {
+        return a.second > b.second;
+    });
+    
+    std::vector<glm::vec3> newVerticies;
+    newVerticies.reserve(verticies.size());
+    
+    for (const auto& [vertex, order] : angles)
+    {
+        newVerticies.push_back(verticies[vertex]);
+    }
+    
+    verticies = std::move(newVerticies);
+}
+
+static std::vector<std::vector<Vertex>> makeBrushVertices(const Brush& brush)
+{
+    const auto planes = brush.getPlanes();
+    
+    std::vector<std::vector<Vertex>> verticesList;
+    for (size_t i = 0; i < planes.size() ; i++)
+    {
+        std::vector<glm::vec3> planeVertices;
+        for (size_t j = 0; j < planes.size(); j++)
+        {
+            if (j == i)
+            {
+                continue;
+            }
+            
+            for (size_t k = 0; k < planes.size(); k++)
+            {
+                if (k == i || k == j)
+                {
+                    continue;
+                }
+                
+                const auto possibleVertex = Plane::intersectPlanes(planes[i], planes[j], planes[k]);
+                
+                //check if this was a valid singular intersection
+                if (!possibleVertex.has_value())
+                {
+                    continue;
+                }
+                
+                const auto vertex = possibleVertex.value();
+                
+                //check we don't already have this
+                bool similar = false;
+                for (const auto& otherVertex : planeVertices)
+                {
+                    if (glm::distance(vertex, otherVertex) <= 0.01f)
+                    {
+                        similar = true;
+                        break;
+                    }
+                }
+                
+                if (similar)
+                {
+                    break;
+                }
+                
+                //make sure this isn't outside of any of the planes
+                bool outSide = false;
+                for (const auto& checkPlane : planes)
+                {
+                    if (Plane::classifyPoint(checkPlane, vertex) == Plane::Classification::Front)
+                    {
+                        outSide = true;
+                        break;
+                    }
+                }
+                
+                if (outSide)
+                {
+                    continue;
+                }
+                
+                planeVertices.push_back(vertex);
+            }
+        }
+        
+        if (planeVertices.empty())
+        {
+            continue;
+        }
+        
+        //sort these all in a clockwise fashion
+        sortVerticiesClockwise(planes[i].normal, planeVertices);
+        
+        std::vector<Vertex> vertices;
+        vertices.reserve(planeVertices.size());
+        
+        for (const auto & edgeVertex : planeVertices)
+        {
+            constexpr glm::vec3 RED = glm::vec3{ 1.0f, 0.0f, 0.0f };
+            vertices.emplace_back(edgeVertex, RED, planes[i].normal, glm::vec2{});
+        }
+        
+        verticesList.push_back(std::move(vertices));
+    }
+    
+    return verticesList;
+}
+
+void Viewport::update()
+{
+    const auto brushes = editor.getBrushes();
+    for (const auto& brush : brushes)
+    {
+        const auto verticesList = makeBrushVertices(brush);
+        for (const auto& vertices : verticesList)
+        {
+            brushMeshes.emplace_back(*gl, vertices);
+        }
+    }
+}
+
 void Viewport::initGL(GladGLContext& glf, int width, int height)
 {
     gl = &glf;
-    this->width = width;
-    this->height = height;
-    viewportWidth = width / 2;
-    viewportHeight = height / 2;
+    changeSize(width, height);
     
     gl->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
@@ -74,6 +238,22 @@ void Viewport::initGL(GladGLContext& glf, int width, int height)
     createViewport(ViewportType::Side, { 0, height });
     createViewport(ViewportType::Projection, { width, height });
     currentViewport = viewportDatas.data();
+}
+
+void Viewport::quitGL()
+{
+    brushMeshes.clear();
+    
+    currentViewport = nullptr;
+    viewportDatas.clear();
+    
+    borderMesh.reset();
+    
+    noProjShader.reset();
+    brushShader.reset();
+    defaultShader.reset();
+    
+    gl = nullptr;
 }
 
 void Viewport::createShaders()
@@ -123,11 +303,14 @@ void Viewport::createShaders()
 
                 layout (location = 0) out vec4 outFragColor;
 
-                layout (binding = 0) uniform sampler2D diffuseTexture;
+                //layout (binding = 0) uniform sampler2D diffuseTexture;
 
                 void main()
                 {
-                    outFragColor = vec4(texture(diffuseTexture, vTexCoord).rgb, 1.0f);
+                    float d1 = dot(vNormal, vec3(1.0f / sqrt(14.0f), 3.0f / sqrt(14.0f), sqrt(2.0f / 7.0f)));
+                    d1 = (d1 / 2.0f) + 0.5f;
+                    outFragColor = vec4(vColor * d1, 1.0f);
+                    //outFragColor = vec4(texture(diffuseTexture, vTexCoord).rgb, 1.0f);
                 })";
     
     brushShader = std::make_unique<Shader>(*gl, DEFAULT_PROJ_VERT, BRUSH_PROJ_FRAG);
@@ -153,36 +336,6 @@ void Viewport::createShaders()
                 })";
     
     noProjShader = std::make_unique<Shader>(*gl, NO_PROJ_VERT, DEFAULT_PROJ_FRAG);
-}
-
-void Viewport::zoomInCamera()
-{
-    if (!currentViewport)
-    {
-        return;
-    }
-    
-    zoomCamera(currentViewport->zoom / 5.0f);
-}
-
-void Viewport::zoomOutCamera()
-{
-    if (!currentViewport)
-    {
-        return;
-    }
-    
-    zoomCamera(-currentViewport->zoom / 5.0f);
-}
-
-void Viewport::zoomCamera(float amount)
-{
-    if (!currentViewport)
-    {
-        return;
-    }
-    
-    currentViewport->zoom = std::clamp(currentViewport->zoom + amount, 1.0f, 1000.0f);
 }
 
 static ViewportCamera setupCamera(Viewport::ViewportType type)
@@ -246,7 +399,7 @@ static std::vector<Vertex> generateGrid(Viewport::ViewportType type)
         }
     }
         
-    //make grid for 2d views
+        //make grid for 2d views
     else
     {
         for (int m = 1; m <= 2; m++)
@@ -316,6 +469,84 @@ void Viewport::createViewport(ViewportType type, glm::ivec2 offset)
     viewportDatas.push_back(std::move(viewport));
 }
 
+void Viewport::moveCamera(Viewport::MoveDir moveDir)
+{
+    using Move = MoveDir;
+    switch (moveDir)
+    {
+    case Move::Forward:
+        if (currentViewport->type == ViewportType::Projection) currentViewport->camera.move(ViewportCamera::Direction::Forward);
+        else currentViewport->camera.move(ViewportCamera::Direction::Up);
+        break;
+    case Move::Back:
+        if (currentViewport->type == ViewportType::Projection) currentViewport->camera.move(ViewportCamera::Direction::Backward);
+        else currentViewport->camera.move(ViewportCamera::Direction::Down);
+        break;
+    case Move::Left:
+        currentViewport->camera.move(ViewportCamera::Direction::Left);
+        break;
+    case Move::Right:
+        currentViewport->camera.move(ViewportCamera::Direction::Right);
+        break;
+    case Move::Up:
+        currentViewport->camera.move(ViewportCamera::Direction::Up);
+        break;
+    case Move::Down:
+        currentViewport->camera.move(ViewportCamera::Direction::Down);
+        break;
+    }
+}
+
+void Viewport::turnCamera(TurnDir turnDir)
+{
+    if (!currentViewport)
+    {
+        return;
+    }
+    
+    using Turn = TurnDir;
+    
+    switch (turnDir)
+    {
+    case Turn::Left:
+        if (currentViewport->type == ViewportType::Projection) currentViewport->camera.turn(ViewportCamera::Direction::Left);
+        break;
+    case Turn::Right:
+        if (currentViewport->type == ViewportType::Projection) currentViewport->camera.turn(ViewportCamera::Direction::Right);
+        break;
+    }
+}
+
+void Viewport::zoomInCamera()
+{
+    if (!currentViewport)
+    {
+        return;
+    }
+    
+    zoomCamera(currentViewport->zoom / 5.0f);
+}
+
+void Viewport::zoomOutCamera()
+{
+    if (!currentViewport)
+    {
+        return;
+    }
+    
+    zoomCamera(-currentViewport->zoom / 5.0f);
+}
+
+void Viewport::zoomCamera(float amount)
+{
+    if (!currentViewport)
+    {
+        return;
+    }
+    
+    currentViewport->zoom = std::clamp(currentViewport->zoom + amount, 1.0f, 1000.0f);
+}
+
 void Viewport::clickLeftStart(int x, int y)
 {
     if (!currentViewport)
@@ -324,6 +555,40 @@ void Viewport::clickLeftStart(int x, int y)
     }
     
     currentViewport = &chooseViewportMouse({ x, y });
+    if (currentViewport->type != ViewportType::Projection)
+    {
+        currentViewport->lastClick = { x, y };
+    }
+}
+
+static glm::vec3 getPositionFromMouse(Viewport::ViewportData& viewport, glm::ivec2 viewportSize, glm::ivec2 mouse)
+{
+    //normalize mouse to [-1, 1] coordinate system
+    const float mouseX = (float(mouse.x) - float(viewport.offset.x)) / (float(viewportSize.x) * 0.5f) - 1.0f;
+    const float mouseY = (float(mouse.y) - float(viewport.offset.y)) / (float(viewportSize.y) * 0.5f) - 1.0f;
+    
+    const glm::vec4 screenPos = glm::vec4{ mouseX, -mouseY, 1.0f, 1.0f };
+    const glm::vec4 worldPos = viewport.inverseProjViewMatrix * screenPos;
+    
+    return glm::vec3{ worldPos };
+}
+
+static std::pair<glm::vec2, int> getRoundedPositionAndAxis(Viewport::ViewportType type, const glm::vec3& position)
+{
+    int skipAxis = getSkipAxis(type);
+    
+    const float axisX = position[(skipAxis + 1) % 3];
+    const float axisY = position[(skipAxis + 2) % 3];
+    
+    constexpr auto roundNumber = [](float number) -> float
+    {
+        return std::round(number / GRID_UNIT) * GRID_UNIT;
+    };
+    
+    const float roundedX = roundNumber(std::round(axisX));
+    const float roundedY = roundNumber(std::round(axisY));
+    
+    return { { roundedX, roundedY }, skipAxis };
 }
 
 void Viewport::clickLeftEnd(int x, int y)
@@ -334,6 +599,22 @@ void Viewport::clickLeftEnd(int x, int y)
     }
     
     currentViewport = &chooseViewportMouse({ x, y });
+    //make a new brush
+    if (currentViewport->type != ViewportType::Projection &&
+        glm::distance(glm::vec2{ currentViewport->lastClick }, glm::vec2{ x, y }) > 0.1f)
+    {
+        const glm::vec3 beginMousePosition = getPositionFromMouse(*currentViewport, { viewportWidth, viewportHeight }, currentViewport->lastClick);
+        
+        //round off to the grid, and figure out which axis we don't know about
+        const auto [beginMouseRounded, beginMouseAxis] = getRoundedPositionAndAxis(currentViewport->type, beginMousePosition);
+        
+        const glm::vec3 endMousePosition = getPositionFromMouse(*currentViewport, { viewportWidth, viewportHeight }, { x, y });
+        
+        //ditto
+        const auto [endMouseRounded, endMouseAxis] = getRoundedPositionAndAxis(currentViewport->type, endMousePosition);
+        
+        editor.createBrush(beginMouseRounded, endMouseRounded, beginMouseAxis);
+    }
 }
 
 Viewport::ViewportData& Viewport::chooseViewportMouse(glm::ivec2 omouse)
@@ -354,20 +635,6 @@ Viewport::ViewportData& Viewport::chooseViewportMouse(glm::ivec2 omouse)
     }
     
     throw std::runtime_error("Clicked outside of viewport");
-}
-
-void Viewport::removeGL()
-{
-    currentViewport = nullptr;
-    viewportDatas.clear();
-    
-    borderMesh.reset();
-    
-    noProjShader.reset();
-    brushShader.reset();
-    defaultShader.reset();
-    
-    gl = nullptr;
 }
 
 void Viewport::render()
@@ -434,6 +701,42 @@ void Viewport::render()
         
         //draw the grid
         viewport.gridMesh->draw(GL_LINES);
+        
+        //select appropriate brush shader for the viewport
+        if (viewport.type == ViewportType::Projection)
+        {
+            brushShader->use();
+            
+            brushShader->setMat4("uProjView", projViewMatrix);
+        }
+        else
+        {
+            defaultShader->use();
+            
+            defaultShader->setMat4("uProjView", projViewMatrix);
+            
+            //we're lines, we always want to show
+            gl->Disable(GL_DEPTH_TEST);
+        }
+        
+        //draw all brush meshes
+        for (auto& brushMesh : brushMeshes)
+        {
+            if (viewport.type == ViewportType::Projection)
+            {
+                brushMesh.draw(GL_TRIANGLE_FAN);
+            }
+            else
+            {
+                brushMesh.draw(GL_LINES);
+            }
+        }
+        
+        //if we're not projection make sure to reset the depth stuff
+        if (viewport.type != ViewportType::Projection)
+        {
+            gl->Enable(GL_DEPTH_TEST);
+        }
     }
     
     //draw out borders between viewports
@@ -448,4 +751,6 @@ void Viewport::changeSize(int width, int height)
 {
     this->width = width;
     this->height = height;
+    viewportWidth = width / 2;
+    viewportHeight = height / 2;
 }
