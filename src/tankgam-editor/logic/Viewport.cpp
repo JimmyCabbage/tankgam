@@ -638,7 +638,7 @@ void Viewport::render()
             const float up = float(viewportHeight);
             
             projViewMatrix = glm::ortho(left / zoom, right / zoom, down / zoom, up / zoom,
-                                        0.1f, 100000.0f);
+                                        1.0f, 100000.0f);
         }
         
         projViewMatrix *= viewport.camera.getViewMatrix();
