@@ -593,6 +593,11 @@ void Viewport::render()
         return;
     }
     
+    if (viewportHeight <= 0 || viewportWidth <= 0)
+    {
+        return;
+    }
+    
     //change the viewport sizes
     //todo: why is this hardcoded find a better way to handle resizing
     for (auto& viewport : viewportDatas)
