@@ -1,6 +1,7 @@
 #include "Brush.h"
 
 #include <array>
+#include <random>
 
 Brush::Brush(std::string textureName, glm::vec3 beginVec, glm::vec3 endVec)
     : textureName{ std::move(textureName) }, planes{}
@@ -17,10 +18,65 @@ Brush::Brush(std::string textureName, glm::vec3 beginVec, glm::vec3 endVec)
     planes.push_back(Plane::fromVertexAndNormal(endVec, -right));
     planes.push_back(Plane::fromVertexAndNormal(endVec, -back));
     
+    vertices = generateVertices();
+    
     glm::vec3 center{};
     size_t vertexCount = 0;
     //calculate center
-    for (size_t i = 0; i < planes.size(); i++)
+    for (const auto& vertex : vertices)
+    {
+        center += vertex;
+        vertexCount++;
+    }
+    
+    center /= static_cast<float>(vertexCount);
+    
+    //flip around planes to face this point
+    for (auto& plane : planes)
+    {
+        if (Plane::classifyPoint(plane, center) == Plane::Classification::Front)
+        {
+            plane.normal = -plane.normal;
+            plane.distance = -plane.distance;
+        }
+    }
+    
+    vertices = generateVertices(true);
+    
+    color = randomWireframeColor();
+}
+
+Brush::~Brush() = default;
+
+void Brush::setTextureName(std::string newName)
+{
+    textureName = std::move(newName);
+}
+
+std::string_view Brush::getTextureName() const
+{
+    return textureName;
+}
+
+std::span<const Plane> Brush::getPlanes() const
+{
+    return planes;
+}
+
+std::span<const glm::vec3> Brush::getVertices() const
+{
+    return vertices;
+}
+
+glm::vec3 Brush::getColor() const
+{
+    return color;
+}
+
+std::vector<glm::vec3> Brush::generateVertices(bool checkOutside)
+{
+    std::vector<glm::vec3> newVertices;
+    for (size_t i = 0; i < planes.size() ; i++)
     {
         for (size_t j = 0; j < planes.size(); j++)
         {
@@ -46,38 +102,61 @@ Brush::Brush(std::string textureName, glm::vec3 beginVec, glm::vec3 endVec)
                 
                 const auto vertex = possibleVertex.value();
                 
-                center += vertex;
-                vertexCount++;
+                //check we don't already have this
+                bool similar = false;
+                for (const auto& otherVertex : newVertices)
+                {
+                    if (glm::distance(vertex, otherVertex) <= 0.01f)
+                    {
+                        similar = true;
+                        break;
+                    }
+                }
+                
+                if (similar)
+                {
+                    break;
+                }
+                
+                if (checkOutside)
+                {
+                    //make sure this isn't outside of any of the planes
+                    bool outSide = false;
+                    for (const auto& checkPlane: planes)
+                    {
+                        if (Plane::classifyPoint(checkPlane, vertex) == Plane::Classification::Front)
+                        {
+                            outSide = true;
+                            break;
+                        }
+                    }
+                    
+                    if (outSide)
+                    {
+                        continue;
+                    }
+                }
+                
+                newVertices.push_back(vertex);
             }
         }
     }
     
-    center /= static_cast<float>(vertexCount);
+    return newVertices;
+}
+
+glm::vec3 Brush::randomWireframeColor()
+{
+    //for a nice wireframe color
+    //TODO: make this stored or something
+    std::random_device dev{};
+    std::mt19937 rng{ dev() };
+    std::uniform_int_distribution colorGenerator{ 125, 225 };
     
-    //flip around planes to face this point
-    for (auto& plane : planes)
+    return glm::vec3
     {
-        if (Plane::classifyPoint(plane, center) == Plane::Classification::Front)
-        {
-            plane.normal = -plane.normal;
-            plane.distance = -plane.distance;
-        }
-    }
-}
-
-Brush::~Brush() = default;
-
-void Brush::setTextureName(std::string newName)
-{
-    textureName = std::move(newName);
-}
-
-std::string_view Brush::getTextureName() const
-{
-    return textureName;
-}
-
-std::span<const Plane> Brush::getPlanes() const
-{
-    return planes;
+        0.0f,
+        static_cast<float>(colorGenerator(rng)) / 255.0f,
+        static_cast<float>(colorGenerator(rng)) / 255.0f
+    };
 }
