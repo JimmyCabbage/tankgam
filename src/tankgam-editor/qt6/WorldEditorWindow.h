@@ -1,11 +1,13 @@
 #pragma once
 
-#include <QMainWindow>
 #include <QVBoxLayout>
+#include <QSplitter>
 #include <QPushButton>
 
 #include "ViewportWindow.h"
 #include "Editor.h"
+#include "RenderWidget.h"
+#include "SettingsTab.h"
 
 class WorldEditorWindow : public QWidget
 {
@@ -18,7 +20,11 @@ public:
 private:
     Editor editor;
     
-    QVBoxLayout* mainLayout;
-    QPushButton* pushButton;
-    ViewportWindow* viewportWindow;
+    QHBoxLayout* mainLayout;
+    
+    QSplitter* renderAndSettingSplitter;
+    
+    RenderWidget* renderWidget;
+    
+    SettingsTab* settingsTab;
 };

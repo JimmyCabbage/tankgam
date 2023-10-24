@@ -12,6 +12,9 @@ ViewportWindow::ViewportWindow(Viewport& viewport, QWindow* parent)
       context{ nullptr }
 {
     setSurfaceType(QSurface::SurfaceType::OpenGLSurface);
+    
+    setMinimumWidth(800);
+    setMinimumHeight(600);
 }
 
 ViewportWindow::~ViewportWindow() = default;
