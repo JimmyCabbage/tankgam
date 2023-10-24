@@ -54,7 +54,7 @@ void ViewportWindow::renderNow()
     {
         loadGL();
         
-        viewport.initGL(gl, viewportWidth, viewportHeight);
+        viewport.initGL(gl, viewportWidth * devicePixelRatio(), viewportHeight * devicePixelRatio());
     }
     
     viewport.render();
@@ -95,7 +95,7 @@ void ViewportWindow::resizeEvent(QResizeEvent* event)
     viewportWidth = size.width();
     viewportHeight = size.height();
     
-    viewport.changeSize(viewportWidth, viewportHeight);
+    viewport.changeSize(viewportWidth * devicePixelRatio(), viewportHeight * devicePixelRatio());
 }
 
 void ViewportWindow::mousePressEvent(QMouseEvent* event)
@@ -104,7 +104,7 @@ void ViewportWindow::mousePressEvent(QMouseEvent* event)
     const int x = pos.x();
     const int y = pos.y();
     
-    viewport.clickLeftStart(x, y);
+    viewport.clickLeftStart(x * devicePixelRatio(), y * devicePixelRatio());
 }
 
 void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
@@ -113,7 +113,7 @@ void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
     const int x = pos.x();
     const int y = pos.y();
     
-    viewport.clickLeftEnd(x, y);
+    viewport.clickLeftEnd(x * devicePixelRatio(), y * devicePixelRatio());
     
     renderNow();
 }
