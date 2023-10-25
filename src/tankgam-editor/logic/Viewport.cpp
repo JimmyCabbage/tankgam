@@ -662,6 +662,8 @@ void Viewport::render()
             brushShader->use();
             
             brushShader->setMat4("uProjView", projViewMatrix);
+            
+            gl->Enable(GL_CULL_FACE);
         }
         else
         {
@@ -670,7 +672,7 @@ void Viewport::render()
             defaultShader->setMat4("uProjView", projViewMatrix);
             
             //we're lines, we always want to show
-            gl->Disable(GL_DEPTH_TEST);
+            gl->DepthFunc(GL_ALWAYS);
         }
         
         //draw all brush meshes
@@ -687,9 +689,13 @@ void Viewport::render()
         }
         
         //if we're not projection make sure to reset the depth stuff
-        if (viewport.type != ViewportType::Projection)
+        if (viewport.type == ViewportType::Projection)
         {
-            gl->Enable(GL_DEPTH_TEST);
+            gl->Disable(GL_CULL_FACE);
+        }
+        else
+        {
+            gl->DepthFunc(GL_LESS);
         }
     }
     
