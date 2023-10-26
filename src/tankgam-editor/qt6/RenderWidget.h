@@ -10,8 +10,8 @@
 class RenderWidget : public QWidget
 {
 public:
-    RenderWidget(Editor& editor, QWidget* parent = nullptr);
-    ~RenderWidget();
+    explicit RenderWidget(Editor& editor, QWidget* parent = nullptr);
+    ~RenderWidget() override;
 
 private:
     QVBoxLayout* renderLayout;

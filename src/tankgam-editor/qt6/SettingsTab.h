@@ -5,8 +5,8 @@
 class SettingsTab : public QTabWidget
 {
 public:
-    SettingsTab(QWidget* parent = nullptr);
-    ~SettingsTab();
+    explicit SettingsTab(QWidget* parent = nullptr);
+    ~SettingsTab() override;
 
 private:
 
