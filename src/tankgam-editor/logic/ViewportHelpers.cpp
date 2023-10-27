@@ -185,81 +185,82 @@ std::vector<Vertex> generateGrid(Viewport::ViewportType type)
 {
     std::vector<Vertex> verticies;
     
-    //make center xyz thing for 3d projection
-    if (type == Viewport::ViewportType::Projection)
+    //make grid for 2d views
+    for (int m = 1; m <= 2; m++)
     {
-        for (int i = 0; i < 3; i++)
+        constexpr int halfLines = (NUM_LINES / 2);
+        for (int i = -halfLines; i <= halfLines; i++)
         {
-            Vertex begin{};
-            begin.color = glm::vec3{ 0.0f, 0.0f, 0.0f };
-            begin.color[i] = 1.0f;
+            //TODO:
+            //holy hell use better variable names
+            //select the axis to generate the lines on
+            int skipAxis = getSkipAxis(type);
+            int j = (skipAxis + 1) % 3;
+            int k = (skipAxis + 2) % 3;
             
-            Vertex end{};
-            end.position[i] = static_cast<float>(GRID_UNIT);
-            end.color = glm::vec3{ 0.0f, 0.0f, 0.0f };
-            end.color[i] = 1.0f;
+            //swap the axises on the second loop to generate the other direction
+            if (m == 2)
+            {
+                int temp = j;
+                j = k;
+                k = temp;
+            }
+            
+            Vertex begin{ .color = { 0.32f, 0.32f, 0.32f } };
+            Vertex end{ .color = { 0.32f, 0.32f, 0.32f } };
+            
+            //color center red
+            if (i == 0)
+            {
+                begin.color = { 0.6f, 0.0f, 0.0f };
+                end.color = { 0.6f, 0.0f, 0.0f };
+            }
+                //color every 50th line teal-ish
+            else if ((i % 50) == 0)
+            {
+                begin.color = { 0.0f, 0.4f, 0.4f };
+                end.color = { 0.0f, 0.4f, 0.4f };
+            }
+                //color every 10th line extra white
+            else if ((i % 10) == 0)
+            {
+                begin.color = { 0.95f, 0.95f, 0.95f };
+                end.color = { 0.95f, 0.95f, 0.95f };
+            }
+            
+            begin.position[j] = float(i * GRID_UNIT);
+            end.position[j] = float(i * GRID_UNIT);
+            
+            constexpr int length = NUM_LINES * GRID_UNIT;
+            begin.position[k] = -(length / 2);
+            end.position[k] = (length / 2);
             
             verticies.push_back(begin);
             verticies.push_back(end);
         }
     }
-        
-        //make grid for 2d views
-    else
+    
+    return verticies;
+}
+
+std::vector<Vertex> generateCoordinates()
+{
+    std::vector<Vertex> verticies;
+    
+    //make center xyz thing always
+    for (int i = 0; i < 3; i++)
     {
-        for (int m = 1; m <= 2; m++)
-        {
-            constexpr int halfLines = (NUM_LINES / 2);
-            for (int i = -halfLines; i <= halfLines; i++)
-            {
-                //TODO:
-                //holy hell use better variable names
-                //select the axis to generate the lines on
-                int skipAxis = getSkipAxis(type);
-                int j = (skipAxis + 1) % 3;
-                int k = (skipAxis + 2) % 3;
-                
-                //swap the axises on the second loop to generate the other direction
-                if (m == 2)
-                {
-                    int temp = j;
-                    j = k;
-                    k = temp;
-                }
-                
-                Vertex begin{ .color = { 0.32f, 0.32f, 0.32f } };
-                Vertex end{ .color = { 0.32f, 0.32f, 0.32f } };
-                
-                //color center red
-                if (i == 0)
-                {
-                    begin.color = { 0.6f, 0.0f, 0.0f };
-                    end.color = { 0.6f, 0.0f, 0.0f };
-                }
-                    //color every 50th line teal-ish
-                else if ((i % 50) == 0)
-                {
-                    begin.color = { 0.0f, 0.4f, 0.4f };
-                    end.color = { 0.0f, 0.4f, 0.4f };
-                }
-                    //color every 10th line extra white
-                else if ((i % 10) == 0)
-                {
-                    begin.color = { 0.95f, 0.95f, 0.95f };
-                    end.color = { 0.95f, 0.95f, 0.95f };
-                }
-                
-                begin.position[j] = float(i * GRID_UNIT);
-                end.position[j] = float(i * GRID_UNIT);
-                
-                constexpr int length = NUM_LINES * GRID_UNIT;
-                begin.position[k] = -(length / 2);
-                end.position[k] = (length / 2);
-                
-                verticies.push_back(begin);
-                verticies.push_back(end);
-            }
-        }
+        Vertex begin{};
+        begin.color = glm::vec3{ 0.0f, 0.0f, 0.0f };
+        begin.color[i] = 1.0f;
+        
+        Vertex end{};
+        end.position[i] = static_cast<float>(GRID_UNIT);
+        end.color = glm::vec3{ 0.0f, 0.0f, 0.0f };
+        end.color[i] = 1.0f;
+        
+        verticies.push_back(begin);
+        verticies.push_back(end);
     }
     
     return verticies;

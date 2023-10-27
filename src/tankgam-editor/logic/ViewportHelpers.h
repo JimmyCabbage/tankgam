@@ -26,6 +26,8 @@ constexpr int getSkipAxis(Viewport::ViewportType type);
 
 std::vector<Vertex> generateGrid(Viewport::ViewportType type);
 
+std::vector<Vertex> generateCoordinates();
+
 glm::vec3 getPositionFromMouse(Viewport::ViewportData& viewport, glm::ivec2 viewportSize, glm::ivec2 mouse);
 
 std::pair<glm::vec2, int> getRoundedPositionAndAxis(Viewport::ViewportType type, const glm::vec3& position);

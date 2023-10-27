@@ -151,7 +151,11 @@ void Viewport::createViewport(ViewportType type, glm::ivec2 offset)
 {
     ViewportData viewport{ type, offset, 100.0f, glm::mat4{ 1.0f } };
     viewport.camera = setupCamera(type);
-    viewport.gridMesh = std::make_unique<Mesh>(*gl, generateGrid(type));
+    if (type != ViewportType::Projection)
+    {
+        viewport.gridMesh = std::make_unique<Mesh>(*gl, generateGrid(type));
+    }
+    viewport.coordinateMesh = std::make_unique<Mesh>(*gl, generateCoordinates());
     
     viewportDatas.push_back(std::move(viewport));
 }
@@ -336,10 +340,11 @@ void Viewport::render()
     {
         gl->Viewport(viewport.offset.x, -viewport.offset.y + viewportHeight, viewportWidth, viewportHeight);
         
-        glm::mat4 projViewMatrix{ 1.0f };
+        glm::mat4 projViewMatrix {1.0f};
         if (viewport.type == ViewportType::Projection)
         {
-            projViewMatrix = glm::perspective(glm::radians(90.0f), float(viewportWidth) / float(viewportHeight), 0.1f, 10000.0f);
+            projViewMatrix = glm::perspective(glm::radians(90.0f), float(viewportWidth) / float(viewportHeight), 0.1f,
+                                              10000.0f);
         }
         else
         {
@@ -358,11 +363,14 @@ void Viewport::render()
         
         viewport.inverseProjViewMatrix = glm::inverse(projViewMatrix);
         
-        defaultShader->use();
-        defaultShader->setMat4("uProjView", projViewMatrix);
-        
-        //draw the grid
-        viewport.gridMesh->draw(GL_LINES);
+        if (viewport.gridMesh)
+        {
+            defaultShader->use();
+            defaultShader->setMat4("uProjView", projViewMatrix);
+            
+            //draw the grid
+            viewport.gridMesh->draw(GL_LINES);
+        }
         
         //select appropriate brush shader for the viewport
         if (viewport.type == ViewportType::Projection)
@@ -375,16 +383,12 @@ void Viewport::render()
         }
         else
         {
-            defaultShader->use();
-            
-            defaultShader->setMat4("uProjView", projViewMatrix);
-            
             //we're lines, we always want to show
             gl->DepthFunc(GL_ALWAYS);
         }
         
         //draw all brush meshes
-        for (auto& brushMesh : brushMeshes)
+        for (auto& brushMesh: brushMeshes)
         {
             if (viewport.type == ViewportType::Projection)
             {
@@ -397,12 +401,20 @@ void Viewport::render()
         }
         
         //if we're not projection make sure to reset the depth stuff
+        //also get ready to draw the coordinate thing
         if (viewport.type == ViewportType::Projection)
         {
             gl->Disable(GL_CULL_FACE);
+            
+            defaultShader->use();
+            defaultShader->setMat4("uProjView", projViewMatrix);
         }
-        else
+        
+        viewport.coordinateMesh->draw(GL_LINES);
+        
+        if (viewport.type != ViewportType::Projection)
         {
+            //reset depth func
             gl->DepthFunc(GL_LESS);
         }
     }
