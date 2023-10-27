@@ -12,6 +12,8 @@ RenderWidget::RenderWidget(Editor& editor, QWidget* parent)
         viewportWindow = new ViewportWindow{ editor.getViewport(), nullptr };
         renderLayout->addWidget(QWidget::createWindowContainer(viewportWindow));
         
+        connect(this, &RenderWidget::toolSelected, viewportWindow, &ViewportWindow::toolSelected);
+        
         connect(refreshButton, &QPushButton::pressed, viewportWindow, &ViewportWindow::renderNow);
     }
 }

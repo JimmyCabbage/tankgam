@@ -73,6 +73,47 @@ glm::vec3 Brush::getColor() const
     return color;
 }
 
+std::optional<size_t> Brush::getPlaneNum(glm::vec3 rayOrigin, glm::vec3 rayDirection) const
+{
+    //test if point is on backside of all faces
+    size_t planeNum = -1;
+    float closestFaceDistance = std::numeric_limits<float>::max();
+    for (size_t i = 0; i < planes.size(); i++)
+    {
+        std::optional<glm::vec3> intersection = Plane::intersectRay(planes[i], rayOrigin, rayDirection);
+        if (intersection.has_value())
+        {
+            bool inside = true;
+            
+            for (const auto& otherPlane : planes)
+            {
+                if (Plane::classifyPoint(otherPlane, intersection.value()) == Plane::Classification::Front)
+                {
+                    inside = false;
+                    break;
+                }
+            }
+            
+            if (inside)
+            {
+                const float faceDistance = glm::distance(intersection.value(), rayOrigin);
+                if (faceDistance < closestFaceDistance)
+                {
+                    planeNum = i;
+                    closestFaceDistance = faceDistance;
+                }
+            }
+        }
+    }
+    
+    if (planeNum == -1)
+    {
+        return std::nullopt;
+    }
+    
+    return planeNum;
+}
+
 std::vector<glm::vec3> Brush::generateVertices(bool checkOutside)
 {
     std::vector<glm::vec3> newVertices;

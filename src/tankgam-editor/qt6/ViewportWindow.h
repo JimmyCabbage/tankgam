@@ -5,6 +5,8 @@
 #include <QWindow>
 #include <QOpenGLContext>
 
+#include "ViewportToolType.h"
+
 class Viewport;
 
 class ViewportWindow : public QWindow
@@ -20,6 +22,8 @@ public slots:
     void renderNow();
     
     void quitOpenGL();
+    
+    void toolSelected(ViewportToolType viewportToolType);
 
 protected:
     bool event(QEvent* event) override;

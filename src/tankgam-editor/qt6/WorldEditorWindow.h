@@ -23,8 +23,6 @@ private:
     QHBoxLayout* mainLayout;
     
     QSplitter* renderAndSettingSplitter;
-    
     RenderWidget* renderWidget;
-    
     SettingsTab* settingsTab;
 };

@@ -11,6 +11,7 @@
 Viewport::Viewport(Editor& editor)
     : editor{ editor }, gl{ nullptr },
       width{ 0 }, height{ 0 }, viewportWidth{ 0 }, viewportHeight{ 0 },
+      toolType{ ViewportToolType::Select },
       currentViewport{ nullptr }
 {
 }
@@ -203,6 +204,16 @@ void Viewport::quitGL()
     defaultShader.reset();
     
     gl = nullptr;
+}
+
+void Viewport::setToolType(ViewportToolType viewportToolType)
+{
+    toolType = viewportToolType;
+}
+
+ViewportToolType Viewport::getToolType() const
+{
+    return toolType;
 }
 
 void Viewport::createShaders()
@@ -550,6 +561,7 @@ void Viewport::clickLeftEnd(int x, int y)
     currentViewport = &chooseViewportMouse({ x, y });
     //make a new brush
     if (currentViewport->type != ViewportType::Projection &&
+        toolType == ViewportToolType::Brush &&
         glm::distance(glm::vec2{ currentViewport->lastClick }, glm::vec2{ x, y }) > 0.1f)
     {
         const glm::vec3 beginMousePosition = getPositionFromMouse(*currentViewport, { viewportWidth, viewportHeight }, currentViewport->lastClick);

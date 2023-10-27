@@ -16,6 +16,8 @@ WorldEditorWindow::WorldEditorWindow(QWidget* parent)
         //settings stuff
         settingsTab = new SettingsTab;
         renderAndSettingSplitter->addWidget(settingsTab);
+        
+        connect(settingsTab, &SettingsTab::toolSelected, renderWidget, &RenderWidget::toolSelected);
     }
     
     resize(1600, 900);

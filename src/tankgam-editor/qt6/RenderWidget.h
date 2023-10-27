@@ -9,9 +9,14 @@
 
 class RenderWidget : public QWidget
 {
+    Q_OBJECT
+
 public:
     explicit RenderWidget(Editor& editor, QWidget* parent = nullptr);
     ~RenderWidget() override;
+
+signals:
+    void toolSelected(ViewportToolType viewportToolType);
 
 private:
     QVBoxLayout* renderLayout;
