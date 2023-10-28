@@ -11,6 +11,7 @@ target_sources(tankgam-editor PRIVATE
         logic/Viewport.h logic/Viewport.cpp
         logic/ViewportCamera.h logic/ViewportCamera.cpp
         logic/ViewportToolType.h
+        logic/ViewportHelpers.h logic/ViewportHelpers.cpp
         logic/Editor.h logic/Editor.cpp)
 
 #math stuff

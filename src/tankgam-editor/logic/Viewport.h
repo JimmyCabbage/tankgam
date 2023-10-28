@@ -58,6 +58,7 @@ public:
         glm::ivec2 lastClick;
         
         std::unique_ptr<Mesh> gridMesh;
+        std::unique_ptr<Mesh> coordinateMesh;
     };
     
     enum class MoveDir
