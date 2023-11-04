@@ -10,6 +10,7 @@
 #include <gl/Mesh.h>
 
 #include "ViewportCamera.h"
+#include "ViewportToolType.h"
 
 class Editor;
 
@@ -34,6 +35,10 @@ public:
         Side,
         Projection
     };
+    
+    void setToolType(ViewportToolType viewportToolType);
+    
+    ViewportToolType getToolType() const;
     
 private:
     void createShaders();
@@ -105,6 +110,8 @@ private:
     int height;
     int viewportWidth;
     int viewportHeight;
+    
+    ViewportToolType toolType;
     
     std::unique_ptr<Shader> defaultShader;
     std::unique_ptr<Shader> brushShader;

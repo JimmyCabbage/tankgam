@@ -76,6 +76,11 @@ void ViewportWindow::quitOpenGL()
     viewport.quitGL();
 }
 
+void ViewportWindow::toolSelected(ViewportToolType viewportToolType)
+{
+    viewport.setToolType(viewportToolType);
+}
+
 bool ViewportWindow::event(QEvent* event)
 {
     switch (event->type())

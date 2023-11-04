@@ -22,21 +22,21 @@ std::array<Vertex, 12> generateBorders()
     constexpr std::array<Vertex, 12> verticies
     {
         //tri1 horizontal
-        Vertex{ .position = { hcTopLeft }, .color = color },
-        Vertex{ .position = { hcTopRight }, .color = color },
-        Vertex{ .position = { hcBottomRight }, .color = color },
+        Vertex{ .position = { hcTopLeft }, .color = color, .normal = {}, .texCoord = {} },
+        Vertex{ .position = { hcTopRight }, .color = color, .normal = {}, .texCoord = {} },
+        Vertex{ .position = { hcBottomRight }, .color = color, .normal = {}, .texCoord = {} },
         //tri2 horizontal
-        Vertex{ .position = { hcBottomLeft }, .color = color },
-        Vertex{ .position = { hcTopLeft }, .color = color },
-        Vertex{ .position = { hcBottomRight }, .color = color },
+        Vertex{ .position = { hcBottomLeft }, .color = color, .normal = {}, .texCoord = {} },
+        Vertex{ .position = { hcTopLeft }, .color = color, .normal = {}, .texCoord = {} },
+        Vertex{ .position = { hcBottomRight }, .color = color, .normal = {}, .texCoord = {} },
         //tri1 horizontal
-        Vertex{ .position = { vcTopLeft }, .color = color },
-        Vertex{ .position = { vcTopRight }, .color = color },
-        Vertex{ .position = { vcBottomRight }, .color = color },
+        Vertex{ .position = { vcTopLeft }, .color = color, .normal = {}, .texCoord = {} },
+        Vertex{ .position = { vcTopRight }, .color = color, .normal = {}, .texCoord = {} },
+        Vertex{ .position = { vcBottomRight }, .color = color, .normal = {}, .texCoord = {} },
         //tri2 horizontal
-        Vertex{ .position = { vcBottomLeft }, .color = color },
-        Vertex{ .position = { vcTopLeft }, .color = color },
-        Vertex{ .position = { vcBottomRight }, .color = color },
+        Vertex{ .position = { vcBottomLeft }, .color = color, .normal = {}, .texCoord = {} },
+        Vertex{ .position = { vcTopLeft }, .color = color, .normal = {}, .texCoord = {} },
+        Vertex{ .position = { vcBottomRight }, .color = color, .normal = {}, .texCoord = {} },
     };
     
     return verticies;
@@ -215,13 +215,13 @@ std::vector<Vertex> generateGrid(Viewport::ViewportType type)
                 begin.color = { 0.6f, 0.0f, 0.0f };
                 end.color = { 0.6f, 0.0f, 0.0f };
             }
-                //color every 50th line teal-ish
+            //color every 50th line teal-ish
             else if ((i % 50) == 0)
             {
                 begin.color = { 0.0f, 0.4f, 0.4f };
                 end.color = { 0.0f, 0.4f, 0.4f };
             }
-                //color every 10th line extra white
+            //color every 10th line extra white
             else if ((i % 10) == 0)
             {
                 begin.color = { 0.95f, 0.95f, 0.95f };

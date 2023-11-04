@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <optional>
 
 #include <glm/glm.hpp>
 
@@ -21,6 +22,9 @@ public:
     std::span<const glm::vec3> getVertices() const;
     
     glm::vec3 getColor() const;
+    
+    //raycast to find the closest plane
+    std::optional<size_t> getPlaneNum(glm::vec3 rayOrigin, glm::vec3 rayDirection) const;
     
 private:
     std::string textureName;

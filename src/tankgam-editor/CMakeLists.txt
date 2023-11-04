@@ -10,6 +10,7 @@ target_sources(tankgam-editor PRIVATE
         logic/Brush.h logic/Brush.cpp
         logic/Viewport.h logic/Viewport.cpp
         logic/ViewportCamera.h logic/ViewportCamera.cpp
+        logic/ViewportToolType.h
         logic/ViewportHelpers.h logic/ViewportHelpers.cpp
         logic/Editor.h logic/Editor.cpp)
 
@@ -21,7 +22,7 @@ target_sources(tankgam-editor PRIVATE
 if(MSVC)
     target_compile_options(tankgam-editor PRIVATE /W4)
 else()
-    target_compile_options(tankgam-editor PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(tankgam-editor PRIVATE -Wall -Wextra -Wpedantic -Wno-missing-field-initializers)
 endif()
 
 #C++ settings
