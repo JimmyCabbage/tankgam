@@ -100,6 +100,7 @@ private:
     Editor& editor;
     
     GladGLContext* gl;
+    float maxLineWidth;
     int width;
     int height;
     int viewportWidth;

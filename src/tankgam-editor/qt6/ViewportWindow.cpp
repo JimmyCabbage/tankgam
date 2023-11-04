@@ -36,8 +36,10 @@ void ViewportWindow::renderNow()
     if (!context)
     {
         QSurfaceFormat format;
+        format.setRenderableType(QSurfaceFormat::OpenGL);
         format.setVersion(4, 2);
         format.setProfile(QSurfaceFormat::OpenGLContextProfile::CoreProfile);
+        format.setOption(QSurfaceFormat::FormatOption::DeprecatedFunctions);
         if (format.depthBufferSize() < 0)
         {
             format.setDepthBufferSize(24);

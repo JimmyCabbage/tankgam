@@ -34,6 +34,11 @@ void Viewport::update()
 void Viewport::initGL(GladGLContext& glf, int width, int height)
 {
     gl = &glf;
+    {
+        GLfloat lineWidths[2];
+        gl->GetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE, lineWidths);
+        maxLineWidth = lineWidths[1];
+    }
     changeSize(width, height);
     
     gl->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -410,7 +415,13 @@ void Viewport::render()
             defaultShader->setMat4("uProjView", projViewMatrix);
         }
         
+        gl->Enable(GL_LINE_SMOOTH);
+        gl->LineWidth(maxLineWidth);
+        
         viewport.coordinateMesh->draw(GL_LINES);
+        
+        gl->LineWidth(1.0f);
+        gl->Disable(GL_LINE_SMOOTH);
         
         if (viewport.type != ViewportType::Projection)
         {
