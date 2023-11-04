@@ -22,7 +22,7 @@ target_sources(tankgam-editor PRIVATE
 if(MSVC)
     target_compile_options(tankgam-editor PRIVATE /W4)
 else()
-    target_compile_options(tankgam-editor PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(tankgam-editor PRIVATE -Wall -Wextra -Wpedantic -Wno-missing-field-initializers)
 endif()
 
 #C++ settings
