@@ -17,13 +17,7 @@ public:
     
     //printf style log
     //note: this will probably lead to some exploits that'll kill me
-    template <typename... Args>
-    void logf(std::string_view format, Args... args)
-    {
-        SDL_Log(format.data(), args...);
-        
-        lines.push_back(fmt::sprintf(format.data(), args...));
-    }
+    void logf(std::string_view format, ...);
     
     void log(std::string_view line);
     
