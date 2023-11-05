@@ -10,7 +10,8 @@
 #include <gl/Texture.h>
 
 #include "sys/Renderer/TextRenderer.h"
-#include "sys/File.h"
+
+#include <util/File.h>
 
 Renderer::Renderer(Console& console, FileManager& fileManager, std::string_view windowName)
     : console{ console }, fileManager{ fileManager },

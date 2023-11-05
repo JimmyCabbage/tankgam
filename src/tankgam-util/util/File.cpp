@@ -1,4 +1,4 @@
-#include "File.h"
+#include "util/File.h"
 
 #include <string>
 #include <string_view>
@@ -6,10 +6,10 @@
 
 #include <fmt/format.h>
 
-#include "Console.h"
+#include "util/Log.h"
 
-FileManager::FileManager(Console& console)
-    : console{ console }
+FileManager::FileManager(Log& log)
+    : log{ log }
 {
 }
 
@@ -23,7 +23,7 @@ FileManager::~FileManager()
 
 std::vector<char> FileManager::readFileRaw(std::string_view fileName)
 {
-    console.logf("Reading file: %s", fileName.data());
+    log.logf("Reading file: %s", fileName.data());
     
     std::ifstream file{ fileName.data(), std::ios::binary | std::ios::ate };
     if (!file.is_open())
@@ -76,7 +76,7 @@ std::vector<char> FileManager::readFileRaw(std::string_view fileName)
 
 void FileManager::writeFileRaw(std::string_view fileName, std::span<char> buffer)
 {
-    console.logf("Writing file: %s", fileName.data());
+    log.logf("Writing file: %s", fileName.data());
     
     std::ofstream file{ fileName.data(), std::ios::binary | std::ios::ate };
     if (!file.is_open())
@@ -99,7 +99,7 @@ std::stringstream FileManager::readFile(std::string_view fileName)
 void FileManager::loadAssetsFile(std::filesystem::path path)
 {
     const std::string pathStr = path.string();
-    console.logf("Reading assets file: %s", pathStr.data());
+    log.logf("Reading assets file: %s", pathStr.data());
 
     int err = 0;
     zip_t* handle = zip_open(pathStr.data(), ZIP_RDONLY, &err);

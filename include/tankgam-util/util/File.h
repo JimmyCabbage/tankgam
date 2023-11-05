@@ -9,12 +9,12 @@
 
 #include <zip.h>
 
-class Console;
+class Log;
 
 class FileManager
 {
 public:
-    explicit FileManager(Console& console);
+    explicit FileManager(Log& log);
     ~FileManager();
     
     std::vector<char> readFileRaw(std::string_view fileName);
@@ -26,7 +26,7 @@ public:
     void loadAssetsFile(std::filesystem::path path);
 
 private:
-    Console& console;
+    Log& log;
 
     std::vector<zip_t*> zips;
 };

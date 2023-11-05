@@ -1,4 +1,5 @@
 add_subdirectory(tankgam-gl)
+add_subdirectory(tankgam-util)
 
 add_subdirectory(tankgam)
 

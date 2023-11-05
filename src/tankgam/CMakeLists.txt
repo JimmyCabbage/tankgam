@@ -38,7 +38,6 @@ target_sources(tankgam PRIVATE
         sdl2/sys/Renderer.h sdl2/sys/Renderer.cpp
         sdl2/sys/Renderer/TextRenderer.h sdl2/sys/Renderer/TextRenderer.cpp
         sdl2/sys/EventHandler.h sdl2/sys/EventHandler.cpp
-        sdl2/sys/File.h sdl2/sys/File.cpp
         sdl2/sys/Timer.h sdl2/sys/Timer.cpp)
 
 #we want ALL the warnings
@@ -53,10 +52,10 @@ target_compile_features(tankgam PUBLIC cxx_std_20)
 set_target_properties(tankgam PROPERTIES CXX_EXTENSIONS OFF)
 
 #linking various internal files
-target_link_libraries(tankgam PRIVATE tankgam-gl)
+target_link_libraries(tankgam PRIVATE tankgam-gl tankgam-util)
 
 #linking various external files
-target_link_libraries(tankgam PRIVATE SDL2::SDL2main SDL2::SDL2 glm::glm libzip::zip)
+target_link_libraries(tankgam PRIVATE SDL2::SDL2main SDL2::SDL2 glm::glm)
 
 #move up some directories to be up
 target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core")
