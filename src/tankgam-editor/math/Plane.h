@@ -24,6 +24,8 @@ struct Plane
     
     static std::optional<glm::vec3> intersectRay(const Plane& plane, glm::vec3 rayOrigin, glm::vec3 rayDirection);
     
+    static void translatePlane(Plane& plane, glm::vec3 direction);
+    
     enum class Classification
     {
         Coincident,

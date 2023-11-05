@@ -18,30 +18,7 @@ Brush::Brush(std::string textureName, glm::vec3 beginVec, glm::vec3 endVec)
     planes.push_back(Plane::fromVertexAndNormal(endVec, -right));
     planes.push_back(Plane::fromVertexAndNormal(endVec, -back));
     
-    vertices = generateVertices();
-    
-    glm::vec3 center{};
-    size_t vertexCount = 0;
-    //calculate center
-    for (const auto& vertex : vertices)
-    {
-        center += vertex;
-        vertexCount++;
-    }
-    
-    center /= static_cast<float>(vertexCount);
-    
-    //flip around planes to face this point
-    for (auto& plane : planes)
-    {
-        if (Plane::classifyPoint(plane, center) == Plane::Classification::Front)
-        {
-            plane.normal = -plane.normal;
-            plane.distance = -plane.distance;
-        }
-    }
-    
-    vertices = generateVertices(true);
+    regenerateVertices();
     
     color = randomWireframeColor();
 }
@@ -124,6 +101,44 @@ std::optional<glm::vec3> Brush::getIntersection(glm::vec3 rayOrigin, glm::vec3 r
     }
     
     return finalIntersection;
+}
+
+void Brush::translate(glm::vec3 direction)
+{
+    for (auto& plane : planes)
+    {
+        Plane::translatePlane(plane, direction);
+    }
+    
+    regenerateVertices();
+}
+
+void Brush::regenerateVertices()
+{
+    vertices = generateVertices();
+    
+    glm::vec3 center{};
+    size_t vertexCount = 0;
+    //calculate center
+    for (const auto& vertex : vertices)
+    {
+        center += vertex;
+        vertexCount++;
+    }
+    
+    center /= static_cast<float>(vertexCount);
+    
+    //flip around planes to face this point
+    for (auto& plane : planes)
+    {
+        if (Plane::classifyPoint(plane, center) == Plane::Classification::Front)
+        {
+            plane.normal = -plane.normal;
+            plane.distance = -plane.distance;
+        }
+    }
+    
+    vertices = generateVertices(true);
 }
 
 std::vector<glm::vec3> Brush::generateVertices(bool checkOutside)

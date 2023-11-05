@@ -113,3 +113,15 @@ void Editor::deleteSelectedBrushes()
     
     viewport.update();
 }
+
+void Editor::moveSelectedBrushes(glm::vec3 moveDir)
+{
+    for (size_t i = 0; i < selectedBrushesIndices.size(); i++)
+    {
+        const size_t index = selectedBrushesIndices[i];
+        brushes[index].translate(moveDir);
+        selectedBrushes[i] = brushes[index];
+    }
+    
+    viewport.update();
+}

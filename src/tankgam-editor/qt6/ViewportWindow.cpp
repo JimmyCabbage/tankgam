@@ -1,6 +1,7 @@
 #include "ViewportWindow.h"
 
 #include <QResizeEvent>
+#include <QGuiApplication>
 
 #include <fmt/format.h>
 
@@ -136,6 +137,10 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
 {
     bool shouldRedraw = true;
     
+    const auto modifiers = QGuiApplication::keyboardModifiers();
+    const bool ctrl = modifiers.testFlag(Qt::ControlModifier);
+    const bool shift = modifiers.testFlag(Qt::ShiftModifier);
+    
     switch (event->key())
     {
     case Qt::Key::Key_Delete:
@@ -160,16 +165,44 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
         viewport.moveCamera(Viewport::MoveDir::Right);
         break;
     case Qt::Key::Key_Up:
-        viewport.moveCamera(Viewport::MoveDir::Up);
+        if (shift)
+        {
+            viewport.moveSelectedBrushes(Viewport::MoveDir::Up);
+        }
+        else
+        {
+            viewport.moveCamera(Viewport::MoveDir::Up);
+        }
         break;
     case Qt::Key::Key_Down:
-        viewport.moveCamera(Viewport::MoveDir::Down);
+        if (shift)
+        {
+            viewport.moveSelectedBrushes(Viewport::MoveDir::Down);
+        }
+        else
+        {
+            viewport.moveCamera(Viewport::MoveDir::Down);
+        }
         break;
     case Qt::Key::Key_Left:
-        viewport.turnCamera(Viewport::TurnDir::Left);
+        if (shift)
+        {
+            viewport.moveSelectedBrushes(Viewport::MoveDir::Left);
+        }
+        else
+        {
+            viewport.turnCamera(Viewport::TurnDir::Left);
+        }
         break;
     case Qt::Key::Key_Right:
-        viewport.turnCamera(Viewport::TurnDir::Right);
+        if (shift)
+        {
+            viewport.moveSelectedBrushes(Viewport::MoveDir::Right);
+        }
+        else
+        {
+            viewport.turnCamera(Viewport::TurnDir::Right);
+        }
         break;
     default:
         shouldRedraw = false;

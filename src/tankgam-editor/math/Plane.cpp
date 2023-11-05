@@ -89,6 +89,12 @@ std::optional<glm::vec3> Plane::intersectRay(const Plane& plane, glm::vec3 rayOr
     return rayOrigin + (t * rayDirection);
 }
 
+void Plane::translatePlane(Plane& plane, glm::vec3 direction)
+{
+    const glm::vec3 point = (plane.normal * -plane.distance) + direction;
+    plane = fromVertexAndNormal(point, plane.normal);
+}
+
 Plane::Classification Plane::classifyPoint(const Plane& plane, glm::vec3 point)
 {
     constexpr float planeThickness = 0.01f;

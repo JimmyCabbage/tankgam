@@ -31,6 +31,8 @@ public:
     
     void deleteSelectedBrushes();
     
+    void moveSelectedBrushes(glm::vec3 moveDir);
+    
 private:
     Viewport viewport;
     

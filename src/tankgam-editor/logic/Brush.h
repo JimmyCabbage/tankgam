@@ -28,11 +28,14 @@ public:
     
     std::optional<glm::vec3> getIntersection(glm::vec3 rayOrigin, glm::vec3 rayDirection) const;
     
+    void translate(glm::vec3 direction);
+    
 private:
     std::string textureName;
     std::vector<Plane> planes;
     
     std::vector<glm::vec3> vertices;
+    void regenerateVertices();
     std::vector<glm::vec3> generateVertices(bool checkOutside = false);
     
     glm::vec3 color;

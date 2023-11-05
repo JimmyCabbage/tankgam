@@ -73,6 +73,8 @@ public:
         Down
     };
     
+    void moveSelectedBrushes(MoveDir moveDir);
+    
     void moveCamera(MoveDir moveDir);
     
     enum class TurnDir
