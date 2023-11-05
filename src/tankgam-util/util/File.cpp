@@ -3,6 +3,8 @@
 #include <string>
 #include <string_view>
 #include <fstream>
+#include <filesystem>
+#include <algorithm>
 
 #include <fmt/format.h>
 
@@ -32,7 +34,7 @@ std::vector<char> FileManager::readFileRaw(std::string_view fileName)
         //console.logf("Failed to read file %s from disk, time to search assets files", fileName.data());
 
         //iterate backwards cause we wanna take priority of modded files
-        for (size_t i = zips.size(); i-- > 0;)
+        for (size_t i = zips.size(); i --> 0;)
         {
             zip_t* zip = zips[i];
 
@@ -94,6 +96,71 @@ std::stringstream FileManager::readFile(std::string_view fileName)
     std::stringstream sstr{ std::move(str) };
     
     return sstr;
+}
+
+std::vector<std::string> FileManager::fileNamesInDir(std::string_view dirName)
+{
+    std::vector<std::string> fileNames;
+    
+    //iterate backwards cause we wanna take priority of modded files
+    for (size_t i = zips.size(); i --> 0;)
+    {
+        zip_t* zip = zips[i];
+        
+        const zip_int64_t numEntries = zip_get_num_entries(zip, 0);
+        for (zip_int64_t j = 0; j < numEntries; j++)
+        {
+            std::string name = zip_get_name(zip, j, 0);
+            
+            const size_t lastSlash = name.find_last_of('/');
+            if (lastSlash == std::string::npos)
+            {
+                continue;
+            }
+            
+            //make sure this is the right directory
+            if (dirName != name.substr(0, lastSlash + 1))
+            {
+                continue;
+            }
+            
+            //make sure we're not just adding the directory directly
+            if (dirName == name)
+            {
+                continue;
+            }
+            
+            //make sure this isn't a duplicate of an already found file
+            if (std::find(fileNames.begin(), fileNames.end(), name) != fileNames.end())
+            {
+                continue;
+            }
+            
+            fileNames.push_back(std::move(name));
+        }
+    }
+    
+    namespace fs = std::filesystem;
+    
+    //get native filesystem files
+    if (fs::is_directory(dirName.data()))
+    {
+        for (const auto& entry : fs::directory_iterator{ dirName })
+        {
+            if (!entry.is_directory() && !entry.is_socket())
+            {
+                std::string name = entry.path().string();
+                
+                //only add if this isn't a duplicate
+                if (std::find(fileNames.begin(), fileNames.end(), name) == fileNames.end())
+                {
+                    fileNames.push_back(std::move(name));
+                }
+            }
+        }
+    }
+    
+    return fileNames;
 }
 
 void FileManager::loadAssetsFile(std::filesystem::path path)
