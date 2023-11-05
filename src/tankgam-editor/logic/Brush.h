@@ -14,6 +14,9 @@ public:
     Brush(std::string textureName, glm::vec3 beginVec, glm::vec3 endVec);
     ~Brush();
     
+    Brush(const Brush& o);
+    Brush& operator=(const Brush& o);
+    
     void setTextureName(std::string newName);
     std::string_view getTextureName() const;
     
@@ -23,8 +26,7 @@ public:
     
     glm::vec3 getColor() const;
     
-    //raycast to find the closest plane
-    std::optional<size_t> getPlaneNum(glm::vec3 rayOrigin, glm::vec3 rayDirection) const;
+    std::optional<glm::vec3> getIntersection(glm::vec3 rayOrigin, glm::vec3 rayDirection) const;
     
 private:
     std::string textureName;

@@ -48,6 +48,23 @@ Brush::Brush(std::string textureName, glm::vec3 beginVec, glm::vec3 endVec)
 
 Brush::~Brush() = default;
 
+Brush::Brush(const Brush& o) = default;
+
+Brush& Brush::operator=(const Brush& o)
+{
+    if (this == &o)
+    {
+        return *this;
+    }
+    
+    textureName = o.textureName;
+    planes = o.planes;
+    vertices = o.vertices;
+    color = o.color;
+    
+    return *this;
+}
+
 void Brush::setTextureName(std::string newName)
 {
     textureName = std::move(newName);
@@ -73,10 +90,10 @@ glm::vec3 Brush::getColor() const
     return color;
 }
 
-std::optional<size_t> Brush::getPlaneNum(glm::vec3 rayOrigin, glm::vec3 rayDirection) const
+std::optional<glm::vec3> Brush::getIntersection(glm::vec3 rayOrigin, glm::vec3 rayDirection) const
 {
     //test if point is on backside of all faces
-    size_t planeNum = -1;
+    std::optional<glm::vec3> finalIntersection;
     float closestFaceDistance = std::numeric_limits<float>::max();
     for (size_t i = 0; i < planes.size(); i++)
     {
@@ -99,19 +116,14 @@ std::optional<size_t> Brush::getPlaneNum(glm::vec3 rayOrigin, glm::vec3 rayDirec
                 const float faceDistance = glm::distance(intersection.value(), rayOrigin);
                 if (faceDistance < closestFaceDistance)
                 {
-                    planeNum = i;
+                    finalIntersection = intersection.value();
                     closestFaceDistance = faceDistance;
                 }
             }
         }
     }
     
-    if (planeNum == -1)
-    {
-        return std::nullopt;
-    }
-    
-    return planeNum;
+    return finalIntersection;
 }
 
 std::vector<glm::vec3> Brush::generateVertices(bool checkOutside)
