@@ -19,7 +19,7 @@ void Editor::defaultState()
     
     beginVec = {};
     endVec = {};
-    defaultBeginSize = { 0, -GRID_UNIT, 0 };
+    defaultBeginSize = { -GRID_UNIT, -GRID_UNIT, -GRID_UNIT };
     defaultEndSize = { GRID_UNIT, 0, GRID_UNIT };
 }
 
