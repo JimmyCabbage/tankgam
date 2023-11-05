@@ -201,10 +201,15 @@ void Viewport::moveSelectedBrushes(MoveDir moveDir)
 {
     if (toolType == ViewportToolType::Select)
     {
-        if (currentViewport->type != ViewportType::Projection)
+        glm::vec3 verticalAxis;
+        glm::vec3 horizontalAxis;
+        if (currentViewport->type == ViewportType::Projection)
         {
-            glm::vec3 verticalAxis;
-            glm::vec3 horizontalAxis;
+            verticalAxis = glm::vec3{ 0.0f, 1.0f, 0.0f };
+            horizontalAxis = glm::vec3{ 0.0f, 0.0f, 0.0f };
+        }
+        else
+        {
             if (currentViewport->type == ViewportType::Top)
             {
                 verticalAxis = glm::vec3{ 0.0f, 0.0f, -1.0f };
@@ -220,25 +225,25 @@ void Viewport::moveSelectedBrushes(MoveDir moveDir)
                 verticalAxis = glm::vec3{ 0.0f, 1.0f, 0.0f };
                 horizontalAxis = glm::vec3{ 0.0f, 0.0f, -1.0f };
             }
-            
-            using Move = MoveDir;
-            switch (moveDir)
-            {
-            case Move::Up:
-                editor.moveSelectedBrushes(verticalAxis * GRID_UNIT);
-                break;
-            case Move::Down:
-                editor.moveSelectedBrushes(verticalAxis * -GRID_UNIT);
-                break;
-            case Move::Left:
-                editor.moveSelectedBrushes(horizontalAxis * -GRID_UNIT);
-                break;
-            case Move::Right:
-                editor.moveSelectedBrushes(horizontalAxis * GRID_UNIT);
-                break;
-            default:
-                throw std::runtime_error{ "Invalid selected brush move" };
-            }
+        }
+        
+        using Move = MoveDir;
+        switch (moveDir)
+        {
+        case Move::Up:
+            editor.moveSelectedBrushes(verticalAxis * GRID_UNIT);
+            break;
+        case Move::Down:
+            editor.moveSelectedBrushes(verticalAxis * -GRID_UNIT);
+            break;
+        case Move::Left:
+            editor.moveSelectedBrushes(horizontalAxis * -GRID_UNIT);
+            break;
+        case Move::Right:
+            editor.moveSelectedBrushes(horizontalAxis * GRID_UNIT);
+            break;
+        default:
+            throw std::runtime_error{ "Invalid selected brush move" };
         }
     }
 }
