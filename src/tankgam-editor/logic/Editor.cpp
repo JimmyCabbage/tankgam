@@ -5,7 +5,7 @@
 #include "Common.h"
 
 Editor::Editor()
-    : viewport{ *this }
+    : stdLog{}, fileManager{ stdLog }, viewport{ fileManager, *this }
 {
     defaultState();
 }

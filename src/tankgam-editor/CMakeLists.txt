@@ -12,7 +12,8 @@ target_sources(tankgam-editor PRIVATE
         logic/ViewportCamera.h logic/ViewportCamera.cpp
         logic/ViewportToolType.h
         logic/ViewportHelpers.h logic/ViewportHelpers.cpp
-        logic/Editor.h logic/Editor.cpp)
+        logic/Editor.h logic/Editor.cpp
+        logic/StdLog.h logic/StdLog.cpp)
 
 #math stuff
 target_sources(tankgam-editor PRIVATE
@@ -36,7 +37,7 @@ set_target_properties(tankgam-editor PROPERTIES
 )
 
 #linking various internal files
-target_link_libraries(tankgam-editor PRIVATE tankgam-gl)
+target_link_libraries(tankgam-editor PRIVATE tankgam-gl tankgam-util)
 
 #linking various external libraries
 target_link_libraries(tankgam-editor PRIVATE Qt::Core Qt::Gui Qt::Widgets glm::glm)

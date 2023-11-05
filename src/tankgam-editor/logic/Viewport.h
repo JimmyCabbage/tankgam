@@ -8,6 +8,7 @@
 
 #include <gl/Shader.h>
 #include <gl/Mesh.h>
+#include <util/File.h>
 
 #include "ViewportCamera.h"
 #include "ViewportToolType.h"
@@ -17,7 +18,7 @@ class Editor;
 class Viewport
 {
 public:
-    explicit Viewport(Editor& editor);
+    Viewport(FileManager& fileManager, Editor& editor);
     ~Viewport();
     
     //when map state is changed
@@ -118,6 +119,7 @@ public:
     void changeSize(int width, int height);
     
 private:
+    FileManager& fileManager;
     Editor& editor;
     
     GladGLContext* gl;

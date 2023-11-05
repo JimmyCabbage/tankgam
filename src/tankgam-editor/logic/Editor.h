@@ -5,6 +5,9 @@
 
 #include <glad/gl.h>
 
+#include <util/File.h>
+
+#include "StdLog.h"
 #include "Viewport.h"
 #include "Brush.h"
 #include "Plane.h"
@@ -34,6 +37,8 @@ public:
     void moveSelectedBrushes(glm::vec3 moveDir);
     
 private:
+    StdLog stdLog;
+    FileManager fileManager;
     Viewport viewport;
     
     std::vector<Brush> brushes;

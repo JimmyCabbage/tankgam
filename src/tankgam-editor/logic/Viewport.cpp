@@ -9,8 +9,9 @@
 #include "Brush.h"
 #include "ViewportHelpers.h"
 
-Viewport::Viewport(Editor& editor)
-    : editor{ editor }, gl{ nullptr },
+Viewport::Viewport(FileManager& fileManager, Editor& editor)
+    : fileManager{ fileManager }, editor{ editor },
+      gl{ nullptr },
       width{ 0 }, height{ 0 }, viewportWidth{ 0 }, viewportHeight{ 0 },
       toolType{ ViewportToolType::Select },
       currentViewport{ nullptr }
