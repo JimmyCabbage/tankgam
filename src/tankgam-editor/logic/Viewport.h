@@ -61,6 +61,8 @@ public:
         std::unique_ptr<Mesh> coordinateMesh;
     };
     
+    void deleteKey();
+    
     enum class MoveDir
     {
         Forward,

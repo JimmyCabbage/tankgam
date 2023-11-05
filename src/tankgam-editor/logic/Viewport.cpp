@@ -189,6 +189,14 @@ void Viewport::createViewport(ViewportType type, glm::ivec2 offset)
     viewportDatas.push_back(std::move(viewport));
 }
 
+void Viewport::deleteKey()
+{
+    if (toolType == ViewportToolType::Select)
+    {
+        editor.deleteSelectedBrushes();
+    }
+}
+
 void Viewport::moveCamera(Viewport::MoveDir moveDir)
 {
     using Move = MoveDir;

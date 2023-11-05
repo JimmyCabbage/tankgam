@@ -29,11 +29,14 @@ public:
     
     void selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection);
     
+    void deleteSelectedBrushes();
+    
 private:
     Viewport viewport;
     
     std::vector<Brush> brushes;
     std::vector<Brush> selectedBrushes;
+    std::vector<size_t> selectedBrushesIndices;
     
     glm::vec3 beginVec;
     glm::vec3 endVec;

@@ -67,12 +67,16 @@ void Editor::createBrush(glm::vec2 begin, glm::vec2 end, int skipAxis)
 void Editor::selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection)
 {
     selectedBrushes.clear();
+    selectedBrushesIndices.clear();
     
     float closestDistance = std::numeric_limits<float>::max();
     const Brush* closestBrush = nullptr;
+    size_t brushNum;
     
-    for (const auto& brush : brushes)
+    for (size_t i = 0; i < brushes.size(); i++)
     {
+        const auto& brush = brushes[i];
+        
         const auto intersection = brush.getIntersection(selectOrigin, selectDirection);
         if (!intersection.has_value())
         {
@@ -84,13 +88,28 @@ void Editor::selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection)
         {
             closestDistance = intersectionDistance;
             closestBrush = &brush;
+            brushNum = i;
         }
     }
     
     if (closestBrush)
     {
         selectedBrushes.push_back(*closestBrush);
+        selectedBrushesIndices.push_back(brushNum);
     }
+    
+    viewport.update();
+}
+
+void Editor::deleteSelectedBrushes()
+{
+    for (size_t index : selectedBrushesIndices)
+    {
+        brushes.erase(brushes.begin() + index);
+    }
+    
+    selectedBrushes.clear();
+    selectedBrushesIndices.clear();
     
     viewport.update();
 }

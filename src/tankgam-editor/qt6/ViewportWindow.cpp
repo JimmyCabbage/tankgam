@@ -138,13 +138,14 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
     
     switch (event->key())
     {
+    case Qt::Key::Key_Delete:
+        viewport.deleteKey();
+        break;
     case Qt::Key::Key_BracketLeft:
         viewport.zoomOutCamera();
-        renderNow();
         break;
     case Qt::Key::Key_BracketRight:
         viewport.zoomInCamera();
-        renderNow();
         break;
     case Qt::Key::Key_W:
         viewport.moveCamera(Viewport::MoveDir::Forward);
