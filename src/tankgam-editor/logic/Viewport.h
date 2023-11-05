@@ -99,6 +99,18 @@ private:
 public:
     void render();
     
+private:
+    glm::mat4 calculateViewportMatrix(ViewportData& viewport) const;
+    
+    void renderGrid(ViewportData& viewport, const glm::mat4& projViewMatrix);
+    
+    void renderBrushes(ViewportData& viewport, const glm::mat4& projViewMatrix);
+    
+    void renderVisibleBrushes(ViewportData& viewport, const glm::mat4& projViewMatrix);
+    
+    void renderSelectedBrushes(ViewportData& viewport, const glm::mat4& projViewMatrix);
+    
+public:
     void changeSize(int width, int height);
     
 private:
@@ -123,4 +135,5 @@ private:
     ViewportData* currentViewport;
     
     std::vector<Mesh> brushMeshes;
+    std::vector<Mesh> selectedBrushMeshes;
 };

@@ -1,5 +1,7 @@
 #include "Editor.h"
 
+#include <limits>
+
 #include "Common.h"
 
 Editor::Editor()
@@ -13,6 +15,7 @@ Editor::~Editor() = default;
 void Editor::defaultState()
 {
     brushes.clear();
+    selectedBrushes.clear();
     
     beginVec = {};
     endVec = {};
@@ -25,9 +28,14 @@ Viewport& Editor::getViewport()
     return viewport;
 }
 
-std::span<const Brush> Editor::getBrushes() const
+std::vector<Brush> Editor::getBrushes() const
 {
     return brushes;
+}
+
+std::vector<Brush> Editor::getSelectedBrushes() const
+{
+    return selectedBrushes;
 }
 
 void Editor::createBrush(glm::vec2 begin, glm::vec2 end, int skipAxis)
@@ -52,6 +60,37 @@ void Editor::createBrush(glm::vec2 begin, glm::vec2 end, int skipAxis)
     defaultEndSize[knownAxis2] = end[1];
     
     brushes.emplace_back("", beginVec, endVec);
+    
+    viewport.update();
+}
+
+void Editor::selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection)
+{
+    selectedBrushes.clear();
+    
+    float closestDistance = std::numeric_limits<float>::max();
+    const Brush* closestBrush = nullptr;
+    
+    for (const auto& brush : brushes)
+    {
+        const auto intersection = brush.getIntersection(selectOrigin, selectDirection);
+        if (!intersection.has_value())
+        {
+            continue;
+        }
+        
+        const float intersectionDistance = glm::distance(intersection.value(), selectOrigin);
+        if (intersectionDistance < closestDistance)
+        {
+            closestDistance = intersectionDistance;
+            closestBrush = &brush;
+        }
+    }
+    
+    if (closestBrush)
+    {
+        selectedBrushes.push_back(*closestBrush);
+    }
     
     viewport.update();
 }

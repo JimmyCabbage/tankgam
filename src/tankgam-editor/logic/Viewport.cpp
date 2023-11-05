@@ -21,6 +21,7 @@ Viewport::~Viewport() = default;
 
 void Viewport::update()
 {
+    brushMeshes.clear();
     const auto brushes = editor.getBrushes();
     for (const auto& brush : brushes)
     {
@@ -28,6 +29,17 @@ void Viewport::update()
         for (const auto& vertices : verticesList)
         {
             brushMeshes.emplace_back(*gl, vertices);
+        }
+    }
+    
+    selectedBrushMeshes.clear();
+    const auto selectedBrushes = editor.getSelectedBrushes();
+    for (const auto& brush : selectedBrushes)
+    {
+        const auto verticesList = makeBrushVertices(brush, glm::vec3{ 1.0f, 0.0f, 0.0f });
+        for (const auto& vertices : verticesList)
+        {
+            selectedBrushMeshes.emplace_back(*gl, vertices);
         }
     }
 }
@@ -38,7 +50,7 @@ void Viewport::initGL(GladGLContext& glf, int width, int height)
     {
         GLfloat lineWidths[2];
         gl->GetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE, lineWidths);
-        maxLineWidth = lineWidths[1];
+        maxLineWidth = std::min(lineWidths[1], 2.0f);
     }
     changeSize(width, height);
     
@@ -57,6 +69,7 @@ void Viewport::initGL(GladGLContext& glf, int width, int height)
 
 void Viewport::quitGL()
 {
+    selectedBrushMeshes.clear();
     brushMeshes.clear();
     
     currentViewport = nullptr;
@@ -276,22 +289,36 @@ void Viewport::clickLeftEnd(int x, int y)
     }
     
     currentViewport = &chooseViewportMouse({ x, y });
-    //make a new brush
-    if (currentViewport->type != ViewportType::Projection &&
-        toolType == ViewportToolType::Brush &&
-        glm::distance(glm::vec2{ currentViewport->lastClick }, glm::vec2{ x, y }) > 0.1f)
+    if (toolType == ViewportToolType::Brush)
     {
-        const glm::vec3 beginMousePosition = getPositionFromMouse(*currentViewport, { viewportWidth, viewportHeight }, currentViewport->lastClick);
-        
-        //round off to the grid, and figure out which axis we don't know about
-        const auto [beginMouseRounded, beginMouseAxis] = getRoundedPositionAndAxis(currentViewport->type, beginMousePosition);
-        
-        const glm::vec3 endMousePosition = getPositionFromMouse(*currentViewport, { viewportWidth, viewportHeight }, { x, y });
-        
-        //ditto
-        const auto [endMouseRounded, endMouseAxis] = getRoundedPositionAndAxis(currentViewport->type, endMousePosition);
-        
-        editor.createBrush(beginMouseRounded, endMouseRounded, beginMouseAxis);
+        //make a new brush
+        if (currentViewport->type != ViewportType::Projection &&
+            glm::distance(glm::vec2{ currentViewport->lastClick }, glm::vec2{ x, y }) > 0.1f)
+        {
+            const glm::vec3 beginMousePosition = getPositionFromMouse(*currentViewport, { viewportWidth, viewportHeight }, currentViewport->lastClick);
+            
+            //round off to the grid, and figure out which axis we don't know about
+            const auto [beginMouseRounded, beginMouseAxis] = getRoundedPositionAndAxis(currentViewport->type, beginMousePosition);
+            
+            const glm::vec3 endMousePosition = getPositionFromMouse(*currentViewport, { viewportWidth, viewportHeight }, { x, y });
+            
+            //ditto
+            const auto [endMouseRounded, endMouseAxis] = getRoundedPositionAndAxis(currentViewport->type, endMousePosition);
+            
+            editor.createBrush(beginMouseRounded, endMouseRounded, beginMouseAxis);
+        }
+    }
+    else if (toolType == ViewportToolType::Select)
+    {
+        //select a brush
+        if (currentViewport->type == ViewportType::Projection)
+        {
+            const glm::vec3 rayDirection = glm::normalize(getPositionFromMouse(*currentViewport, { viewportWidth, viewportHeight }, { x, y }));
+            
+            const glm::vec3 rayOrigin = currentViewport->camera.getPosition();
+            
+            editor.selectBrush(rayOrigin, rayDirection);
+        }
     }
 }
 
@@ -352,81 +379,24 @@ void Viewport::render()
     gl->Enable(GL_DEPTH_TEST);
     gl->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    //for alpha blending
+    gl->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
     //draw all viewports
     for (auto& viewport : viewportDatas)
     {
         gl->Viewport(viewport.offset.x, -viewport.offset.y + viewportHeight, viewportWidth, viewportHeight);
         
-        glm::mat4 projViewMatrix {1.0f};
-        if (viewport.type == ViewportType::Projection)
-        {
-            projViewMatrix = glm::perspective(glm::radians(90.0f), float(viewportWidth) / float(viewportHeight), 0.1f,
-                                              10000.0f);
-        }
-        else
-        {
-            const float zoom = viewport.zoom / 100.0f;
-            
-            const float left = -float(viewportWidth);
-            const float right = float(viewportWidth);
-            const float down = -float(viewportHeight);
-            const float up = float(viewportHeight);
-            
-            projViewMatrix = glm::ortho(left / zoom, right / zoom, down / zoom, up / zoom,
-                                        1.0f, 100000.0f);
-        }
+        const glm::mat4 projViewMatrix = calculateViewportMatrix(viewport);
         
-        projViewMatrix *= viewport.camera.getViewMatrix();
+        renderGrid(viewport, projViewMatrix);
         
-        viewport.inverseProjViewMatrix = glm::inverse(projViewMatrix);
+        renderBrushes(viewport, projViewMatrix);
         
-        if (viewport.gridMesh)
-        {
-            defaultShader->use();
-            defaultShader->setMat4("uProjView", projViewMatrix);
-            
-            //draw the grid
-            viewport.gridMesh->draw(GL_LINES);
-        }
+        defaultShader->use();
+        defaultShader->setMat4("uProjView", projViewMatrix);
         
-        //select appropriate brush shader for the viewport
-        if (viewport.type == ViewportType::Projection)
-        {
-            brushShader->use();
-            
-            brushShader->setMat4("uProjView", projViewMatrix);
-            
-            gl->Enable(GL_CULL_FACE);
-        }
-        else
-        {
-            //we're lines, we always want to show
-            gl->DepthFunc(GL_ALWAYS);
-        }
-        
-        //draw all brush meshes
-        for (auto& brushMesh: brushMeshes)
-        {
-            if (viewport.type == ViewportType::Projection)
-            {
-                brushMesh.draw(GL_TRIANGLE_FAN);
-            }
-            else
-            {
-                brushMesh.draw(GL_LINES);
-            }
-        }
-        
-        //if we're not projection make sure to reset the depth stuff
-        //also get ready to draw the coordinate thing
-        if (viewport.type == ViewportType::Projection)
-        {
-            gl->Disable(GL_CULL_FACE);
-            
-            defaultShader->use();
-            defaultShader->setMat4("uProjView", projViewMatrix);
-        }
-        
+        gl->DepthFunc(GL_LEQUAL);
         gl->Enable(GL_LINE_SMOOTH);
         gl->LineWidth(maxLineWidth);
         
@@ -434,12 +404,7 @@ void Viewport::render()
         
         gl->LineWidth(1.0f);
         gl->Disable(GL_LINE_SMOOTH);
-        
-        if (viewport.type != ViewportType::Projection)
-        {
-            //reset depth func
-            gl->DepthFunc(GL_LESS);
-        }
+        gl->DepthFunc(GL_LESS);
     }
     
     //draw out borders between viewports
@@ -448,6 +413,123 @@ void Viewport::render()
     
     noProjShader->use();
     borderMesh->draw(GL_TRIANGLES);
+}
+
+glm::mat4 Viewport::calculateViewportMatrix(ViewportData& viewport) const
+{
+    glm::mat4 projViewMatrix {1.0f};
+    if (viewport.type == ViewportType::Projection)
+    {
+        projViewMatrix = glm::perspective(glm::radians(90.0f), float(viewportWidth) / float(viewportHeight), 0.1f,
+                                          10000.0f);
+    }
+    else
+    {
+        const float zoom = viewport.zoom / 100.0f;
+        
+        const float left = -float(viewportWidth);
+        const float right = float(viewportWidth);
+        const float down = -float(viewportHeight);
+        const float up = float(viewportHeight);
+        
+        projViewMatrix = glm::ortho(left / zoom, right / zoom, down / zoom, up / zoom,
+                                    1.0f, 100000.0f);
+    }
+    
+    projViewMatrix *= viewport.camera.getViewMatrix();
+    
+    return projViewMatrix;
+}
+
+void Viewport::renderGrid(ViewportData& viewport, const glm::mat4& projViewMatrix)
+{
+    viewport.inverseProjViewMatrix = glm::inverse(projViewMatrix);
+    
+    if (viewport.gridMesh)
+    {
+        defaultShader->use();
+        defaultShader->setMat4("uProjView", projViewMatrix);
+        
+        //draw the grid
+        viewport.gridMesh->draw(GL_LINES);
+    }
+}
+
+void Viewport::renderBrushes(ViewportData& viewport, const glm::mat4& projViewMatrix)
+{
+    renderVisibleBrushes(viewport, projViewMatrix);
+    
+    renderSelectedBrushes(viewport, projViewMatrix);
+}
+
+void Viewport::renderVisibleBrushes(ViewportData& viewport, const glm::mat4& projViewMatrix)
+{
+    //select appropriate brush shader for the viewport
+    if (viewport.type == ViewportType::Projection)
+    {
+        brushShader->use();
+        brushShader->setMat4("uProjView", projViewMatrix);
+        
+        gl->Enable(GL_CULL_FACE);
+    }
+    else
+    {
+        //we're lines, we always want to show
+        gl->DepthFunc(GL_ALWAYS);
+    }
+    
+    //draw all brush meshes
+    for (auto& brushMesh: brushMeshes)
+    {
+        if (viewport.type == ViewportType::Projection)
+        {
+            brushMesh.draw(GL_TRIANGLE_FAN);
+        }
+        else
+        {
+            brushMesh.draw(GL_LINES);
+        }
+    }
+    
+    if (viewport.type == ViewportType::Projection)
+    {
+        gl->Disable(GL_CULL_FACE);
+    }
+    else
+    {
+        //reset depth func
+        gl->DepthFunc(GL_LESS);
+    }
+}
+
+void Viewport::renderSelectedBrushes(ViewportData& viewport, const glm::mat4& projViewMatrix)
+{
+    if (toolType != ViewportToolType::Select)
+    {
+        return;
+    }
+    
+    //draw out highlighted brushes
+    if (viewport.type == ViewportType::Projection)
+    {
+        brushShader->use();
+        brushShader->setMat4("uProjView", projViewMatrix);
+        
+        gl->Enable(GL_BLEND);
+        
+        gl->DepthMask(GL_FALSE);
+        gl->DepthFunc(GL_LEQUAL);
+        
+        for (auto& brushMesh : selectedBrushMeshes)
+        {
+            brushMesh.draw(GL_TRIANGLE_FAN);
+        }
+        
+        gl->DepthFunc(GL_LESS);
+        gl->DepthMask(GL_TRUE);
+        
+        gl->Disable(GL_BLEND);
+    }
 }
 
 void Viewport::changeSize(int width, int height)

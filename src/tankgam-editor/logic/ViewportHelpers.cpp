@@ -103,11 +103,11 @@ void sortVerticiesClockwise(const glm::vec3& normal, std::vector<glm::vec3>& ver
     verticies = std::move(newVerticies);
 }
 
-std::vector<std::vector<Vertex>> makeBrushVertices(const Brush& brush)
+std::vector<std::vector<Vertex>> makeBrushVertices(const Brush& brush, glm::vec3 overrideColor)
 {
     const auto planes = brush.getPlanes();
     const auto vertices = brush.getVertices();
-    const auto color = brush.getColor();
+    const auto color = overrideColor == glm::vec3{} ? brush.getColor() : overrideColor;
     
     std::vector<std::vector<Vertex>> verticesList;
     for (const auto& plane : planes)

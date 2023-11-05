@@ -21,14 +21,19 @@ private:
 public:
     Viewport& getViewport();
     
-    std::span<const Brush> getBrushes() const;
+    std::vector<Brush> getBrushes() const;
+    
+    std::vector<Brush> getSelectedBrushes() const;
     
     void createBrush(glm::vec2 begin, glm::vec2 end, int skipAxis);
+    
+    void selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection);
     
 private:
     Viewport viewport;
     
     std::vector<Brush> brushes;
+    std::vector<Brush> selectedBrushes;
     
     glm::vec3 beginVec;
     glm::vec3 endVec;
