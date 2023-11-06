@@ -26,19 +26,30 @@ void Viewport::update()
     if (gl)
     {
         brushMeshes.clear();
+        brushTextureNames.clear();
         const auto brushes = editor.getBrushes();
-        for (const auto& brush: brushes)
+        for (const auto& brush : brushes)
         {
+            const std::string texture = brush.getTextureName().data();
+            if (textures.find(texture) == textures.end())
+            {
+                const std::vector<char> textureBuffer = fileManager.readFileRaw(brush.getTextureName().data());
+                
+                auto textureData = reinterpret_cast<const uint8_t*>(textureBuffer.data());
+                textures.insert(std::pair{ texture, Texture{ *gl, std::span<const uint8_t>{ textureData, textureBuffer.size() } } });
+            }
+            
             const auto verticesList = makeBrushVertices(brush);
-            for (const auto& vertices: verticesList)
+            for (const auto& vertices : verticesList)
             {
                 brushMeshes.emplace_back(*gl, vertices);
+                brushTextureNames.push_back(brush.getTextureName().data());
             }
         }
         
         selectedBrushMeshes.clear();
         const auto selectedBrushes = editor.getSelectedBrushes();
-        for (const auto& brush: selectedBrushes)
+        for (const auto& brush : selectedBrushes)
         {
             const auto verticesList = makeBrushVertices(brush, glm::vec3{ 1.0f, 0.0f, 0.0f });
             for (const auto& vertices: verticesList)
@@ -75,6 +86,7 @@ void Viewport::initGL(GladGLContext& glf, int width, int height)
 void Viewport::quitGL()
 {
     selectedBrushMeshes.clear();
+    brushTextureNames.clear();
     brushMeshes.clear();
     
     currentViewport = nullptr;
@@ -83,8 +95,11 @@ void Viewport::quitGL()
     borderMesh.reset();
     
     noProjShader.reset();
+    brushColorShader.reset();
     brushShader.reset();
     defaultShader.reset();
+    
+    textures.clear();
     
     gl = nullptr;
 }
@@ -156,17 +171,37 @@ void Viewport::createShaders()
 
                 layout (location = 0) out vec4 outFragColor;
 
-                //layout (binding = 0) uniform sampler2D diffuseTexture;
+                layout (binding = 0) uniform sampler2D diffuseTexture;
 
                 void main()
                 {
                     float d1 = dot(vNormal, vec3(1.0f / sqrt(14.0f), 3.0f / sqrt(14.0f), sqrt(2.0f / 7.0f)));
-                    d1 = (d1 / 2.0f) + 0.5f;
-                    outFragColor = vec4(vColor * d1, 1.0f);
-                    //outFragColor = vec4(texture(diffuseTexture, vTexCoord).rgb, 1.0f);
+                    d1 = (d1 / 2.0f) + 0.65f;
+                    //outFragColor = vec4(vColor * d1, 1.0f);
+                    outFragColor = vec4(texture(diffuseTexture, vTexCoord).rgb * d1, 1.0f);
                 })";
     
     brushShader = std::make_unique<Shader>(*gl, DEFAULT_PROJ_VERT, BRUSH_PROJ_FRAG);
+    
+    constexpr std::string_view BRUSH_COLOR_PROJ_FRAG = R"(#version 420 core
+                in vec3 vPos;
+                in vec3 vColor;
+                in vec3 vNormal;
+                in vec2 vTexCoord;
+
+                layout (location = 0) out vec4 outFragColor;
+
+                layout (binding = 0) uniform sampler2D diffuseTexture;
+
+                void main()
+                {
+                    float d1 = dot(vNormal, vec3(1.0f / sqrt(14.0f), 3.0f / sqrt(14.0f), sqrt(2.0f / 7.0f)));
+                    d1 = (d1 / 2.0f) + 0.65f;
+                    outFragColor = vec4(vColor * d1, 1.0f);
+                    //outFragColor = vec4(texture(diffuseTexture, vTexCoord).rgb * d1, 1.0f);
+                })";
+    
+    brushColorShader = std::make_unique<Shader>(*gl, DEFAULT_PROJ_VERT, BRUSH_COLOR_PROJ_FRAG);
     
     constexpr std::string_view NO_PROJ_VERT = R"(#version 330 core
                 layout (location = 0) in vec3 aPos;
@@ -379,7 +414,7 @@ void Viewport::clickLeftEnd(int x, int y)
             //ditto
             const auto [endMouseRounded, endMouseAxis] = getRoundedPositionAndAxis(currentViewport->type, endMousePosition);
             
-            editor.createBrush(beginMouseRounded, endMouseRounded, beginMouseAxis);
+            editor.createBrush(textureName, beginMouseRounded, endMouseRounded, beginMouseAxis);
         }
     }
     else if (toolType == ViewportToolType::Select)
@@ -548,15 +583,21 @@ void Viewport::renderVisibleBrushes(ViewportData& viewport, const glm::mat4& pro
     }
     else
     {
+        defaultShader->use();
+        defaultShader->setMat4("uProjView", projViewMatrix);
+        
         //we're lines, we always want to show
         gl->DepthFunc(GL_ALWAYS);
     }
     
     //draw all brush meshes
-    for (auto& brushMesh: brushMeshes)
+    for (size_t i = 0; i < brushMeshes.size(); i++)
     {
+        auto& brushMesh = brushMeshes[i];
+        auto& brushTextureName = brushTextureNames[i];
         if (viewport.type == ViewportType::Projection)
         {
+            textures.at(brushTextureName).bind();
             brushMesh.draw(GL_TRIANGLE_FAN);
         }
         else
@@ -586,8 +627,8 @@ void Viewport::renderSelectedBrushes(ViewportData& viewport, const glm::mat4& pr
     //draw out highlighted brushes
     if (viewport.type == ViewportType::Projection)
     {
-        brushShader->use();
-        brushShader->setMat4("uProjView", projViewMatrix);
+        brushColorShader->use();
+        brushColorShader->setMat4("uProjView", projViewMatrix);
         
         gl->Enable(GL_BLEND);
         

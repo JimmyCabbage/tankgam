@@ -3,12 +3,14 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>
 
 #include <gl/Shader.h>
 #include <gl/Mesh.h>
+#include <gl/Texture.h>
 #include <util/File.h>
 
 #include "ViewportCamera.h"
@@ -137,9 +139,11 @@ private:
     ViewportToolType toolType;
     
     std::string textureName;
+    std::unordered_map<std::string, Texture> textures;
     
     std::unique_ptr<Shader> defaultShader;
     std::unique_ptr<Shader> brushShader;
+    std::unique_ptr<Shader> brushColorShader;
     std::unique_ptr<Shader> noProjShader;
     
     std::unique_ptr<Mesh> borderMesh;
@@ -148,5 +152,6 @@ private:
     ViewportData* currentViewport;
     
     std::vector<Mesh> brushMeshes;
+    std::vector<std::string> brushTextureNames;
     std::vector<Mesh> selectedBrushMeshes;
 };

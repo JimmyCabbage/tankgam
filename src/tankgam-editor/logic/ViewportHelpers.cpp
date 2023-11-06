@@ -103,6 +103,34 @@ void sortVerticiesClockwise(const glm::vec3& normal, std::vector<glm::vec3>& ver
     verticies = std::move(newVerticies);
 }
 
+static std::pair<glm::vec3, glm::vec3> getTextureAxisFromNormal(const glm::vec3& normal)
+{
+    constexpr std::array<glm::vec3, 18> baseAxises
+    {
+        glm::vec3{0,1,0}, {0,0,1}, {-1,0,0},		// floor
+        glm::vec3{0,-1,0}, {0,0,1}, {-1,0,0},		// ceiling
+        glm::vec3{0,0,1}, {1,0,0}, {0,1,0},		// west wall
+        glm::vec3{0,0,-1}, {-1,0,0}, {0,1,0},		// east wall
+        glm::vec3{1,0,0}, {0,0,-1}, {0,1,0},		// south wall
+        glm::vec3{-1,0,0}, {0,0,1}, {0,1,0}		// north wall
+    };
+    
+    size_t bestAxis = 0;
+    float best = 0.0f;
+    
+    for (size_t i = 0; i < 6; i++)
+    {
+        const float dot = glm::dot(normal, baseAxises[i * 3]);
+        if (dot > best)
+        {
+            best = dot;
+            bestAxis = i;
+        }
+    }
+    
+    return { baseAxises[bestAxis * 3 + 1], baseAxises[bestAxis * 3 + 2] };
+}
+
 std::vector<std::vector<Vertex>> makeBrushVertices(const Brush& brush, glm::vec3 overrideColor)
 {
     const auto planes = brush.getPlanes();
@@ -132,9 +160,11 @@ std::vector<std::vector<Vertex>> makeBrushVertices(const Brush& brush, glm::vec3
         std::vector<Vertex> vertexList;
         vertexList.reserve(planeVertices.size());
         
-        for (const auto & edgeVertex : planeVertices)
+        for (const auto& edgeVertex : planeVertices)
         {
-            vertexList.emplace_back(edgeVertex, color, plane.normal, glm::vec2{});
+            const auto [uAxis, vAxis] = getTextureAxisFromNormal(plane.normal);
+            const glm::vec2 texCoord = glm::vec2{ glm::dot(edgeVertex, uAxis), glm::dot(edgeVertex, vAxis) } / GRID_UNIT;
+            vertexList.emplace_back(edgeVertex, color, plane.normal, texCoord);
         }
         
         verticesList.push_back(std::move(vertexList));
