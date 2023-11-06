@@ -10,7 +10,8 @@
 #include "StdLog.h"
 #include "Viewport.h"
 #include "Brush.h"
-#include "Plane.h"
+
+#include <util/Plane.h>
 
 class Editor
 {

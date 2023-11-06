@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-#include "Plane.h"
+#include <util/Plane.h>
 
 class Brush
 {

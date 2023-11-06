@@ -2,7 +2,8 @@ add_library(tankgam-util STATIC)
 
 target_sources(tankgam-util PRIVATE
         ${PROJECT_SOURCE_DIR}/include/tankgam-util/util/Log.h
-        ${PROJECT_SOURCE_DIR}/include/tankgam-util/util/FileManager.h util/FileManager.cpp)
+        ${PROJECT_SOURCE_DIR}/include/tankgam-util/util/FileManager.h util/FileManager.cpp
+        ${PROJECT_SOURCE_DIR}/include/tankgam-util/util/Plane.h util/Plane.cpp)
 
 #we want ALL the warnings
 if(${MSVC})
@@ -16,7 +17,7 @@ target_compile_features(tankgam-util PUBLIC cxx_std_20)
 set_target_properties(tankgam-util PROPERTIES CXX_EXTENSIONS OFF)
 
 #linking various external files
-target_link_libraries(tankgam-util PUBLIC libzip::zip)
+target_link_libraries(tankgam-util PUBLIC libzip::zip glm::glm)
 
 #move up some directories to be up
 target_include_directories(tankgam-util PUBLIC "${PROJECT_SOURCE_DIR}/include/tankgam-util")

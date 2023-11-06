@@ -15,10 +15,6 @@ target_sources(tankgam-editor PRIVATE
         logic/Editor.h logic/Editor.cpp
         logic/StdLog.h logic/StdLog.cpp)
 
-#math stuff
-target_sources(tankgam-editor PRIVATE
-        math/Plane.h math/Plane.cpp)
-
 #we want ALL the warnings
 if(MSVC)
     target_compile_options(tankgam-editor PRIVATE /W4)
