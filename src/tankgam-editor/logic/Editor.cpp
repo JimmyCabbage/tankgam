@@ -1,12 +1,15 @@
 #include "Editor.h"
 
 #include <limits>
+#include <stdexcept>
 
 #include "Common.h"
 
 Editor::Editor()
     : stdLog{}, fileManager{ stdLog }, viewport{ fileManager, *this }
 {
+    fileManager.loadAssetsFile("base_textures.assets");
+    
     defaultState();
 }
 
@@ -14,18 +17,37 @@ Editor::~Editor() = default;
 
 void Editor::defaultState()
 {
+    availableTextures = fileManager.fileNamesInDir("textures/");
+    if (availableTextures.empty())
+    {
+        throw std::runtime_error{ "No available textures!" };
+    }
+    
     brushes.clear();
     selectedBrushes.clear();
+    selectedBrushesIndices.clear();
     
     beginVec = {};
     endVec = {};
     defaultBeginSize = { -GRID_UNIT, -GRID_UNIT, -GRID_UNIT };
     defaultEndSize = { GRID_UNIT, 0, GRID_UNIT };
+    
+    viewport.update();
+}
+
+FileManager& Editor::getFileManager()
+{
+    return fileManager;
 }
 
 Viewport& Editor::getViewport()
 {
     return viewport;
+}
+
+std::span<const std::string> Editor::getAvailableTextures() const
+{
+    return availableTextures;
 }
 
 std::vector<Brush> Editor::getBrushes() const
@@ -38,7 +60,7 @@ std::vector<Brush> Editor::getSelectedBrushes() const
     return selectedBrushes;
 }
 
-void Editor::createBrush(glm::vec2 begin, glm::vec2 end, int skipAxis)
+void Editor::createBrush(std::string_view textureName, glm::vec2 begin, glm::vec2 end, int skipAxis)
 {
     const int knownAxis1 = (skipAxis + 1) % 3;
     const int knownAxis2 = (skipAxis + 2) % 3;
@@ -59,7 +81,7 @@ void Editor::createBrush(glm::vec2 begin, glm::vec2 end, int skipAxis)
     defaultEndSize[knownAxis1] = end[0];
     defaultEndSize[knownAxis2] = end[1];
     
-    brushes.emplace_back("", beginVec, endVec);
+    brushes.emplace_back(textureName.data(), beginVec, endVec);
     
     viewport.update();
 }

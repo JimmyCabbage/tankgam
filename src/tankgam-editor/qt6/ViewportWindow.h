@@ -24,6 +24,8 @@ public slots:
     void quitOpenGL();
     
     void toolSelected(ViewportToolType viewportToolType);
+    
+    void textureSelected(std::string textureName);
 
 protected:
     bool event(QEvent* event) override;

@@ -82,6 +82,11 @@ void ViewportWindow::toolSelected(ViewportToolType viewportToolType)
     viewport.setToolType(viewportToolType);
 }
 
+void ViewportWindow::textureSelected(std::string textureName)
+{
+    viewport.setTextureName(std::move(textureName));
+}
+
 bool ViewportWindow::event(QEvent* event)
 {
     switch (event->type())

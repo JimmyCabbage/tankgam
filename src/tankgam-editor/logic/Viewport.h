@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>
@@ -40,6 +41,10 @@ public:
     void setToolType(ViewportToolType viewportToolType);
     
     ViewportToolType getToolType() const;
+    
+    void setTextureName(std::string newTextureName);
+    
+    std::string getTextureName() const;
     
 private:
     void createShaders();
@@ -130,6 +135,8 @@ private:
     int viewportHeight;
     
     ViewportToolType toolType;
+    
+    std::string textureName;
     
     std::unique_ptr<Shader> defaultShader;
     std::unique_ptr<Shader> brushShader;

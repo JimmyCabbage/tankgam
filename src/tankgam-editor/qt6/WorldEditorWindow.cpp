@@ -14,10 +14,11 @@ WorldEditorWindow::WorldEditorWindow(QWidget* parent)
         renderAndSettingSplitter->addWidget(renderWidget);
         
         //settings stuff
-        settingsTab = new SettingsTab;
+        settingsTab = new SettingsTab{ editor };
         renderAndSettingSplitter->addWidget(settingsTab);
         
         connect(settingsTab, &SettingsTab::toolSelected, renderWidget, &RenderWidget::toolSelected);
+        connect(settingsTab, &SettingsTab::textureSelected, renderWidget, &RenderWidget::textureSelected);
     }
     
     resize(1600, 900);

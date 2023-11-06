@@ -22,13 +22,17 @@ private:
     void defaultState();
     
 public:
+    FileManager& getFileManager();
+    
     Viewport& getViewport();
+    
+    std::span<const std::string> getAvailableTextures() const;
     
     std::vector<Brush> getBrushes() const;
     
     std::vector<Brush> getSelectedBrushes() const;
     
-    void createBrush(glm::vec2 begin, glm::vec2 end, int skipAxis);
+    void createBrush(std::string_view textureName, glm::vec2 begin, glm::vec2 end, int skipAxis);
     
     void selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection);
     
@@ -40,6 +44,8 @@ private:
     StdLog stdLog;
     FileManager fileManager;
     Viewport viewport;
+    
+    std::vector<std::string> availableTextures;
     
     std::vector<Brush> brushes;
     std::vector<Brush> selectedBrushes;

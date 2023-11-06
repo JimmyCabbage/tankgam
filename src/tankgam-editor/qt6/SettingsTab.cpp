@@ -2,8 +2,10 @@
 
 #include <optional>
 
-SettingsTab::SettingsTab(QWidget* parent)
-    : QTabWidget{ parent }
+#include "Editor.h"
+
+SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
+    : QTabWidget{ parent }, editor{ editor }
 {
     generalTabLayout = new QVBoxLayout{ this };
     generalTabLayout->setAlignment(Qt::AlignTop);
@@ -20,6 +22,19 @@ SettingsTab::SettingsTab(QWidget* parent)
         generalTabLayout->addWidget(toolsDropdown);
         
         connect(toolsDropdown, &QComboBox::textHighlighted, this, &SettingsTab::textHighlightedTools);
+        
+        texturesDropdownLabel = new QLabel{ "Current Texture:", this };
+        generalTabLayout->addWidget(texturesDropdownLabel);
+        
+        texturesDropdown = new QComboBox{ this };
+        const auto textures = editor.getAvailableTextures();
+        for (const auto& texture : textures)
+        {
+            texturesDropdown->addItem(QString::fromStdString(texture));
+        }
+        generalTabLayout->addWidget(texturesDropdown);
+        
+        connect(texturesDropdown, &QComboBox::textHighlighted, this, &SettingsTab::textHighlightedTextures);
     }
     addTab(generalTab, "General");
 }
@@ -43,4 +58,9 @@ void SettingsTab::textHighlightedTools(const QString& text)
     {
         emit toolSelected(toolType.value());
     }
+}
+
+void SettingsTab::textHighlightedTextures(const QString& text)
+{
+    emit textureSelected(text.toStdString());
 }

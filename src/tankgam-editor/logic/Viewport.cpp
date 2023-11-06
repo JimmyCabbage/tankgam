@@ -22,25 +22,29 @@ Viewport::~Viewport() = default;
 
 void Viewport::update()
 {
-    brushMeshes.clear();
-    const auto brushes = editor.getBrushes();
-    for (const auto& brush : brushes)
+    textureName = editor.getAvailableTextures()[0];
+    if (gl)
     {
-        const auto verticesList = makeBrushVertices(brush);
-        for (const auto& vertices : verticesList)
+        brushMeshes.clear();
+        const auto brushes = editor.getBrushes();
+        for (const auto& brush: brushes)
         {
-            brushMeshes.emplace_back(*gl, vertices);
+            const auto verticesList = makeBrushVertices(brush);
+            for (const auto& vertices: verticesList)
+            {
+                brushMeshes.emplace_back(*gl, vertices);
+            }
         }
-    }
-    
-    selectedBrushMeshes.clear();
-    const auto selectedBrushes = editor.getSelectedBrushes();
-    for (const auto& brush : selectedBrushes)
-    {
-        const auto verticesList = makeBrushVertices(brush, glm::vec3{ 1.0f, 0.0f, 0.0f });
-        for (const auto& vertices : verticesList)
+        
+        selectedBrushMeshes.clear();
+        const auto selectedBrushes = editor.getSelectedBrushes();
+        for (const auto& brush: selectedBrushes)
         {
-            selectedBrushMeshes.emplace_back(*gl, vertices);
+            const auto verticesList = makeBrushVertices(brush, glm::vec3{ 1.0f, 0.0f, 0.0f });
+            for (const auto& vertices: verticesList)
+            {
+                selectedBrushMeshes.emplace_back(*gl, vertices);
+            }
         }
     }
 }
@@ -93,6 +97,16 @@ void Viewport::setToolType(ViewportToolType viewportToolType)
 ViewportToolType Viewport::getToolType() const
 {
     return toolType;
+}
+
+void Viewport::setTextureName(std::string newTextureName)
+{
+    textureName = std::move(newTextureName);
+}
+
+std::string Viewport::getTextureName() const
+{
+    return textureName;
 }
 
 void Viewport::createShaders()
