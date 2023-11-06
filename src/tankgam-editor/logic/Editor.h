@@ -6,12 +6,11 @@
 #include <glad/gl.h>
 
 #include <util/FileManager.h>
+#include <util/Plane.h>
+#include <util/Brush.h>
 
 #include "StdLog.h"
 #include "Viewport.h"
-#include "Brush.h"
-
-#include <util/Plane.h>
 
 class Editor
 {

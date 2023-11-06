@@ -7,8 +7,8 @@
 #include <glm/glm.hpp>
 
 #include <gl/Vertex.h>
+#include <util/Brush.h>
 
-#include "Brush.h"
 #include "Viewport.h"
 #include "ViewportCamera.h"
 

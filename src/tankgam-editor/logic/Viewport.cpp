@@ -3,10 +3,10 @@
 #include <string_view>
 
 #include <gl/Vertex.h>
+#include <util/Brush.h>
 
 #include "Common.h"
 #include "Editor.h"
-#include "Brush.h"
 #include "ViewportHelpers.h"
 
 Viewport::Viewport(FileManager& fileManager, Editor& editor)
