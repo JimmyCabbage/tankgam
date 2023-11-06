@@ -11,7 +11,7 @@
 
 #include "sys/Renderer/TextRenderer.h"
 
-#include <util/File.h>
+#include <util/FileManager.h>
 
 Renderer::Renderer(Console& console, FileManager& fileManager, std::string_view windowName)
     : console{ console }, fileManager{ fileManager },

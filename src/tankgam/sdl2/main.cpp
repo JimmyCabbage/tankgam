@@ -6,7 +6,7 @@
 
 #include "SDL.h"
 
-#include <util/File.h>
+#include <util/FileManager.h>
 
 int main(int argc, char** argv)
 {

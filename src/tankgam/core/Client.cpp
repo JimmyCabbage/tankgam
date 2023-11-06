@@ -16,7 +16,7 @@
 #include "Event.h"
 #include "EntityManager.h"
 
-#include <util/File.h>
+#include <util/FileManager.h>
 
 Client::Client(Console& console, FileManager& fileManager, Net& net)
     : console{ console }, fileManager{ fileManager }, net{ net }

@@ -8,7 +8,7 @@
 #include "NetChan.h"
 #include "NetBuf.h"
 
-#include <util/File.h>
+#include <util/FileManager.h>
 
 Server::Server(Console& console, FileManager& fileManager, Net& net)
     : console{ console }, fileManager{ fileManager }, net{ net }

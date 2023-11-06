@@ -11,7 +11,7 @@
 #include <gl/Shader.h>
 #include <gl/Mesh.h>
 #include <gl/Texture.h>
-#include <util/File.h>
+#include <util/FileManager.h>
 
 #include "ViewportCamera.h"
 #include "ViewportToolType.h"

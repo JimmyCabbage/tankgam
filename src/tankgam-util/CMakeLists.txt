@@ -2,7 +2,7 @@ add_library(tankgam-util STATIC)
 
 target_sources(tankgam-util PRIVATE
         ${PROJECT_SOURCE_DIR}/include/tankgam-util/util/Log.h
-        ${PROJECT_SOURCE_DIR}/include/tankgam-util/util/File.h util/File.cpp)
+        ${PROJECT_SOURCE_DIR}/include/tankgam-util/util/FileManager.h util/FileManager.cpp)
 
 #we want ALL the warnings
 if(${MSVC})
