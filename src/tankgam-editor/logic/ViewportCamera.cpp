@@ -68,16 +68,6 @@ glm::vec3 ViewportCamera::getPosition() const
     return position;
 }
 
-glm::vec3 ViewportCamera::getRight() const
-{
-    return right;
-}
-
-glm::vec3 ViewportCamera::getUp() const
-{
-    return up;
-}
-
 glm::mat4 ViewportCamera::getViewMatrix() const
 {
     return glm::lookAt(position, position + front, up);

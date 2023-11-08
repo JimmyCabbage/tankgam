@@ -11,14 +11,17 @@
 class Brush
 {
 public:
-    Brush(std::string textureName, glm::vec3 beginVec, glm::vec3 endVec);
+    Brush(std::string textureName, float textureScale, glm::vec3 beginVec, glm::vec3 endVec);
     ~Brush();
     
     Brush(const Brush& o);
     Brush& operator=(const Brush& o);
     
     void setTextureName(std::string newName);
+    
     std::string_view getTextureName() const;
+    
+    float getTextureScale() const;
     
     std::span<const Plane> getPlanes() const;
     
@@ -32,6 +35,7 @@ public:
     
 private:
     std::string textureName;
+    float textureScale;
     std::vector<Plane> planes;
     
     std::vector<glm::vec3> vertices;

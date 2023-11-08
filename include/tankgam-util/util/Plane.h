@@ -35,4 +35,6 @@ struct Plane
     };
     
     static Classification classifyPoint(const Plane& plane, glm::vec3 point);
+    
+    static Classification classifyPoints(const Plane& plane, std::span<const glm::vec3> polygonVertices);
 };

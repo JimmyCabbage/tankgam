@@ -5,6 +5,7 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QComboBox>
+#include <QPushButton>
 
 #include "ViewportToolType.h"
 
@@ -28,6 +29,8 @@ signals:
     
     void textureSelected(std::string textureName);
 
+    void buildMap();
+    
 private:
     Editor& editor;
     
@@ -37,4 +40,5 @@ private:
     QComboBox* toolsDropdown;
     QLabel* texturesDropdownLabel;
     QComboBox* texturesDropdown;
+    QPushButton* buildMapButton;
 };

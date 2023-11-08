@@ -42,7 +42,7 @@ void Viewport::update()
             for (const auto& vertices : verticesList)
             {
                 brushMeshes.emplace_back(*gl, vertices);
-                brushTextureNames.push_back(brush.getTextureName().data());
+                brushTextureNames.emplace_back(brush.getTextureName().data());
             }
         }
         
@@ -253,12 +253,30 @@ void Viewport::moveSelectedBrushes(MoveDir moveDir)
 {
     if (toolType == ViewportToolType::Select)
     {
-        glm::vec3 verticalAxis = currentViewport->camera.getUp();
-        glm::vec3 horizontalAxis = currentViewport->camera.getRight();
+        glm::vec3 verticalAxis;
+        glm::vec3 horizontalAxis;
         if (currentViewport->type == ViewportType::Projection)
         {
             verticalAxis = glm::vec3{ 0.0f, 1.0f, 0.0f };
             horizontalAxis = glm::vec3{ 0.0f, 0.0f, 0.0f };
+        }
+        else
+        {
+            if (currentViewport->type == ViewportType::Top)
+            {
+                verticalAxis = glm::vec3{ 0.0f, 0.0f, -1.0f };
+                horizontalAxis = glm::vec3{ 1.0f, 0.0f, 0.0f };
+            }
+            else if (currentViewport->type == ViewportType::Front)
+            {
+                verticalAxis = glm::vec3{ 0.0f, 1.0f, 0.0f };
+                horizontalAxis = glm::vec3{ -1.0f, 0.0f, 0.0f };
+            }
+            else if (currentViewport->type == ViewportType::Side)
+            {
+                verticalAxis = glm::vec3{ 0.0f, 1.0f, 0.0f };
+                horizontalAxis = glm::vec3{ 0.0f, 0.0f, -1.0f };
+            }
         }
         
         using Move = MoveDir;
@@ -608,27 +626,30 @@ void Viewport::renderSelectedBrushes(ViewportData& viewport, const glm::mat4& pr
         return;
     }
     
+    gl->DepthMask(GL_FALSE);
+    gl->DepthFunc(GL_LEQUAL);
+    
     //draw out highlighted brushes
-    if (viewport.type == ViewportType::Projection)
+    for (auto& brushMesh : selectedBrushMeshes)
     {
-        brushColorShader->use();
-        brushColorShader->setMat4("uProjView", projViewMatrix);
-        
-        gl->Enable(GL_BLEND);
-        
-        gl->DepthMask(GL_FALSE);
-        gl->DepthFunc(GL_LEQUAL);
-        
-        for (auto& brushMesh : selectedBrushMeshes)
+        if (viewport.type == ViewportType::Projection)
         {
+            brushColorShader->use();
+            brushColorShader->setMat4("uProjView", projViewMatrix);
+            
             brushMesh.draw(GL_TRIANGLE_FAN);
         }
-        
-        gl->DepthFunc(GL_LESS);
-        gl->DepthMask(GL_TRUE);
-        
-        gl->Disable(GL_BLEND);
+        else
+        {
+            defaultShader->use();
+            defaultShader->setMat4("uProjView", projViewMatrix);
+            
+            brushMesh.draw(GL_LINES);
+        }
     }
+    
+    gl->DepthFunc(GL_LESS);
+    gl->DepthMask(GL_TRUE);
 }
 
 void Viewport::changeSize(int width, int height)

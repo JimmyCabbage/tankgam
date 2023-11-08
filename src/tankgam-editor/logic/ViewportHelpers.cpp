@@ -1,5 +1,7 @@
 #include "ViewportHelpers.h"
 
+#include <util/Bsp.h>
+
 #include "Common.h"
 
 std::array<Vertex, 12> generateBorders()
@@ -103,38 +105,11 @@ void sortVerticiesClockwise(const glm::vec3& normal, std::vector<glm::vec3>& ver
     verticies = std::move(newVerticies);
 }
 
-static std::pair<glm::vec3, glm::vec3> getTextureAxisFromNormal(const glm::vec3& normal)
-{
-    constexpr std::array<glm::vec3, 18> baseAxises
-    {
-        glm::vec3{0,1,0}, {0,0,1}, {-1,0,0},		// floor
-        glm::vec3{0,-1,0}, {0,0,1}, {-1,0,0},		// ceiling
-        glm::vec3{0,0,1}, {1,0,0}, {0,1,0},		// west wall
-        glm::vec3{0,0,-1}, {-1,0,0}, {0,1,0},		// east wall
-        glm::vec3{1,0,0}, {0,0,-1}, {0,1,0},		// south wall
-        glm::vec3{-1,0,0}, {0,0,1}, {0,1,0}		// north wall
-    };
-    
-    size_t bestAxis = 0;
-    float best = 0.0f;
-    
-    for (size_t i = 0; i < 6; i++)
-    {
-        const float dot = glm::dot(normal, baseAxises[i * 3]);
-        if (dot > best)
-        {
-            best = dot;
-            bestAxis = i;
-        }
-    }
-    
-    return { baseAxises[bestAxis * 3 + 1], baseAxises[bestAxis * 3 + 2] };
-}
-
 std::vector<std::vector<Vertex>> makeBrushVertices(const Brush& brush, glm::vec3 overrideColor)
 {
     const auto planes = brush.getPlanes();
     const auto vertices = brush.getVertices();
+    const float textureScale = brush.getTextureScale();
     const auto color = overrideColor == glm::vec3{} ? brush.getColor() : overrideColor;
     
     std::vector<std::vector<Vertex>> verticesList;
@@ -162,8 +137,8 @@ std::vector<std::vector<Vertex>> makeBrushVertices(const Brush& brush, glm::vec3
         
         for (const auto& edgeVertex : planeVertices)
         {
-            const auto [uAxis, vAxis] = getTextureAxisFromNormal(plane.normal);
-            const glm::vec2 texCoord = glm::vec2{ glm::dot(edgeVertex, uAxis), glm::dot(edgeVertex, vAxis) } / GRID_UNIT;
+            const auto [uAxis, vAxis] = bsp::getTextureAxisFromNormal(plane.normal);
+            const glm::vec2 texCoord = glm::vec2{ glm::dot(edgeVertex, uAxis), glm::dot(edgeVertex, vAxis) } / textureScale;
             vertexList.emplace_back(edgeVertex, color, plane.normal, texCoord);
         }
         
@@ -185,7 +160,7 @@ ViewportCamera setupCamera(Viewport::ViewportType type)
     case Type::Top:
         return ViewportCamera{ { middleGrid, initialDistance, middleGrid }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } };
     case Type::Front:
-        return ViewportCamera{ { middleGrid, middleGrid, initialDistance }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f } };
+        return ViewportCamera{ { middleGrid, middleGrid, -initialDistance }, { 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f } };
     case Type::Side:
         return ViewportCamera{ { initialDistance, middleGrid, middleGrid }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } };
     case Type::Projection:

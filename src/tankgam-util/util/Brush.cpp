@@ -3,8 +3,8 @@
 #include <array>
 #include <random>
 
-Brush::Brush(std::string textureName, glm::vec3 beginVec, glm::vec3 endVec)
-    : textureName{ std::move(textureName) }, planes{}
+Brush::Brush(std::string textureName, float textureScale, glm::vec3 beginVec, glm::vec3 endVec)
+    : textureName{ std::move(textureName) }, textureScale{ textureScale }, planes{}
 {
     const glm::vec3 up{ 0.0f, 1.0f, 0.0f };
     const glm::vec3 right{ 1.0f, 0.0f, 0.0f };
@@ -50,6 +50,11 @@ void Brush::setTextureName(std::string newName)
 std::string_view Brush::getTextureName() const
 {
     return textureName;
+}
+
+float Brush::getTextureScale() const
+{
+    return textureScale;
 }
 
 std::span<const Plane> Brush::getPlanes() const

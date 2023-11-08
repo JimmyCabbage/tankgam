@@ -112,3 +112,30 @@ Plane::Classification Plane::classifyPoint(const Plane& plane, glm::vec3 point)
     return Classification::Coincident;
 #endif
 }
+
+Plane::Classification Plane::classifyPoints(const Plane& plane, std::span<const glm::vec3> polygonVertices)
+{
+    size_t backCount = 0;
+    size_t frontCount = 0;
+    
+    for (const auto& vertex : polygonVertices)
+    {
+        switch (Plane::classifyPoint(plane, vertex))
+        {
+        case Classification::Front:
+            frontCount++;
+            break;
+        case Classification::Back:
+            backCount++;
+            break;
+        case Classification::Coincident:
+            //do nothing
+            break;
+        }
+    }
+    
+    if (backCount && frontCount) return Classification::Spanning;
+    if (backCount) return Classification::Back;
+    if (frontCount) return Classification::Front;
+    return Classification::Coincident;
+}

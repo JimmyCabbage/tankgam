@@ -47,6 +47,11 @@ SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
         generalTabLayout->addWidget(texturesDropdown);
         
         connect(texturesDropdown, &QComboBox::currentTextChanged, this, &SettingsTab::currentTextChangedTextures);
+        
+        buildMapButton = new QPushButton{ "Build Map", this };
+        generalTabLayout->addWidget(buildMapButton);
+        
+        connect(buildMapButton, &QPushButton::clicked, this, &SettingsTab::buildMap);
     }
     addTab(generalTab, "General");
 }

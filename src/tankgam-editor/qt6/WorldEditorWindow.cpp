@@ -19,9 +19,11 @@ WorldEditorWindow::WorldEditorWindow(QWidget* parent)
         
         connect(settingsTab, &SettingsTab::toolSelected, renderWidget, &RenderWidget::toolSelected);
         connect(settingsTab, &SettingsTab::textureSelected, renderWidget, &RenderWidget::textureSelected);
+        connect(settingsTab, &SettingsTab::buildMap, this, [this]() { editor.buildMap(); });
     }
     
     resize(1600, 900);
+    renderWidget->resize(924, 900);
 }
 
 WorldEditorWindow::~WorldEditorWindow() = default;

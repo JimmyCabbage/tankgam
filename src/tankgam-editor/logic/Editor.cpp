@@ -3,6 +3,9 @@
 #include <limits>
 #include <stdexcept>
 
+#include <util/Bsp.h>
+#include <util/BspBuilder.h>
+
 #include "Common.h"
 
 Editor::Editor()
@@ -62,6 +65,13 @@ std::vector<Brush> Editor::getSelectedBrushes() const
 
 void Editor::createBrush(std::string_view textureName, glm::vec2 begin, glm::vec2 end, int skipAxis)
 {
+    //make sure this brush actually has some volume
+    if (std::abs(begin.x - end.x) < 0.1f ||
+        std::abs(begin.y - end.y) < 0.1f)
+    {
+        return;
+    }
+    
     const int knownAxis1 = (skipAxis + 1) % 3;
     const int knownAxis2 = (skipAxis + 2) % 3;
     
@@ -81,7 +91,7 @@ void Editor::createBrush(std::string_view textureName, glm::vec2 begin, glm::vec
     defaultEndSize[knownAxis1] = end[0];
     defaultEndSize[knownAxis2] = end[1];
     
-    brushes.emplace_back(textureName.data(), beginVec, endVec);
+    brushes.emplace_back(textureName.data(), GRID_UNIT, beginVec, endVec);
     
     viewport.update();
 }
@@ -146,4 +156,13 @@ void Editor::moveSelectedBrushes(glm::vec3 moveDir)
     }
     
     viewport.update();
+}
+
+void Editor::buildMap()
+{
+    BspBuilder bspBuilder;
+    bspBuilder.addBrushes(brushes);
+    
+    bsp::File file = bspBuilder.build();
+    bsp::writeFile("test.tgmap", file);
 }

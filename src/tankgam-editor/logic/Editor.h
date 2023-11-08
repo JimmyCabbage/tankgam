@@ -40,6 +40,8 @@ public:
     
     void moveSelectedBrushes(glm::vec3 moveDir);
     
+    void buildMap();
+    
 private:
     StdLog stdLog;
     FileManager fileManager;
