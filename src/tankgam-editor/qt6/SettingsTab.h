@@ -29,6 +29,11 @@ private slots:
     //file
     void editingFinishedMapName();
     
+    void clickedLoadMap();
+    
+public slots:
+    void updateTextboxMapName(std::string mapName);
+    
 signals:
     //general
     void toolSelected(ViewportToolType viewportToolType);
@@ -39,6 +44,10 @@ signals:
     
     //file
     void changeMapName(std::string mapName);
+    
+    void saveMap();
+    
+    void loadMap(std::string mapName);
     
 private:
     Editor& editor;
@@ -55,4 +64,6 @@ private:
     QWidget* fileTab;
     QLabel* mapNameLabel;
     QLineEdit* mapNameEntry;
+    QPushButton* saveMapButton;
+    QPushButton* loadMapButton;
 };

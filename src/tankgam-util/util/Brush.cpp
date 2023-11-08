@@ -3,6 +3,15 @@
 #include <array>
 #include <random>
 
+Brush::Brush(std::string textureName, float textureScale, std::span<const Plane> brushPlanes, glm::vec3 color)
+    : textureName{ std::move(textureName) }, textureScale{ textureScale }, color{ color }
+{
+    planes.resize(brushPlanes.size());
+    std::copy(brushPlanes.begin(), brushPlanes.end(), planes.begin());
+    
+    regenerateVertices();
+}
+
 Brush::Brush(std::string textureName, float textureScale, glm::vec3 beginVec, glm::vec3 endVec)
     : textureName{ std::move(textureName) }, textureScale{ textureScale }, planes{}
 {

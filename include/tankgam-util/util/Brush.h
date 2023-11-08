@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <span>
 
 #include <glm/glm.hpp>
 
@@ -11,6 +12,7 @@
 class Brush
 {
 public:
+    Brush(std::string textureName, float textureScale, std::span<const Plane> brushPlanes, glm::vec3 color);
     Brush(std::string textureName, float textureScale, glm::vec3 beginVec, glm::vec3 endVec);
     ~Brush();
     

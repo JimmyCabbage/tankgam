@@ -44,6 +44,10 @@ public:
     
     void moveSelectedBrushes(glm::vec3 moveDir);
     
+    void saveMap();
+    
+    void loadMap(std::string fileName);
+    
     void buildMap();
     
 private:
@@ -54,6 +58,7 @@ private:
     std::string mapName;
     
     std::vector<std::string> availableTextures;
+    std::vector<std::string> usedTextures;
     
     std::vector<Brush> brushes;
     std::vector<Brush> selectedBrushes;

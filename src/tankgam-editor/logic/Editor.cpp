@@ -2,6 +2,8 @@
 
 #include <limits>
 #include <stdexcept>
+#include <fstream>
+#include <algorithm>
 
 #include <fmt/format.h>
 
@@ -22,11 +24,14 @@ Editor::~Editor() = default;
 
 void Editor::defaultState()
 {
+    mapName = "default";
+    
     availableTextures = fileManager.fileNamesInDir("textures/");
     if (availableTextures.empty())
     {
         throw std::runtime_error{ "No available textures!" };
     }
+    usedTextures.clear();
     
     brushes.clear();
     selectedBrushes.clear();
@@ -104,6 +109,10 @@ void Editor::createBrush(std::string_view textureName, glm::vec2 begin, glm::vec
     defaultEndSize[knownAxis2] = end[1];
     
     brushes.emplace_back(textureName.data(), GRID_UNIT, beginVec, endVec);
+    if (std::find(usedTextures.begin(), usedTextures.end(), std::string{ textureName.data() }) == usedTextures.end())
+    {
+        usedTextures.emplace_back(textureName.data());
+    }
     
     viewport.update();
 }
@@ -165,6 +174,159 @@ void Editor::moveSelectedBrushes(glm::vec3 moveDir)
         const size_t index = selectedBrushesIndices[i];
         brushes[index].translate(moveDir);
         selectedBrushes[i] = brushes[index];
+    }
+    
+    viewport.update();
+}
+
+void Editor::saveMap()
+{
+    if (mapName.empty())
+    {
+        return;
+    }
+    
+    std::ofstream file{ mapName + ".map" };
+    
+    if (!file.is_open())
+    {
+        return;
+    }
+    
+    for (std::string_view texture : usedTextures)
+    {
+        file << "t " << texture.data() << '\n';
+    }
+    
+    size_t numNormals = 0;
+    size_t numPlanes = 0;
+    for (const auto& brush : brushes)
+    {
+        const size_t startPlane = numPlanes;
+        const auto planes = brush.getPlanes();
+        for (const auto& plane : planes)
+        {
+            file << "n "
+                 << plane.normal.x << ' '
+                 << plane.normal.y << ' '
+                 << plane.normal.z << '\n';
+            const size_t normLoc = numNormals++;
+            
+            file << "p "
+                 << normLoc << ' '
+                 << plane.distance << '\n';
+            numPlanes++;
+        }
+        
+        const glm::vec3 c = brush.getColor();
+        const size_t texLoc = std::distance(usedTextures.begin(), std::find(usedTextures.begin(), usedTextures.end(), brush.getTextureName()));
+        file << "b "
+             << brush.getTextureScale() << ' '
+             << c.x << ' '
+             << c.y << ' '
+             << c.z << ' '
+             << texLoc << ' '
+             << numPlanes - startPlane << ' ';
+        for (size_t i = startPlane; i < numPlanes; i++)
+        {
+            file << i << ' ';
+        }
+        file << '\n';
+    }
+}
+
+void Editor::loadMap(std::string fileName)
+{
+    defaultState();
+    
+    //remove extension if present
+    mapName = fileName.substr(0, fileName.find_last_of('.'));
+    
+    std::ifstream file{ fileName };
+    
+    if (!file.is_open())
+    {
+        throw std::runtime_error{ fmt::format("Failed to open file {}", fileName) };
+    }
+    
+    std::vector<glm::vec3> normals;
+    std::vector<Plane> planes;
+    
+    int lineNum = 0;
+    std::string line;
+    while (std::getline(file, line))
+    {
+        lineNum++;
+        
+        if (line.empty())
+        {
+            continue;
+        }
+        
+        std::stringstream lineStream{ std::move(line) };
+        
+        char type;
+        lineStream >> type;
+        switch (type)
+        {
+        case 't':
+        {
+            std::string texture;
+            lineStream >> texture;
+            
+            usedTextures.push_back(std::move(texture));
+        }
+            break;
+        case 'n':
+        {
+            glm::vec3 n;
+            lineStream >> n.x >> n.y >> n.z;
+            
+            normals.push_back(n);
+        }
+            break;
+        case 'p':
+        {
+            Plane plane{};
+            
+            size_t normLoc;
+            lineStream >> normLoc >> plane.distance;
+            
+            plane.normal = normals[normLoc];
+            
+            planes.push_back(plane);
+        }
+            break;
+        case 'b':
+        {
+            float textureScale;
+            glm::vec3 c;
+            size_t texLoc;
+            size_t numPlanes;
+            
+            lineStream >> textureScale
+                >> c.x >> c.y >> c.z
+                >> texLoc
+                >> numPlanes;
+            
+            const std::string textureName = usedTextures[texLoc];
+            std::vector<Plane> brushPlanes;
+            brushPlanes.reserve(numPlanes);
+            
+            for (size_t i = 0; i < numPlanes; i++)
+            {
+                size_t planeLoc;
+                lineStream >> planeLoc;
+                
+                brushPlanes.push_back(planes[planeLoc]);
+            }
+            
+            brushes.emplace_back(textureName, textureScale, brushPlanes, c);
+        }
+            break;
+        default:
+            stdLog.logf("Unknown option %c in map file (line: %d), skipping..", type, lineNum);
+        }
     }
     
     viewport.update();
