@@ -22,7 +22,6 @@ Viewport::~Viewport() = default;
 
 void Viewport::update()
 {
-    textureName = editor.getAvailableTextures()[0];
     if (gl)
     {
         brushMeshes.clear();
@@ -72,6 +71,8 @@ void Viewport::initGL(GladGLContext& glf, int width, int height)
     
     gl->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
+    textureName = editor.getAvailableTextures()[0];
+    
     createShaders();
     
     borderMesh = std::make_unique<Mesh>(*gl, generateBorders());
@@ -100,6 +101,7 @@ void Viewport::quitGL()
     defaultShader.reset();
     
     textures.clear();
+    textureName = "";
     
     gl = nullptr;
 }

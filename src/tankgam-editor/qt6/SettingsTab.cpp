@@ -2,6 +2,8 @@
 
 #include <optional>
 
+#include <QShortcut>
+
 #include "Editor.h"
 
 SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
@@ -21,7 +23,17 @@ SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
         toolsDropdown->addItem("Brush");
         generalTabLayout->addWidget(toolsDropdown);
         
-        connect(toolsDropdown, &QComboBox::textHighlighted, this, &SettingsTab::textHighlightedTools);
+        connect(toolsDropdown, &QComboBox::currentTextChanged, this, &SettingsTab::currentTextChangedTools);
+        
+        //create some cool shortcuts
+        {
+            QShortcut* selectShortcut = new QShortcut{ QKeySequence{ Qt::ALT + Qt::Key_S }, this };
+            connect(selectShortcut, &QShortcut::activated, this, [this]() {
+                toolsDropdown->setCurrentIndex(0); });
+            
+            QShortcut* brushShortcut = new QShortcut{ QKeySequence{ Qt::ALT + Qt::Key_B }, this };
+            connect(brushShortcut, &QShortcut::activated, this, [this]() { toolsDropdown->setCurrentIndex(1); });
+        }
         
         texturesDropdownLabel = new QLabel{ "Current Texture:", this };
         generalTabLayout->addWidget(texturesDropdownLabel);
@@ -34,14 +46,14 @@ SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
         }
         generalTabLayout->addWidget(texturesDropdown);
         
-        connect(texturesDropdown, &QComboBox::textHighlighted, this, &SettingsTab::textHighlightedTextures);
+        connect(texturesDropdown, &QComboBox::currentTextChanged, this, &SettingsTab::currentTextChangedTextures);
     }
     addTab(generalTab, "General");
 }
 
 SettingsTab::~SettingsTab() = default;
 
-void SettingsTab::textHighlightedTools(const QString& text)
+void SettingsTab::currentTextChangedTools(const QString& text)
 {
     std::optional<ViewportToolType> toolType;
     
@@ -60,7 +72,7 @@ void SettingsTab::textHighlightedTools(const QString& text)
     }
 }
 
-void SettingsTab::textHighlightedTextures(const QString& text)
+void SettingsTab::currentTextChangedTextures(const QString& text)
 {
     emit textureSelected(text.toStdString());
 }

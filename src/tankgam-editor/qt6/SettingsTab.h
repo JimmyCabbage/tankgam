@@ -19,9 +19,9 @@ public:
     ~SettingsTab() override;
     
 public slots:
-    void textHighlightedTools(const QString& text);
+    void currentTextChangedTools(const QString& text);
 
-    void textHighlightedTextures(const QString& text);
+    void currentTextChangedTextures(const QString& text);
     
 signals:
     void toolSelected(ViewportToolType viewportToolType);
