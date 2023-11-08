@@ -54,6 +54,22 @@ SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
         connect(buildMapButton, &QPushButton::clicked, this, &SettingsTab::buildMap);
     }
     addTab(generalTab, "General");
+    
+    fileTabLayout = new QVBoxLayout{ this };
+    fileTabLayout->setAlignment(Qt::AlignTop);
+    
+    fileTab = new QWidget{ this };
+    fileTab->setLayout(fileTabLayout);
+    {
+        mapNameLabel = new QLabel{ "Map Name:", this };
+        fileTabLayout->addWidget(mapNameLabel);
+        
+        mapNameEntry = new QLineEdit{ "default", this };
+        fileTabLayout->addWidget(mapNameEntry);
+        
+        connect(mapNameEntry, &QLineEdit::editingFinished, this, &SettingsTab::editingFinishedMapName);
+    }
+    addTab(fileTab, "File");
 }
 
 SettingsTab::~SettingsTab() = default;
@@ -80,4 +96,9 @@ void SettingsTab::currentTextChangedTools(const QString& text)
 void SettingsTab::currentTextChangedTextures(const QString& text)
 {
     emit textureSelected(text.toStdString());
+}
+
+void SettingsTab::editingFinishedMapName()
+{
+    emit changeMapName(mapNameEntry->text().toStdString());
 }

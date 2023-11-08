@@ -26,6 +26,10 @@ public:
     
     Viewport& getViewport();
     
+    void setMapName(std::string newMapName);
+    
+    std::string getMapName() const;
+    
     std::span<const std::string> getAvailableTextures() const;
     
     std::vector<Brush> getBrushes() const;
@@ -46,6 +50,8 @@ private:
     StdLog stdLog;
     FileManager fileManager;
     Viewport viewport;
+    
+    std::string mapName;
     
     std::vector<std::string> availableTextures;
     

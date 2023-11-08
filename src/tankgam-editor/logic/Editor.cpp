@@ -3,6 +3,8 @@
 #include <limits>
 #include <stdexcept>
 
+#include <fmt/format.h>
+
 #include <util/Bsp.h>
 #include <util/BspBuilder.h>
 
@@ -46,6 +48,16 @@ FileManager& Editor::getFileManager()
 Viewport& Editor::getViewport()
 {
     return viewport;
+}
+
+void Editor::setMapName(std::string newMapName)
+{
+    mapName = std::move(newMapName);
+}
+
+std::string Editor::getMapName() const
+{
+    return mapName;
 }
 
 std::span<const std::string> Editor::getAvailableTextures() const
@@ -164,5 +176,5 @@ void Editor::buildMap()
     bspBuilder.addBrushes(brushes);
     
     bsp::File file = bspBuilder.build();
-    bsp::writeFile("test.tgmap", file);
+    bsp::writeFile(fmt::format("{}.tgmap", mapName), file);
 }

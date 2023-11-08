@@ -20,6 +20,7 @@ WorldEditorWindow::WorldEditorWindow(QWidget* parent)
         connect(settingsTab, &SettingsTab::toolSelected, renderWidget, &RenderWidget::toolSelected);
         connect(settingsTab, &SettingsTab::textureSelected, renderWidget, &RenderWidget::textureSelected);
         connect(settingsTab, &SettingsTab::buildMap, this, [this]() { editor.buildMap(); });
+        connect(settingsTab, &SettingsTab::changeMapName, this, [this](std::string mapName) { editor.setMapName(std::move(mapName)); });
     }
     
     resize(1600, 900);
