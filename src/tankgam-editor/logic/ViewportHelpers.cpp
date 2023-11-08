@@ -185,7 +185,7 @@ ViewportCamera setupCamera(Viewport::ViewportType type)
     case Type::Top:
         return ViewportCamera{ { middleGrid, initialDistance, middleGrid }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } };
     case Type::Front:
-        return ViewportCamera{ { middleGrid, middleGrid, -initialDistance }, { 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f } };
+        return ViewportCamera{ { middleGrid, middleGrid, initialDistance }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f } };
     case Type::Side:
         return ViewportCamera{ { initialDistance, middleGrid, middleGrid }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } };
     case Type::Projection:
