@@ -27,11 +27,11 @@ SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
         
         //create some cool shortcuts
         {
-            QShortcut* selectShortcut = new QShortcut{ QKeySequence{ Qt::ALT + Qt::Key_S }, this };
+            QShortcut* selectShortcut = new QShortcut{ QKeySequence{ Qt::ALT | Qt::Key_S }, this };
             connect(selectShortcut, &QShortcut::activated, this, [this]() {
                 toolsDropdown->setCurrentIndex(0); });
             
-            QShortcut* brushShortcut = new QShortcut{ QKeySequence{ Qt::ALT + Qt::Key_B }, this };
+            QShortcut* brushShortcut = new QShortcut{ QKeySequence{ Qt::ALT | Qt::Key_B }, this };
             connect(brushShortcut, &QShortcut::activated, this, [this]() { toolsDropdown->setCurrentIndex(1); });
         }
         
