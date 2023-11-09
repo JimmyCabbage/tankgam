@@ -299,7 +299,7 @@ void bsp::writeFile(std::string_view bspFileName, File& bspFile)
     
     const auto writeString = [&file](const std::string_view string)
     {
-        const size_t maxLen = std::max(string.size(), static_cast<size_t>(std::numeric_limits<StringLength>::max()));
+        const size_t maxLen = std::min(string.size(), static_cast<size_t>(std::numeric_limits<StringLength>::max()));
         const auto strLength = static_cast<StringLength>(maxLen);
         file.write(reinterpret_cast<const char*>(&strLength), sizeof strLength);
         file.write(string.data(), strLength);
