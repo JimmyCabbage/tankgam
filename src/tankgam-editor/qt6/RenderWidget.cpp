@@ -14,6 +14,7 @@ RenderWidget::RenderWidget(Editor& editor, QWidget* parent)
         
         connect(this, &RenderWidget::toolSelected, viewportWindow, &ViewportWindow::toolSelected);
         connect(this, &RenderWidget::textureSelected, viewportWindow, &ViewportWindow::textureSelected);
+        connect(this, &RenderWidget::renderNow, viewportWindow, &ViewportWindow::renderNow);
         
         connect(refreshButton, &QPushButton::pressed, viewportWindow, &ViewportWindow::renderNow);
     }

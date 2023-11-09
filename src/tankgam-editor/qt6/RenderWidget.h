@@ -19,6 +19,8 @@ signals:
     void toolSelected(ViewportToolType viewportToolType);
     
     void textureSelected(std::string textureName);
+    
+    void renderNow();
 
 private:
     QVBoxLayout* renderLayout;

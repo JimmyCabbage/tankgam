@@ -24,14 +24,14 @@ WorldEditorWindow::WorldEditorWindow(QWidget* parent)
         connect(settingsTab, &SettingsTab::changeMapName, this, [this](std::string mapName) { editor.setMapName(std::move(mapName)); });
         connect(settingsTab, &SettingsTab::saveMap, this, [this]() { editor.saveMap(); });
         connect(settingsTab, &SettingsTab::loadMap, this, [this](std::string mapName) { editor.loadMap(std::move(mapName)); });
-        connect(settingsTab, &SettingsTab::loadMap, this, [this]()
+        connect(settingsTab, &SettingsTab::loadMap, this, [this](std::string mapName)
         {
-            const std::string mapName = editor.getMapName();
             size_t lastSlash = mapName.find_last_of('/');
             lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
             
             settingsTab->updateTextboxMapName(mapName.substr(lastSlash));
         });
+        connect(settingsTab, &SettingsTab::loadMap, renderWidget, &RenderWidget::renderNow);
     }
     
     resize(1600, 900);
