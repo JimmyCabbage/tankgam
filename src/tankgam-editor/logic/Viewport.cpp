@@ -59,6 +59,13 @@ void Viewport::update()
                 selectedBrushMeshes.emplace_back(*gl, vertices);
             }
         }
+        
+        const auto selectedFaces = editor.getSelectedFaces();
+        for (const auto& face : selectedFaces)
+        {
+            const auto verticesAndTextures = makeFaceVertices(face, glm::vec3{ 1.0f, 0.0f, 0.0f });
+            selectedBrushMeshes.emplace_back(*gl, verticesAndTextures.first);
+        }
     }
 }
 
@@ -252,9 +259,9 @@ void Viewport::deleteKey()
     }
 }
 
-void Viewport::moveSelectedBrushes(MoveDir moveDir)
+void Viewport::moveSelected(MoveDir moveDir)
 {
-    if (toolType == ViewportToolType::Select)
+    if (toolType == ViewportToolType::Select || toolType == ViewportToolType::SelectFace)
     {
         glm::vec3 verticalAxis = currentViewport->camera.getUp();
         glm::vec3 horizontalAxis = currentViewport->camera.getRight();
@@ -268,16 +275,16 @@ void Viewport::moveSelectedBrushes(MoveDir moveDir)
         switch (moveDir)
         {
         case Move::Up:
-            editor.moveSelectedBrushes(verticalAxis * GRID_UNIT);
+            editor.moveSelected(verticalAxis * GRID_UNIT);
             break;
         case Move::Down:
-            editor.moveSelectedBrushes(verticalAxis * -GRID_UNIT);
+            editor.moveSelected(verticalAxis * -GRID_UNIT);
             break;
         case Move::Left:
-            editor.moveSelectedBrushes(horizontalAxis * -GRID_UNIT);
+            editor.moveSelected(horizontalAxis * -GRID_UNIT);
             break;
         case Move::Right:
-            editor.moveSelectedBrushes(horizontalAxis * GRID_UNIT);
+            editor.moveSelected(horizontalAxis * GRID_UNIT);
             break;
         default:
             throw std::runtime_error{ "Invalid selected brush move" };
@@ -414,6 +421,18 @@ void Viewport::clickLeftEnd(int x, int y)
             const glm::vec3 rayOrigin = currentViewport->camera.getPosition();
             
             editor.selectBrush(rayOrigin, rayDirection);
+        }
+    }
+    else if (toolType == ViewportToolType::SelectFace)
+    {
+        //select a brush
+        if (currentViewport->type == ViewportType::Projection)
+        {
+            const glm::vec3 rayDirection = glm::normalize(getPositionFromMouse(*currentViewport, { viewportWidth, viewportHeight }, { x, y }));
+            
+            const glm::vec3 rayOrigin = currentViewport->camera.getPosition();
+            
+            editor.selectFace(rayOrigin, rayDirection);
         }
     }
 }
@@ -606,7 +625,7 @@ void Viewport::renderVisibleBrushes(ViewportData& viewport, const glm::mat4& pro
 
 void Viewport::renderSelectedBrushes(ViewportData& viewport, const glm::mat4& projViewMatrix)
 {
-    if (toolType != ViewportToolType::Select)
+    if (toolType != ViewportToolType::Select && toolType != ViewportToolType::SelectFace)
     {
         return;
     }

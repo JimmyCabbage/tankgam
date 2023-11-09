@@ -36,6 +36,7 @@ void Editor::defaultState()
     brushes.clear();
     selectedBrushes.clear();
     selectedBrushesIndices.clear();
+    selectedFaces.clear();
     
     beginVec = {};
     endVec = {};
@@ -80,6 +81,17 @@ std::vector<Brush> Editor::getSelectedBrushes() const
     return selectedBrushes;
 }
 
+std::vector<BrushFace> Editor::getSelectedFaces() const
+{
+    std::vector<BrushFace> brushFaces;
+    for (const auto [brushNum, faceNum] : selectedFaces)
+    {
+        brushFaces.push_back(brushes[brushNum].getFace(faceNum));
+    }
+    
+    return brushFaces;
+}
+
 void Editor::createBrush(std::string_view textureName, glm::vec2 begin, glm::vec2 end, int skipAxis)
 {
     //make sure this brush actually has some volume
@@ -122,6 +134,8 @@ void Editor::selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection)
     selectedBrushes.clear();
     selectedBrushesIndices.clear();
     
+    selectedFaces.clear();
+    
     float closestDistance = std::numeric_limits<float>::max();
     const Brush* closestBrush = nullptr;
     size_t brushNum;
@@ -154,6 +168,57 @@ void Editor::selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection)
     viewport.update();
 }
 
+void Editor::selectFace(glm::vec3 selectOrigin, glm::vec3 selectDirection)
+{
+    selectedBrushes.clear();
+    selectedBrushesIndices.clear();
+    
+    selectedFaces.clear();
+    
+    float closestDistance = std::numeric_limits<float>::max();
+    bool faceFound = false;
+    size_t brushNum;
+    size_t faceNum;
+    
+    for (size_t i = 0; i < brushes.size(); i++)
+    {
+        const auto& brush = brushes[i];
+        
+        const auto intersection = brush.getIntersection(selectOrigin, selectDirection);
+        if (!intersection.has_value())
+        {
+            continue;
+        }
+        
+        const float intersectionDistance = glm::distance(intersection.value(), selectOrigin);
+        if (intersectionDistance < closestDistance)
+        {
+            closestDistance = intersectionDistance;
+            brushNum = i;
+            
+            const auto faces = brush.getFaces();
+            for (size_t j = 0; j < faces.size(); j++)
+            {
+                const auto& face = faces[j];
+                if (Plane::classifyPoint(face.plane, intersection.value()) == Plane::Classification::Coincident)
+                {
+                    faceNum = j;
+                    break;
+                }
+            }
+            
+            faceFound = true;
+        }
+    }
+    
+    if (faceFound)
+    {
+        selectedFaces.push_back(std::make_pair(brushNum, faceNum));
+    }
+    
+    viewport.update();
+}
+
 void Editor::deleteSelectedBrushes()
 {
     for (size_t index : selectedBrushesIndices)
@@ -167,13 +232,18 @@ void Editor::deleteSelectedBrushes()
     viewport.update();
 }
 
-void Editor::moveSelectedBrushes(glm::vec3 moveDir)
+void Editor::moveSelected(glm::vec3 moveDir)
 {
     for (size_t i = 0; i < selectedBrushesIndices.size(); i++)
     {
         const size_t index = selectedBrushesIndices[i];
         brushes[index].translate(moveDir);
         selectedBrushes[i] = brushes[index];
+    }
+    
+    for (const auto [brushNum, faceNum] : selectedFaces)
+    {
+        brushes[brushNum].translate(faceNum, moveDir);
     }
     
     viewport.update();

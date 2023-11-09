@@ -42,11 +42,15 @@ public:
     
     std::vector<BrushFace> getFaces() const;
     
+    BrushFace getFace(size_t faceNum) const;
+    
     glm::vec3 getColor() const;
     
     std::optional<glm::vec3> getIntersection(glm::vec3 rayOrigin, glm::vec3 rayDirection) const;
     
     void translate(glm::vec3 direction);
+    
+    void translate(size_t faceNum, glm::vec3 direction);
     
 private:
     struct BrushFaces

@@ -21,6 +21,7 @@ SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
         
         toolsDropdown = new QComboBox{ this };
         toolsDropdown->addItem("Select");
+        toolsDropdown->addItem("Select Face");
         toolsDropdown->addItem("Brush");
         generalTabLayout->addWidget(toolsDropdown);
         
@@ -29,11 +30,13 @@ SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
         //create some cool shortcuts
         {
             QShortcut* selectShortcut = new QShortcut{ QKeySequence{ Qt::ALT | Qt::Key_S }, this };
-            connect(selectShortcut, &QShortcut::activated, this, [this]() {
-                toolsDropdown->setCurrentIndex(0); });
+            connect(selectShortcut, &QShortcut::activated, this, [this]() { toolsDropdown->setCurrentIndex(0); });
+            
+            QShortcut* selectFaceShortcut = new QShortcut{ QKeySequence{ Qt::ALT | Qt::Key_F }, this };
+            connect(selectFaceShortcut, &QShortcut::activated, this, [this]() { toolsDropdown->setCurrentIndex(1); });
             
             QShortcut* brushShortcut = new QShortcut{ QKeySequence{ Qt::ALT | Qt::Key_B }, this };
-            connect(brushShortcut, &QShortcut::activated, this, [this]() { toolsDropdown->setCurrentIndex(1); });
+            connect(brushShortcut, &QShortcut::activated, this, [this]() { toolsDropdown->setCurrentIndex(2); });
         }
         
         texturesDropdownLabel = new QLabel{ "Current Texture:", this };
@@ -92,6 +95,10 @@ void SettingsTab::currentTextChangedTools(const QString& text)
     if (text == "Select")
     {
         toolType = ViewportToolType::Select;
+    }
+    else if (text == "Select Face")
+    {
+        toolType = ViewportToolType::SelectFace;
     }
     else if (text == "Brush")
     {

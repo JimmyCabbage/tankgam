@@ -81,7 +81,7 @@ public:
         Down
     };
     
-    void moveSelectedBrushes(MoveDir moveDir);
+    void moveSelected(MoveDir moveDir);
     
     void moveCamera(MoveDir moveDir);
     

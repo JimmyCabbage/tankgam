@@ -19,6 +19,8 @@ glm::vec3 centerOfVerticies(std::span<const glm::vec3> verticies);
 
 void sortVerticiesClockwise(const glm::vec3& normal, std::vector<glm::vec3>& verticies);
 
+std::pair<std::vector<Vertex>, std::string> makeFaceVertices(const BrushFace& face, glm::vec3 color);
+
 std::vector<std::pair<std::vector<Vertex>, std::string>> makeBrushVertices(const Brush& brush, glm::vec3 overrideColor = glm::vec3{});
 
 ViewportCamera setupCamera(Viewport::ViewportType type);

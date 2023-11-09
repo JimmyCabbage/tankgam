@@ -3,5 +3,6 @@
 enum class ViewportToolType
 {
     Select,
+    SelectFace,
     Brush
 };

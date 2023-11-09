@@ -143,6 +143,15 @@ std::vector<BrushFace> Brush::getFaces() const
     return brushFaces;
 }
 
+BrushFace Brush::getFace(size_t faceNum) const
+{
+    return BrushFace
+    {
+        textureNames[faces.textureIndices[faceNum]], faces.textureScales[faceNum],
+        faces.planes[faceNum], faces.verticesList[faceNum]
+    };
+}
+
 glm::vec3 Brush::getColor() const
 {
     return color;
@@ -190,6 +199,13 @@ void Brush::translate(glm::vec3 direction)
     {
         Plane::translatePlane(plane, direction);
     }
+    
+    regenerateVertices();
+}
+
+void Brush::translate(size_t faceNum, glm::vec3 direction)
+{
+    Plane::translatePlane(faces.planes[faceNum], direction);
     
     regenerateVertices();
 }

@@ -194,7 +194,7 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
     case Qt::Key::Key_Up:
         if (shift)
         {
-            viewport.moveSelectedBrushes(Viewport::MoveDir::Up);
+            viewport.moveSelected(Viewport::MoveDir::Up);
         }
         else
         {
@@ -204,7 +204,7 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
     case Qt::Key::Key_Down:
         if (shift)
         {
-            viewport.moveSelectedBrushes(Viewport::MoveDir::Down);
+            viewport.moveSelected(Viewport::MoveDir::Down);
         }
         else
         {
@@ -214,7 +214,7 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
     case Qt::Key::Key_Left:
         if (shift)
         {
-            viewport.moveSelectedBrushes(Viewport::MoveDir::Left);
+            viewport.moveSelected(Viewport::MoveDir::Left);
         }
         else
         {
@@ -224,7 +224,7 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
     case Qt::Key::Key_Right:
         if (shift)
         {
-            viewport.moveSelectedBrushes(Viewport::MoveDir::Right);
+            viewport.moveSelected(Viewport::MoveDir::Right);
         }
         else
         {

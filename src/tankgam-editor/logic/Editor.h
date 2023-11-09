@@ -36,13 +36,17 @@ public:
     
     std::vector<Brush> getSelectedBrushes() const;
     
+    std::vector<BrushFace> getSelectedFaces() const;
+    
     void createBrush(std::string_view textureName, glm::vec2 begin, glm::vec2 end, int skipAxis);
     
     void selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection);
     
+    void selectFace(glm::vec3 selectOrigin, glm::vec3 selectDirection);
+    
     void deleteSelectedBrushes();
     
-    void moveSelectedBrushes(glm::vec3 moveDir);
+    void moveSelected(glm::vec3 moveDir);
     
     void saveMap();
     
@@ -63,6 +67,7 @@ private:
     std::vector<Brush> brushes;
     std::vector<Brush> selectedBrushes;
     std::vector<size_t> selectedBrushesIndices;
+    std::vector<std::pair<size_t, size_t>> selectedFaces;
     
     glm::vec3 beginVec;
     glm::vec3 endVec;

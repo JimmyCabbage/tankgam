@@ -105,6 +105,26 @@ void sortVerticiesClockwise(const glm::vec3& normal, std::vector<glm::vec3>& ver
     verticies = std::move(newVerticies);
 }
 
+std::pair<std::vector<Vertex>, std::string> makeFaceVertices(const BrushFace& face, glm::vec3 color)
+{
+    std::vector<glm::vec3> vs = face.vertices;
+    
+    //sort these all in a clockwise fashion
+    sortVerticiesClockwise(face.plane.normal, vs);
+    
+    std::vector<Vertex> vertexList;
+    vertexList.reserve(vs.size());
+    
+    for (const auto& edgeVertex : vs)
+    {
+        const auto [uAxis, vAxis] = bsp::getTextureAxisFromNormal(face.plane.normal);
+        const glm::vec2 texCoord = glm::vec2{ glm::dot(edgeVertex, uAxis), glm::dot(edgeVertex, vAxis) } / face.textureScale;
+        vertexList.emplace_back(edgeVertex, color, face.plane.normal, texCoord);
+    }
+    
+    return std::make_pair(std::move(vertexList), std::move(face.textureName));
+}
+
 std::vector<std::pair<std::vector<Vertex>, std::string>> makeBrushVertices(const Brush& brush, glm::vec3 overrideColor)
 {
     auto faces = brush.getFaces();
