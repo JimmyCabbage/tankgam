@@ -149,10 +149,6 @@ void ViewportWindow::wheelEvent(QWheelEvent* event)
     
     if (!numDegrees.isNull())
     {
-        //gain focus
-        const auto p = QCursor::pos();
-        viewport.clickFocus(p.x() * devicePixelRatio(), p.y() * devicePixelRatio());
-        
         bool negative = numDegrees.y() < 0;
         for (int i = 0; i < std::abs(numDegrees.y()); i += 150)
         {

@@ -101,8 +101,6 @@ private:
     void zoomCamera(float amount);
     
 public:
-    void clickFocus(int x, int y);
-    
     void clickLeftStart(int x, int y);
     
     void clickLeftEnd(int x, int y);

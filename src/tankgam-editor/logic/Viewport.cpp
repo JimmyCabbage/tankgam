@@ -363,16 +363,6 @@ void Viewport::zoomCamera(float amount)
     currentViewport->zoom = std::clamp(currentViewport->zoom + amount, 1.0f, 1000.0f);
 }
 
-void Viewport::clickFocus(int x, int y)
-{
-    if (!currentViewport)
-    {
-        return;
-    }
-    
-    currentViewport = &chooseViewportMouse({ x, y });
-}
-
 void Viewport::clickLeftStart(int x, int y)
 {
     if (!currentViewport)
