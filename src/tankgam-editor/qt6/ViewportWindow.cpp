@@ -92,6 +92,7 @@ bool ViewportWindow::event(QEvent* event)
     switch (event->type())
     {
     case QEvent::UpdateRequest:
+        event->accept();
         renderNow();
         return true;
     default:
@@ -105,6 +106,7 @@ void ViewportWindow::exposeEvent(QExposeEvent* event)
     
     if (isExposed())
     {
+        event->accept();
         renderNow();
     }
 }
@@ -115,6 +117,7 @@ void ViewportWindow::resizeEvent(QResizeEvent* event)
     viewportWidth = size.width();
     viewportHeight = size.height();
     
+    event->accept();
     viewport.changeSize(viewportWidth * devicePixelRatio(), viewportHeight * devicePixelRatio());
 }
 
@@ -124,6 +127,7 @@ void ViewportWindow::mousePressEvent(QMouseEvent* event)
     const int x = pos.x();
     const int y = pos.y();
     
+    event->accept();
     viewport.clickLeftStart(x * devicePixelRatio(), y * devicePixelRatio());
 }
 
@@ -135,6 +139,7 @@ void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
     
     viewport.clickLeftEnd(x * devicePixelRatio(), y * devicePixelRatio());
     
+    event->accept();
     renderNow();
 }
 
@@ -216,6 +221,7 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
     
     if (shouldRedraw)
     {
+        event->accept();
         renderNow();
     }
 }
