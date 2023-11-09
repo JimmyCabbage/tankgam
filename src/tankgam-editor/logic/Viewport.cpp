@@ -29,20 +29,23 @@ void Viewport::update()
         const auto brushes = editor.getBrushes();
         for (const auto& brush : brushes)
         {
-            const std::string texture = brush.getTextureName().data();
-            if (textures.find(texture) == textures.end())
+            const auto textureNames = brush.getTextureNames();
+            for (const auto& texture : textureNames)
             {
-                const std::vector<char> textureBuffer = fileManager.readFileRaw(brush.getTextureName().data());
-                
-                auto textureData = reinterpret_cast<const uint8_t*>(textureBuffer.data());
-                textures.insert(std::pair{ texture, Texture{ *gl, std::span<const uint8_t>{ textureData, textureBuffer.size() } } });
+                if (textures.find(texture) == textures.end())
+                {
+                    const std::vector<char> textureBuffer = fileManager.readFileRaw(texture);
+                    
+                    auto textureData = reinterpret_cast<const uint8_t*>(textureBuffer.data());
+                    textures.insert(std::pair{ texture, Texture{ *gl, std::span<const uint8_t>{ textureData, textureBuffer.size() } } });
+                }
             }
             
-            const auto verticesList = makeBrushVertices(brush);
-            for (const auto& vertices : verticesList)
+            auto verticesAndTexturesList = makeBrushVertices(brush);
+            for (auto& [vertices, textureName] : verticesAndTexturesList)
             {
                 brushMeshes.emplace_back(*gl, vertices);
-                brushTextureNames.emplace_back(brush.getTextureName().data());
+                brushTextureNames.push_back(std::move(textureName));
             }
         }
         
@@ -50,8 +53,8 @@ void Viewport::update()
         const auto selectedBrushes = editor.getSelectedBrushes();
         for (const auto& brush : selectedBrushes)
         {
-            const auto verticesList = makeBrushVertices(brush, glm::vec3{ 1.0f, 0.0f, 0.0f });
-            for (const auto& vertices: verticesList)
+            const auto verticesAndTexturesList = makeBrushVertices(brush, glm::vec3{ 1.0f, 0.0f, 0.0f });
+            for (const auto& [vertices, textureName] : verticesAndTexturesList)
             {
                 selectedBrushMeshes.emplace_back(*gl, vertices);
             }
@@ -71,7 +74,7 @@ void Viewport::initGL(GladGLContext& glf, int width, int height)
     
     gl->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
-    textureName = editor.getAvailableTextures()[0];
+    currentTextureName = editor.getAvailableTextures()[0];
     
     createShaders();
     
@@ -101,7 +104,7 @@ void Viewport::quitGL()
     defaultShader.reset();
     
     textures.clear();
-    textureName = "";
+    currentTextureName = "";
     
     gl = nullptr;
 }
@@ -118,12 +121,12 @@ ViewportToolType Viewport::getToolType() const
 
 void Viewport::setTextureName(std::string newTextureName)
 {
-    textureName = std::move(newTextureName);
+    currentTextureName = std::move(newTextureName);
 }
 
 std::string Viewport::getTextureName() const
 {
-    return textureName;
+    return currentTextureName;
 }
 
 void Viewport::createShaders()
@@ -398,7 +401,7 @@ void Viewport::clickLeftEnd(int x, int y)
             //ditto
             const auto [endMouseRounded, endMouseAxis] = getRoundedPositionAndAxis(currentViewport->type, endMousePosition);
             
-            editor.createBrush(textureName, beginMouseRounded, endMouseRounded, beginMouseAxis);
+            editor.createBrush(currentTextureName, beginMouseRounded, endMouseRounded, beginMouseAxis);
         }
     }
     else if (toolType == ViewportToolType::Select)

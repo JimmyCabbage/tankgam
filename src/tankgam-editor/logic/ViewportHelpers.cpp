@@ -105,47 +105,37 @@ void sortVerticiesClockwise(const glm::vec3& normal, std::vector<glm::vec3>& ver
     verticies = std::move(newVerticies);
 }
 
-std::vector<std::vector<Vertex>> makeBrushVertices(const Brush& brush, glm::vec3 overrideColor)
+std::vector<std::pair<std::vector<Vertex>, std::string>> makeBrushVertices(const Brush& brush, glm::vec3 overrideColor)
 {
-    const auto planes = brush.getPlanes();
-    const auto vertices = brush.getVertices();
-    const float textureScale = brush.getTextureScale();
+    auto faces = brush.getFaces();
     const auto color = overrideColor == glm::vec3{} ? brush.getColor() : overrideColor;
     
-    std::vector<std::vector<Vertex>> verticesList;
-    for (const auto& plane : planes)
+    std::vector<std::pair<std::vector<Vertex>, std::string>> verticesAndTexturesList;
+    for (auto& face : faces)
     {
-        std::vector<glm::vec3> planeVertices;
-        for (const auto& vertex : vertices)
-        {
-            if (Plane::classifyPoint(plane, vertex) == Plane::Classification::Coincident)
-            {
-                planeVertices.push_back(vertex);
-            }
-        }
-        
-        if (planeVertices.empty())
+        if (face.vertices.empty())
         {
             continue;
         }
         
         //sort these all in a clockwise fashion
-        sortVerticiesClockwise(plane.normal, planeVertices);
+        sortVerticiesClockwise(face.plane.normal, face.vertices);
         
         std::vector<Vertex> vertexList;
-        vertexList.reserve(planeVertices.size());
+        vertexList.reserve(face.vertices.size());
         
-        for (const auto& edgeVertex : planeVertices)
+        for (const auto& edgeVertex : face.vertices)
         {
-            const auto [uAxis, vAxis] = bsp::getTextureAxisFromNormal(plane.normal);
-            const glm::vec2 texCoord = glm::vec2{ glm::dot(edgeVertex, uAxis), glm::dot(edgeVertex, vAxis) } / textureScale;
-            vertexList.emplace_back(edgeVertex, color, plane.normal, texCoord);
+            const auto [uAxis, vAxis] = bsp::getTextureAxisFromNormal(face.plane.normal);
+            const glm::vec2 texCoord = glm::vec2{ glm::dot(edgeVertex, uAxis), glm::dot(edgeVertex, vAxis) } / face.textureScale;
+            vertexList.emplace_back(edgeVertex, color, face.plane.normal, texCoord);
         }
         
-        verticesList.push_back(std::move(vertexList));
+        auto pair = std::make_pair(std::move(vertexList), std::move(face.textureName));
+        verticesAndTexturesList.push_back(std::move(pair));
     }
     
-    return verticesList;
+    return verticesAndTexturesList;
 }
 
 ViewportCamera setupCamera(Viewport::ViewportType type)

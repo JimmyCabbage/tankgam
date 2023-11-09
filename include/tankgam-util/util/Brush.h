@@ -9,9 +9,18 @@
 
 #include <util/Plane.h>
 
+struct BrushFace
+{
+    std::string textureName;
+    float textureScale;
+    Plane plane;
+    std::vector<glm::vec3> vertices;
+};
+
 class Brush
 {
 public:
+    Brush(std::span<const std::string> brushTextureNames, std::span<const float> brushTextureScales, std::span<const Plane> brushPlanes, glm::vec3 color);
     Brush(std::string textureName, float textureScale, std::span<const Plane> brushPlanes, glm::vec3 color);
     Brush(std::string textureName, float textureScale, glm::vec3 beginVec, glm::vec3 endVec);
     ~Brush();
@@ -19,15 +28,19 @@ public:
     Brush(const Brush& o);
     Brush& operator=(const Brush& o);
     
-    void setTextureName(std::string newName);
+    size_t getNumFaces() const;
     
-    std::string_view getTextureName() const;
+    void setTextureName(size_t faceNum, std::string_view newName);
     
-    float getTextureScale() const;
+    std::string getTextureName(size_t faceNum) const;
     
-    std::span<const Plane> getPlanes() const;
+    std::vector<std::string> getTextureNames() const;
     
-    std::span<const glm::vec3> getVertices() const;
+    float getTextureScale(size_t faceNum) const;
+    
+    void setTextureScale(size_t faceNum, float newScale);
+    
+    std::vector<BrushFace> getFaces() const;
     
     glm::vec3 getColor() const;
     
@@ -36,9 +49,15 @@ public:
     void translate(glm::vec3 direction);
     
 private:
-    std::string textureName;
-    float textureScale;
-    std::vector<Plane> planes;
+    struct BrushFaces
+    {
+        std::vector<size_t> textureIndices;
+        std::vector<float> textureScales;
+        std::vector<Plane> planes;
+        std::vector<std::vector<glm::vec3>> verticesList;
+    } faces;
+    
+    std::vector<std::string> textureNames;
     
     std::vector<glm::vec3> vertices;
     void regenerateVertices();

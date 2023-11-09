@@ -1,31 +1,77 @@
 #include "util/Brush.h"
 
 #include <array>
+#include <algorithm>
 #include <random>
+#include <stdexcept>
+
+#include <fmt/format.h>
+
+Brush::Brush(std::span<const std::string> brushTextureNames, std::span<const float> brushTextureScales, std::span<const Plane> brushPlanes, glm::vec3 color)
+    : color{ color }
+{
+    //just some error checking
+    {
+        const size_t s1 = brushTextureNames.size();
+        const size_t s2 = brushTextureScales.size();
+        const size_t s3 = brushPlanes.size();
+        
+        if (s1 != s2 || s2 != s3)
+        {
+            throw std::runtime_error{ fmt::format("Brush constructor arrays out of sync {} {} {}", s1, s2, s3) };
+        }
+    }
+    
+    faces.planes.resize(brushPlanes.size());
+    std::copy(brushPlanes.begin(), brushPlanes.end(), faces.planes.begin());
+    
+    faces.textureIndices.resize(faces.planes.size());
+    faces.textureScales.resize(faces.planes.size());
+    for (size_t i = 0; i < brushTextureNames.size(); i++)
+    {
+        setTextureName(i, brushTextureNames[i]);
+        faces.textureScales[i] = brushTextureScales[i];
+    }
+    
+    regenerateVertices();
+}
 
 Brush::Brush(std::string textureName, float textureScale, std::span<const Plane> brushPlanes, glm::vec3 color)
-    : textureName{ std::move(textureName) }, textureScale{ textureScale }, color{ color }
+    : color{ color }
 {
-    planes.resize(brushPlanes.size());
-    std::copy(brushPlanes.begin(), brushPlanes.end(), planes.begin());
+    faces.planes.resize(brushPlanes.size());
+    std::copy(brushPlanes.begin(), brushPlanes.end(), faces.planes.begin());
+    
+    textureNames.push_back(std::move(textureName));
+    
+    faces.textureIndices.resize(faces.planes.size());
+    faces.textureScales.resize(faces.planes.size());
+    std::fill(faces.textureIndices.begin(), faces.textureIndices.end(), 0);
+    std::fill(faces.textureScales.begin(), faces.textureScales.end(), textureScale);
     
     regenerateVertices();
 }
 
 Brush::Brush(std::string textureName, float textureScale, glm::vec3 beginVec, glm::vec3 endVec)
-    : textureName{ std::move(textureName) }, textureScale{ textureScale }, planes{}
 {
     const glm::vec3 up{ 0.0f, 1.0f, 0.0f };
     const glm::vec3 right{ 1.0f, 0.0f, 0.0f };
     const glm::vec3 back{ 0.0f, 0.0f, 1.0f };
     
-    planes.push_back(Plane::fromVertexAndNormal(beginVec, up));
-    planes.push_back(Plane::fromVertexAndNormal(beginVec, right));
-    planes.push_back(Plane::fromVertexAndNormal(beginVec, back));
+    faces.planes.push_back(Plane::fromVertexAndNormal(beginVec, up));
+    faces.planes.push_back(Plane::fromVertexAndNormal(beginVec, right));
+    faces.planes.push_back(Plane::fromVertexAndNormal(beginVec, back));
+
+    faces.planes.push_back(Plane::fromVertexAndNormal(endVec, -up));
+    faces.planes.push_back(Plane::fromVertexAndNormal(endVec, -right));
+    faces.planes.push_back(Plane::fromVertexAndNormal(endVec, -back));
     
-    planes.push_back(Plane::fromVertexAndNormal(endVec, -up));
-    planes.push_back(Plane::fromVertexAndNormal(endVec, -right));
-    planes.push_back(Plane::fromVertexAndNormal(endVec, -back));
+    textureNames.push_back(std::move(textureName));
+    
+    faces.textureIndices.resize(faces.planes.size());
+    faces.textureScales.resize(faces.planes.size());
+    std::fill(faces.textureIndices.begin(), faces.textureIndices.end(), 0);
+    std::fill(faces.textureScales.begin(), faces.textureScales.end(), textureScale);
     
     regenerateVertices();
     
@@ -43,37 +89,58 @@ Brush& Brush::operator=(const Brush& o)
         return *this;
     }
     
-    textureName = o.textureName;
-    planes = o.planes;
-    vertices = o.vertices;
-    color = o.color;
+    faces = o.faces;
     
     return *this;
 }
 
-void Brush::setTextureName(std::string newName)
+size_t Brush::getNumFaces() const
 {
-    textureName = std::move(newName);
+    return faces.planes.size();
 }
 
-std::string_view Brush::getTextureName() const
+void Brush::setTextureName(size_t faceNum, std::string_view newName)
 {
-    return textureName;
+    if (std::find(textureNames.begin(), textureNames.end(), newName) == textureNames.end())
+    {
+        textureNames.emplace_back(newName.data());
+    }
+    const auto it = std::find(textureNames.begin(), textureNames.end(), newName);
+    
+    const size_t loc = std::distance(textureNames.begin(), it);
+    faces.textureIndices[faceNum] = loc;
 }
 
-float Brush::getTextureScale() const
+std::string Brush::getTextureName(size_t faceNum) const
 {
-    return textureScale;
+    return textureNames[faces.textureIndices[faceNum]];
 }
 
-std::span<const Plane> Brush::getPlanes() const
+std::vector<std::string> Brush::getTextureNames() const
 {
-    return planes;
+    return textureNames;
 }
 
-std::span<const glm::vec3> Brush::getVertices() const
+float Brush::getTextureScale(size_t faceNum) const
 {
-    return vertices;
+    return faces.textureScales[faceNum];
+}
+
+void Brush::setTextureScale(size_t faceNum, float newScale)
+{
+    faces.textureScales[faceNum] = newScale;
+}
+
+std::vector<BrushFace> Brush::getFaces() const
+{
+    std::vector<BrushFace> brushFaces;
+    for (size_t i = 0; i < faces.planes.size(); i++)
+    {
+        brushFaces.emplace_back(textureNames[faces.textureIndices[i]], faces.textureScales[i],
+                                faces.planes[i], faces.verticesList[i]);
+    }
+    
+    return brushFaces;
 }
 
 glm::vec3 Brush::getColor() const
@@ -86,14 +153,14 @@ std::optional<glm::vec3> Brush::getIntersection(glm::vec3 rayOrigin, glm::vec3 r
     //test if point is on backside of all faces
     std::optional<glm::vec3> finalIntersection;
     float closestFaceDistance = std::numeric_limits<float>::max();
-    for (size_t i = 0; i < planes.size(); i++)
+    for (size_t i = 0; i < faces.planes.size(); i++)
     {
-        std::optional<glm::vec3> intersection = Plane::intersectRay(planes[i], rayOrigin, rayDirection);
+        std::optional<glm::vec3> intersection = Plane::intersectRay(faces.planes[i], rayOrigin, rayDirection);
         if (intersection.has_value())
         {
             bool inside = true;
             
-            for (const auto& otherPlane : planes)
+            for (const auto& otherPlane : faces.planes)
             {
                 if (Plane::classifyPoint(otherPlane, intersection.value()) == Plane::Classification::Front)
                 {
@@ -119,7 +186,7 @@ std::optional<glm::vec3> Brush::getIntersection(glm::vec3 rayOrigin, glm::vec3 r
 
 void Brush::translate(glm::vec3 direction)
 {
-    for (auto& plane : planes)
+    for (auto& plane : faces.planes)
     {
         Plane::translatePlane(plane, direction);
     }
@@ -143,7 +210,7 @@ void Brush::regenerateVertices()
     center /= static_cast<float>(vertexCount);
     
     //flip around planes to face this point
-    for (auto& plane : planes)
+    for (auto& plane : faces.planes)
     {
         if (Plane::classifyPoint(plane, center) == Plane::Classification::Front)
         {
@@ -153,28 +220,46 @@ void Brush::regenerateVertices()
     }
     
     vertices = generateVertices(true);
+    
+    faces.verticesList.resize(faces.planes.size());
+    for (auto& faceVertices : faces.verticesList)
+    {
+        faceVertices.clear();
+    }
+    
+    for (const auto& vertex : vertices)
+    {
+        for (size_t i = 0; i < faces.planes.size(); i++)
+        {
+            const auto& plane = faces.planes[i];
+            if (Plane::classifyPoint(plane, vertex) == Plane::Classification::Coincident)
+            {
+                faces.verticesList[i].push_back(vertex);
+            }
+        }
+    }
 }
 
 std::vector<glm::vec3> Brush::generateVertices(bool checkOutside)
 {
     std::vector<glm::vec3> newVertices;
-    for (size_t i = 0; i < planes.size() ; i++)
+    for (size_t i = 0; i < faces.planes.size() ; i++)
     {
-        for (size_t j = 0; j < planes.size(); j++)
+        for (size_t j = 0; j < faces.planes.size(); j++)
         {
             if (j == i)
             {
                 continue;
             }
             
-            for (size_t k = 0; k < planes.size(); k++)
+            for (size_t k = 0; k < faces.planes.size(); k++)
             {
                 if (k == i || k == j)
                 {
                     continue;
                 }
                 
-                const auto possibleVertex = Plane::intersectPlanes(planes[i], planes[j], planes[k]);
+                const auto possibleVertex = Plane::intersectPlanes(faces.planes[i], faces.planes[j], faces.planes[k]);
                 
                 //check if this was a valid singular intersection
                 if (!possibleVertex.has_value())
@@ -204,7 +289,7 @@ std::vector<glm::vec3> Brush::generateVertices(bool checkOutside)
                 {
                     //make sure this isn't outside of any of the planes
                     bool outSide = false;
-                    for (const auto& checkPlane: planes)
+                    for (const auto& checkPlane : faces.planes)
                     {
                         if (Plane::classifyPoint(checkPlane, vertex) == Plane::Classification::Front)
                         {

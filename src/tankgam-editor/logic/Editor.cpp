@@ -200,34 +200,41 @@ void Editor::saveMap()
     
     size_t numNormals = 0;
     size_t numPlanes = 0;
+    size_t numFaces = 0;
     for (const auto& brush : brushes)
     {
-        const size_t startPlane = numPlanes;
-        const auto planes = brush.getPlanes();
-        for (const auto& plane : planes)
+        const size_t startFaces = numFaces;
+        const auto faces = brush.getFaces();
+        for (const auto& face : faces)
         {
             file << "n "
-                 << plane.normal.x << ' '
-                 << plane.normal.y << ' '
-                 << plane.normal.z << '\n';
+                 << face.plane.normal.x << ' '
+                 << face.plane.normal.y << ' '
+                 << face.plane.normal.z << '\n';
             const size_t normLoc = numNormals++;
             
             file << "p "
                  << normLoc << ' '
-                 << plane.distance << '\n';
-            numPlanes++;
+                 << face.plane.distance << '\n';
+            const size_t planeLoc = numPlanes++;
+            
+            const size_t texLoc = std::distance(usedTextures.begin(), std::find(usedTextures.begin(), usedTextures.end(), face.textureName));
+            file << "f "
+                 << texLoc << ' '
+                 << face.textureScale << ' '
+                 << planeLoc << '\n';
+            
+            numFaces++;
         }
         
         const glm::vec3 c = brush.getColor();
-        const size_t texLoc = std::distance(usedTextures.begin(), std::find(usedTextures.begin(), usedTextures.end(), brush.getTextureName()));
+        
         file << "b "
-             << brush.getTextureScale() << ' '
              << c.x << ' '
              << c.y << ' '
              << c.z << ' '
-             << texLoc << ' '
-             << numPlanes - startPlane << ' ';
-        for (size_t i = startPlane; i < numPlanes; i++)
+             << numFaces - startFaces << ' ';
+        for (size_t i = startFaces; i < numFaces; i++)
         {
             file << i << ' ';
         }
@@ -251,6 +258,14 @@ void Editor::loadMap(std::string fileName)
     
     std::vector<glm::vec3> normals;
     std::vector<Plane> planes;
+    
+    struct TempFace
+    {
+        size_t texLoc;
+        float texScale;
+        size_t planeLoc;
+    };
+    std::vector<TempFace> faces;
     
     int lineNum = 0;
     std::string line;
@@ -297,31 +312,48 @@ void Editor::loadMap(std::string fileName)
             planes.push_back(plane);
         }
             break;
+        case 'f':
+        {
+            TempFace face{};
+            
+            lineStream >> face.texLoc
+                       >> face.texScale
+                       >> face.planeLoc;
+            
+            faces.push_back(face);
+        }
+            break;
         case 'b':
         {
-            float textureScale;
             glm::vec3 c;
-            size_t texLoc;
-            size_t numPlanes;
+            size_t numFaces;
             
-            lineStream >> textureScale
-                >> c.x >> c.y >> c.z
-                >> texLoc
-                >> numPlanes;
+            lineStream >> c.x >> c.y >> c.z
+                >> numFaces;
             
-            const std::string textureName = usedTextures[texLoc];
-            std::vector<Plane> brushPlanes;
-            brushPlanes.reserve(numPlanes);
+            std::vector<TempFace> brushFaces;
+            brushFaces.reserve(numFaces);
             
-            for (size_t i = 0; i < numPlanes; i++)
+            for (size_t i = 0; i < numFaces; i++)
             {
-                size_t planeLoc;
-                lineStream >> planeLoc;
+                size_t faceLoc;
+                lineStream >> faceLoc;
                 
-                brushPlanes.push_back(planes[planeLoc]);
+                brushFaces.push_back(faces[faceLoc]);
             }
             
-            brushes.emplace_back(textureName, textureScale, brushPlanes, c);
+            std::vector<std::string> names;
+            std::vector<float> scales;
+            std::vector<Plane> ps;
+            
+            for (const auto& face : brushFaces)
+            {
+                names.push_back(usedTextures[face.texLoc]);
+                scales.push_back(face.texScale);
+                ps.push_back(planes[face.planeLoc]);
+            }
+            
+            brushes.emplace_back(names, scales, ps, c);
         }
             break;
         default:

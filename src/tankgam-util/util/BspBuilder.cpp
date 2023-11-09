@@ -55,27 +55,15 @@ static std::unique_ptr<ConvexPolygon> convertBrushesToPolygons(std::span<const B
     
     for (const auto& brush : brushes)
     {
-        const auto brushVertices = brush.getVertices();
-        const float textureScale = brush.getTextureScale();
-        const std::string textureName = brush.getTextureName().data();
-        const auto planes = brush.getPlanes();
-        for (const auto& plane : planes)
+        auto faces = brush.getFaces();
+        for (auto& face : faces)
         {
-            std::vector<glm::vec3> vertices;
-            for (const auto& brushVertex : brushVertices)
-            {
-                if (Plane::classifyPoint(plane, brushVertex) == Plane::Classification::Coincident)
-                {
-                    vertices.push_back(brushVertex);
-                }
-            }
-            
             std::unique_ptr<ConvexPolygon> newPolygon = std::make_unique<ConvexPolygon>();
             
-            const auto textureAxises = bsp::getTextureAxisFromNormal(plane.normal);
+            const auto textureAxises = bsp::getTextureAxisFromNormal(face.plane.normal);
             
-            newPolygon->plane = plane;
-            newPolygon->vertices = std::move(vertices);
+            newPolygon->plane = face.plane;
+            newPolygon->vertices = std::move(face.vertices);
             newPolygon->usedAsSplit = false;
             newPolygon->textureInfo =
             {
@@ -83,8 +71,8 @@ static std::unique_ptr<ConvexPolygon> convertBrushesToPolygons(std::span<const B
                 .uOffset = 0.0f,
                 .vAxis = textureAxises.second,
                 .vOffset = 0.0f,
-                .scale = textureScale,
-                .textureName = textureName
+                .scale = face.textureScale,
+                .textureName = std::move(face.textureName)
             };
             
             //add this to the linked list

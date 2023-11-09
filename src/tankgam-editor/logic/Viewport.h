@@ -138,7 +138,7 @@ private:
     
     ViewportToolType toolType;
     
-    std::string textureName;
+    std::string currentTextureName;
     std::unordered_map<std::string, Texture> textures;
     
     std::unique_ptr<Shader> defaultShader;
