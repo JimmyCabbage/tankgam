@@ -84,7 +84,7 @@ std::vector<Brush> Editor::getSelectedBrushes() const
 std::vector<BrushFace> Editor::getSelectedFaces() const
 {
     std::vector<BrushFace> brushFaces;
-    for (const auto [brushNum, faceNum] : selectedFaces)
+    for (const auto& [brushNum, faceNum] : selectedFaces)
     {
         brushFaces.push_back(brushes[brushNum].getFace(faceNum));
     }
@@ -247,9 +247,26 @@ void Editor::moveSelected(glm::vec3 moveDir)
         selectedBrushes[i] = brushes[index];
     }
     
-    for (const auto [brushNum, faceNum] : selectedFaces)
+    for (const auto& [brushNum, faceNum] : selectedFaces)
     {
         brushes[brushNum].translate(faceNum, moveDir);
+    }
+    
+    viewport.update();
+}
+
+void Editor::rotateSelected(glm::vec3 rotDir)
+{
+    for (size_t i = 0; i < selectedBrushesIndices.size(); i++)
+    {
+        const size_t index = selectedBrushesIndices[i];
+        brushes[index].rotate(rotDir);
+        selectedBrushes[i] = brushes[index];
+    }
+    
+    for (const auto& [brushNum, faceNum] : selectedFaces)
+    {
+        brushes[brushNum].rotate(faceNum, rotDir);
     }
     
     viewport.update();

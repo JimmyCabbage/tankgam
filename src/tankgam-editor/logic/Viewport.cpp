@@ -320,6 +320,31 @@ void Viewport::moveCamera(Viewport::MoveDir moveDir)
     }
 }
 
+void Viewport::turnSelected(TurnDir turnDir)
+{
+    if (toolType == ViewportToolType::Select || toolType == ViewportToolType::SelectFace)
+    {
+        glm::vec3 rotAxis = currentViewport->camera.getFront();
+        if (currentViewport->type == ViewportType::Projection)
+        {
+            rotAxis = glm::vec3{ 0.0f, 1.0f, 0.0f };
+        }
+        
+        using Turn = TurnDir;
+        switch (turnDir)
+        {
+        case Turn::Left:
+            editor.rotateSelected(rotAxis * -glm::radians(15.0f));
+            break;
+        case Turn::Right:
+            editor.rotateSelected(rotAxis * glm::radians(15.0f));
+            break;
+        default:
+            throw std::runtime_error{ "Invalid selected brush rotate" };
+        }
+    }
+}
+
 void Viewport::turnCamera(TurnDir turnDir)
 {
     if (!currentViewport)

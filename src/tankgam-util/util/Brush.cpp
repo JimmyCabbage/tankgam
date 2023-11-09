@@ -210,25 +210,34 @@ void Brush::translate(size_t faceNum, glm::vec3 direction)
     regenerateVertices();
 }
 
+void Brush::rotate(glm::vec3 rotation)
+{
+    for (auto& plane : faces.planes)
+    {
+        Plane::rotatePlane(plane, rotation, center);
+    }
+    
+    regenerateVertices();
+}
+
+void Brush::rotate(size_t faceNum, glm::vec3 rotation)
+{
+    const glm::vec3 newCenter = calculateCenter(faces.verticesList[faceNum]);
+    Plane::rotatePlane(faces.planes[faceNum], rotation, newCenter);
+    
+    regenerateVertices();
+}
+
 void Brush::regenerateVertices()
 {
     vertices = generateVertices();
     
-    glm::vec3 center{};
-    size_t vertexCount = 0;
-    //calculate center
-    for (const auto& vertex : vertices)
-    {
-        center += vertex;
-        vertexCount++;
-    }
-    
-    center /= static_cast<float>(vertexCount);
+    const glm::vec3 newCenter = calculateCenter(vertices);
     
     //flip around planes to face this point
     for (auto& plane : faces.planes)
     {
-        if (Plane::classifyPoint(plane, center) == Plane::Classification::Front)
+        if (Plane::classifyPoint(plane, newCenter) == Plane::Classification::Front)
         {
             plane.normal = -plane.normal;
             plane.distance = -plane.distance;
@@ -236,6 +245,8 @@ void Brush::regenerateVertices()
     }
     
     vertices = generateVertices(true);
+    
+    center = calculateCenter(vertices);
     
     faces.verticesList.resize(faces.planes.size());
     for (auto& faceVertices : faces.verticesList)
@@ -326,6 +337,22 @@ std::vector<glm::vec3> Brush::generateVertices(bool checkOutside)
     }
     
     return newVertices;
+}
+
+glm::vec3 Brush::calculateCenter(std::span<const glm::vec3> centerVertices)
+{
+    glm::vec3 newCenter{};
+    size_t vertexCount = 0;
+    //calculate center
+    for (const auto& vertex : centerVertices)
+    {
+        newCenter += vertex;
+        vertexCount++;
+    }
+    
+    newCenter /= static_cast<float>(vertexCount);
+    
+    return newCenter;
 }
 
 glm::vec3 Brush::randomWireframeColor()

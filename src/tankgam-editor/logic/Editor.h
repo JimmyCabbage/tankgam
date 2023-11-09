@@ -48,6 +48,8 @@ public:
     
     void moveSelected(glm::vec3 moveDir);
     
+    void rotateSelected(glm::vec3 rotDir);
+    
     void saveMap();
     
     void loadMap(std::string fileName);

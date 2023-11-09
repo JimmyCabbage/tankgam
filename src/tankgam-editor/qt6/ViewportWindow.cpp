@@ -181,6 +181,12 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
     case Qt::Key::Key_BracketRight:
         viewport.zoomInCamera();
         break;
+    case Qt::Key::Key_Less:
+        viewport.turnSelected(Viewport::TurnDir::Left);
+        break;
+    case Qt::Key::Key_Greater:
+        viewport.turnSelected(Viewport::TurnDir::Right);
+        break;
     case Qt::Key::Key_W:
         viewport.moveCamera(Viewport::MoveDir::Forward);
         break;

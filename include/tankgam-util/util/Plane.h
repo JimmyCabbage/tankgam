@@ -26,6 +26,9 @@ struct Plane
     
     static void translatePlane(Plane& plane, glm::vec3 direction);
     
+    //rotation is in radians
+    static void rotatePlane(Plane& plane, glm::vec3 rotation, glm::vec3 center = {});
+    
     enum class Classification
     {
         Coincident,

@@ -91,6 +91,8 @@ public:
         Right
     };
     
+    void turnSelected(TurnDir turnDir);
+    
     void turnCamera(TurnDir turnDir);
     
     void zoomInCamera();

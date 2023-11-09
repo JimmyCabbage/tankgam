@@ -68,6 +68,11 @@ glm::vec3 ViewportCamera::getPosition() const
     return position;
 }
 
+glm::vec3 ViewportCamera::getFront() const
+{
+    return front;
+}
+
 glm::vec3 ViewportCamera::getRight() const
 {
     return right;

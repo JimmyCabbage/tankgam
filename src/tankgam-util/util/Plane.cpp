@@ -1,5 +1,7 @@
 #include "util/Plane.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 bool Plane::isValidPlane(const Plane& plane)
 {
     if (glm::length(plane.normal) <= 0.9f)
@@ -93,6 +95,22 @@ void Plane::translatePlane(Plane& plane, glm::vec3 direction)
 {
     const glm::vec3 point = (plane.normal * -plane.distance) + direction;
     plane = fromVertexAndNormal(point, plane.normal);
+}
+
+void Plane::rotatePlane(Plane& plane, glm::vec3 rotation, glm::vec3 center)
+{
+    const glm::mat4 transMat = glm::translate(glm::mat4{ 1.0f }, center);
+    const glm::mat4 revTransMat = glm::translate(glm::mat4{ 1.0f }, -center);
+    
+    glm::mat4 rotMat = glm::rotate(glm::mat4{ 1.0f }, rotation.x, glm::vec3{ 1.0f, 0.0f, 0.0f });
+    rotMat = glm::rotate(rotMat, rotation.y, glm::vec3{ 0.0f, 1.0f, 0.0f });
+    rotMat = glm::rotate(rotMat, rotation.z, glm::vec3{ 0.0f, 0.0f, 1.0f });
+    
+    const glm::mat4 mat = transMat * rotMat * revTransMat;
+    
+    const glm::vec3 rotatedPoint = mat * glm::vec4{ plane.normal * -plane.distance, 1.0f };
+    const glm::vec3 rotatedNormal = glm::normalize(glm::vec3{ rotMat * glm::vec4{ plane.normal, 1.0f } });
+    plane = fromVertexAndNormal(rotatedPoint, rotatedNormal);
 }
 
 Plane::Classification Plane::classifyPoint(const Plane& plane, glm::vec3 point)

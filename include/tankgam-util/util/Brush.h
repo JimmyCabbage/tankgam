@@ -52,6 +52,10 @@ public:
     
     void translate(size_t faceNum, glm::vec3 direction);
     
+    void rotate(glm::vec3 rotation);
+    
+    void rotate(size_t faceNum, glm::vec3 rotation);
+    
 private:
     struct BrushFaces
     {
@@ -66,6 +70,9 @@ private:
     std::vector<glm::vec3> vertices;
     void regenerateVertices();
     std::vector<glm::vec3> generateVertices(bool checkOutside = false);
+    
+    glm::vec3 center;
+    glm::vec3 calculateCenter(std::span<const glm::vec3> centerVertices);
     
     glm::vec3 color;
     glm::vec3 randomWireframeColor();
