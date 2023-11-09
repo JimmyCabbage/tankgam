@@ -143,6 +143,27 @@ void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
     renderNow();
 }
 
+void ViewportWindow::wheelEvent(QWheelEvent* event)
+{
+    QPoint numDegrees = event->angleDelta() / 8;
+    
+    if (!numDegrees.isNull())
+    {
+        //gain focus
+        const auto p = QCursor::pos();
+        viewport.clickFocus(p.x() * devicePixelRatio(), p.y() * devicePixelRatio());
+        
+        bool negative = numDegrees.y() < 0;
+        for (int i = 0; i < std::abs(numDegrees.y()); i += 150)
+        {
+            negative ? viewport.zoomOutCamera() : viewport.zoomInCamera();
+        }
+    }
+    
+    event->accept();
+    renderNow();
+}
+
 void ViewportWindow::keyPressEvent(QKeyEvent* event)
 {
     bool shouldRedraw = true;
