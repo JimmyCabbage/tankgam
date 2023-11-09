@@ -40,9 +40,9 @@ public:
     
     void createBrush(std::string_view textureName, glm::vec2 begin, glm::vec2 end, int skipAxis);
     
-    void selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection);
+    void selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection, bool overridePrevSel = true);
     
-    void selectFace(glm::vec3 selectOrigin, glm::vec3 selectDirection);
+    void selectFace(glm::vec3 selectOrigin, glm::vec3 selectDirection, bool overridePrevSel = true);
     
     void deleteSelectedBrushes();
     

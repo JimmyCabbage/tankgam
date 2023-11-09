@@ -384,7 +384,7 @@ void Viewport::clickLeftStart(int x, int y)
     }
 }
 
-void Viewport::clickLeftEnd(int x, int y)
+void Viewport::clickLeftEnd(int x, int y, bool ctrlHeld)
 {
     if (!currentViewport)
     {
@@ -420,7 +420,7 @@ void Viewport::clickLeftEnd(int x, int y)
             
             const glm::vec3 rayOrigin = currentViewport->camera.getPosition();
             
-            editor.selectBrush(rayOrigin, rayDirection);
+            editor.selectBrush(rayOrigin, rayDirection, !ctrlHeld);
         }
     }
     else if (toolType == ViewportToolType::SelectFace)
@@ -432,7 +432,7 @@ void Viewport::clickLeftEnd(int x, int y)
             
             const glm::vec3 rayOrigin = currentViewport->camera.getPosition();
             
-            editor.selectFace(rayOrigin, rayDirection);
+            editor.selectFace(rayOrigin, rayDirection, !ctrlHeld);
         }
     }
 }

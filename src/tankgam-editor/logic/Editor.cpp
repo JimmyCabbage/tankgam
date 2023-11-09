@@ -129,10 +129,13 @@ void Editor::createBrush(std::string_view textureName, glm::vec2 begin, glm::vec
     viewport.update();
 }
 
-void Editor::selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection)
+void Editor::selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection, bool overridePrevSel)
 {
-    selectedBrushes.clear();
-    selectedBrushesIndices.clear();
+    if (overridePrevSel)
+    {
+        selectedBrushes.clear();
+        selectedBrushesIndices.clear();
+    }
     
     selectedFaces.clear();
     
@@ -168,12 +171,15 @@ void Editor::selectBrush(glm::vec3 selectOrigin, glm::vec3 selectDirection)
     viewport.update();
 }
 
-void Editor::selectFace(glm::vec3 selectOrigin, glm::vec3 selectDirection)
+void Editor::selectFace(glm::vec3 selectOrigin, glm::vec3 selectDirection, bool overridePrevSel)
 {
     selectedBrushes.clear();
     selectedBrushesIndices.clear();
     
-    selectedFaces.clear();
+    if (overridePrevSel)
+    {
+        selectedFaces.clear();
+    }
     
     float closestDistance = std::numeric_limits<float>::max();
     bool faceFound = false;

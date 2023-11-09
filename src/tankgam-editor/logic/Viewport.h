@@ -103,7 +103,7 @@ private:
 public:
     void clickLeftStart(int x, int y);
     
-    void clickLeftEnd(int x, int y);
+    void clickLeftEnd(int x, int y, bool ctrlHeld);
     
 private:
     ViewportData& chooseViewportMouse(glm::ivec2 omouse);

@@ -137,7 +137,10 @@ void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
     const int x = pos.x();
     const int y = pos.y();
     
-    viewport.clickLeftEnd(x * devicePixelRatio(), y * devicePixelRatio());
+    const auto modifiers = QGuiApplication::keyboardModifiers();
+    const bool ctrl = modifiers.testFlag(Qt::ControlModifier);
+    
+    viewport.clickLeftEnd(x * devicePixelRatio(), y * devicePixelRatio(), ctrl);
     
     event->accept();
     renderNow();
@@ -165,7 +168,6 @@ void ViewportWindow::keyPressEvent(QKeyEvent* event)
     bool shouldRedraw = true;
     
     const auto modifiers = QGuiApplication::keyboardModifiers();
-    const bool ctrl = modifiers.testFlag(Qt::ControlModifier);
     const bool shift = modifiers.testFlag(Qt::ShiftModifier);
     
     switch (event->key())
