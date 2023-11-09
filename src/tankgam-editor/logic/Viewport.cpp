@@ -253,30 +253,12 @@ void Viewport::moveSelectedBrushes(MoveDir moveDir)
 {
     if (toolType == ViewportToolType::Select)
     {
-        glm::vec3 verticalAxis;
-        glm::vec3 horizontalAxis;
+        glm::vec3 verticalAxis = currentViewport->camera.getUp();
+        glm::vec3 horizontalAxis = currentViewport->camera.getRight();
         if (currentViewport->type == ViewportType::Projection)
         {
             verticalAxis = glm::vec3{ 0.0f, 1.0f, 0.0f };
             horizontalAxis = glm::vec3{ 0.0f, 0.0f, 0.0f };
-        }
-        else
-        {
-            if (currentViewport->type == ViewportType::Top)
-            {
-                verticalAxis = glm::vec3{ 0.0f, 0.0f, -1.0f };
-                horizontalAxis = glm::vec3{ 1.0f, 0.0f, 0.0f };
-            }
-            else if (currentViewport->type == ViewportType::Front)
-            {
-                verticalAxis = glm::vec3{ 0.0f, 1.0f, 0.0f };
-                horizontalAxis = glm::vec3{ -1.0f, 0.0f, 0.0f };
-            }
-            else if (currentViewport->type == ViewportType::Side)
-            {
-                verticalAxis = glm::vec3{ 0.0f, 1.0f, 0.0f };
-                horizontalAxis = glm::vec3{ 0.0f, 0.0f, -1.0f };
-            }
         }
         
         using Move = MoveDir;
