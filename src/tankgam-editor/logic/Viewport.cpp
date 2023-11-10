@@ -187,7 +187,7 @@ void Viewport::createShaders()
 
                 void main()
                 {
-                    float d1 = dot(vNormal, vec3(1.0f / sqrt(14.0f), 3.0f / sqrt(14.0f), sqrt(2.0f / 7.0f)));
+                    float d1 = dot(vNormal, vec3(1.0f / -sqrt(14.0f), 3.0f / sqrt(14.0f), -sqrt(2.0f / 7.0f)));
                     d1 = (d1 / 2.0f) + 0.65f;
                     //outFragColor = vec4(vColor * d1, 1.0f);
                     outFragColor = vec4(texture(diffuseTexture, vTexCoord).rgb * d1, 1.0f);
@@ -609,8 +609,6 @@ void Viewport::renderVisibleBrushes(ViewportData& viewport, const glm::mat4& pro
     {
         brushShader->use();
         brushShader->setMat4("uProjView", projViewMatrix);
-        
-        gl->Enable(GL_CULL_FACE);
     }
     else
     {
@@ -637,11 +635,7 @@ void Viewport::renderVisibleBrushes(ViewportData& viewport, const glm::mat4& pro
         }
     }
     
-    if (viewport.type == ViewportType::Projection)
-    {
-        gl->Disable(GL_CULL_FACE);
-    }
-    else
+    if (viewport.type != ViewportType::Projection)
     {
         //reset depth func
         gl->DepthFunc(GL_LESS);
