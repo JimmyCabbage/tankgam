@@ -337,7 +337,7 @@ void Viewport::turnSelected(TurnDir turnDir)
             editor.rotateSelected(rotAxis * glm::radians(-5.0f));
             break;
         case Turn::Right:
-            editor.rotateSelected(rotAxis * glm::radians(-5.0f));
+            editor.rotateSelected(rotAxis * glm::radians(5.0f));
             break;
         default:
             throw std::runtime_error{ "Invalid selected brush rotate" };
@@ -624,6 +624,7 @@ void Viewport::renderVisibleBrushes(ViewportData& viewport, const glm::mat4& pro
     {
         auto& brushMesh = brushMeshes[i];
         auto& brushTextureName = brushTextureNames[i];
+        
         if (viewport.type == ViewportType::Projection)
         {
             textures.at(brushTextureName).bind();
@@ -631,7 +632,7 @@ void Viewport::renderVisibleBrushes(ViewportData& viewport, const glm::mat4& pro
         }
         else
         {
-            brushMesh.draw(GL_LINES);
+            brushMesh.draw(GL_LINE_LOOP);
         }
     }
     
@@ -667,7 +668,7 @@ void Viewport::renderSelectedBrushes(ViewportData& viewport, const glm::mat4& pr
             defaultShader->use();
             defaultShader->setMat4("uProjView", projViewMatrix);
             
-            brushMesh.draw(GL_LINES);
+            brushMesh.draw(GL_LINE_LOOP);
         }
     }
     
