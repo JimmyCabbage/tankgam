@@ -334,10 +334,10 @@ void Viewport::turnSelected(TurnDir turnDir)
         switch (turnDir)
         {
         case Turn::Left:
-            editor.rotateSelected(rotAxis * -glm::radians(15.0f));
+            editor.rotateSelected(rotAxis * glm::radians(-5.0f));
             break;
         case Turn::Right:
-            editor.rotateSelected(rotAxis * glm::radians(15.0f));
+            editor.rotateSelected(rotAxis * glm::radians(-5.0f));
             break;
         default:
             throw std::runtime_error{ "Invalid selected brush rotate" };
