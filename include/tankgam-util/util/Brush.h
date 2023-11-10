@@ -54,8 +54,6 @@ public:
     
     void rotate(glm::vec3 rotation);
     
-    void rotate(size_t faceNum, glm::vec3 rotation);
-    
 private:
     struct BrushFaces
     {

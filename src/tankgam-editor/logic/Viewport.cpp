@@ -322,7 +322,7 @@ void Viewport::moveCamera(Viewport::MoveDir moveDir)
 
 void Viewport::turnSelected(TurnDir turnDir)
 {
-    if (toolType == ViewportToolType::Select || toolType == ViewportToolType::SelectFace)
+    if (toolType == ViewportToolType::Select)
     {
         glm::vec3 rotAxis = currentViewport->camera.getFront();
         if (currentViewport->type == ViewportType::Projection)

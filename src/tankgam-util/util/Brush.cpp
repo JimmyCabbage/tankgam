@@ -220,14 +220,6 @@ void Brush::rotate(glm::vec3 rotation)
     regenerateVertices();
 }
 
-void Brush::rotate(size_t faceNum, glm::vec3 rotation)
-{
-    const glm::vec3 newCenter = calculateCenter(faces.verticesList[faceNum]);
-    Plane::rotatePlane(faces.planes[faceNum], rotation, newCenter);
-    
-    regenerateVertices();
-}
-
 void Brush::regenerateVertices()
 {
     vertices = generateVertices();

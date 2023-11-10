@@ -264,11 +264,6 @@ void Editor::rotateSelected(glm::vec3 rotDir)
         selectedBrushes[i] = brushes[index];
     }
     
-    for (const auto& [brushNum, faceNum] : selectedFaces)
-    {
-        brushes[brushNum].rotate(faceNum, rotDir);
-    }
-    
     viewport.update();
 }
 
