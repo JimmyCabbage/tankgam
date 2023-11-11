@@ -322,7 +322,7 @@ void Viewport::moveCamera(Viewport::MoveDir moveDir)
 
 void Viewport::turnSelected(TurnDir turnDir)
 {
-    if (toolType == ViewportToolType::Select)
+    if (toolType == ViewportToolType::Select || toolType == ViewportToolType::SelectFace)
     {
         glm::vec3 rotAxis = currentViewport->camera.getFront();
         if (currentViewport->type == ViewportType::Projection)
@@ -334,10 +334,10 @@ void Viewport::turnSelected(TurnDir turnDir)
         switch (turnDir)
         {
         case Turn::Left:
-            editor.rotateSelected(rotAxis * glm::radians(-5.0f));
+            editor.rotateSelected(rotAxis * glm::radians(-2.5f));
             break;
         case Turn::Right:
-            editor.rotateSelected(rotAxis * glm::radians(5.0f));
+            editor.rotateSelected(rotAxis * glm::radians(2.5f));
             break;
         default:
             throw std::runtime_error{ "Invalid selected brush rotate" };

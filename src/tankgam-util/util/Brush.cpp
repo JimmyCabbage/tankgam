@@ -217,22 +217,50 @@ void Brush::rotate(glm::vec3 rotation)
         Plane::rotatePlane(plane, rotation, center);
     }
     
-    regenerateVertices();
+    regenerateVertices(false);
 }
 
-void Brush::regenerateVertices()
+void Brush::rotate(size_t faceNum, glm::vec3 rotation)
 {
-    vertices = generateVertices();
+    Brush prevBrush = *this;
     
-    const glm::vec3 newCenter = calculateCenter(vertices);
+    const glm::vec3 faceCenter = calculateCenter(faces.verticesList[faceNum]);
+    Plane::rotatePlane(faces.planes[faceNum], rotation, faceCenter);
     
-    //flip around planes to face this point
-    for (auto& plane : faces.planes)
+    regenerateVertices(false);
+    
+    size_t numFullFaces = 0;
+    for (size_t i = 0; i < faces.planes.size(); i++)
     {
-        if (Plane::classifyPoint(plane, newCenter) == Plane::Classification::Front)
+        if (faces.verticesList[i].size() >= 3)
         {
-            plane.normal = -plane.normal;
-            plane.distance = -plane.distance;
+            numFullFaces += 1;
+        }
+    }
+    
+    //restore prev state if this resulted in a bad state
+    if (numFullFaces < 4)
+    {
+        *this = prevBrush;
+    }
+}
+
+void Brush::regenerateVertices(bool regenerateCenter)
+{
+    if (regenerateCenter)
+    {
+        vertices = generateVertices();
+        
+        const glm::vec3 newCenter = calculateCenter(vertices);
+        
+        //flip around planes to face this point
+        for (auto& plane: faces.planes)
+        {
+            if (Plane::classifyPoint(plane, newCenter) == Plane::Classification::Front)
+            {
+                plane.normal = -plane.normal;
+                plane.distance = -plane.distance;
+            }
         }
     }
     
@@ -287,6 +315,12 @@ std::vector<glm::vec3> Brush::generateVertices(bool checkOutside)
                 }
                 
                 const auto vertex = possibleVertex.value();
+                
+                //nan check
+                if (vertex.x != vertex.x || vertex.y != vertex.y || vertex.z != vertex.z)
+                {
+                    continue;
+                }
                 
                 //check we don't already have this
                 bool similar = false;
