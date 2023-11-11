@@ -463,5 +463,7 @@ void Editor::buildMap()
     bspBuilder.addBrushes(brushes);
     
     bsp::File file = bspBuilder.build();
+    file.header.mapName = mapName;
+    
     bsp::writeFile(fmt::format("{}.tgmap", mapName), file);
 }
