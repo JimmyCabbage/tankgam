@@ -16,6 +16,11 @@ SettingsTab::SettingsTab(Editor& editor, QWidget* parent)
     generalTab = new QWidget{ this };
     generalTab->setLayout(generalTabLayout);
     {
+        refreshButton = new QPushButton{ "Refresh Viewport", this };
+        generalTabLayout->addWidget(refreshButton);
+        
+        connect(refreshButton, &QPushButton::clicked, this, &SettingsTab::refreshViewport);
+        
         toolsDropdownLabel = new QLabel{ "Current Tool:", this };
         generalTabLayout->addWidget(toolsDropdownLabel);
         

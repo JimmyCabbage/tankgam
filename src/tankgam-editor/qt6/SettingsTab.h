@@ -36,6 +36,8 @@ public slots:
     
 signals:
     //general
+    void refreshViewport();
+    
     void toolSelected(ViewportToolType viewportToolType);
     
     void textureSelected(std::string textureName);
@@ -54,6 +56,7 @@ private:
     
     QVBoxLayout* generalTabLayout;
     QWidget* generalTab;
+    QPushButton* refreshButton;
     QLabel* toolsDropdownLabel;
     QComboBox* toolsDropdown;
     QLabel* texturesDropdownLabel;

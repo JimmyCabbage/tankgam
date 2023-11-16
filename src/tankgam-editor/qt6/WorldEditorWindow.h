@@ -6,7 +6,6 @@
 
 #include "ViewportWindow.h"
 #include "Editor.h"
-#include "RenderWidget.h"
 #include "SettingsTab.h"
 
 class WorldEditorWindow : public QWidget
@@ -22,7 +21,7 @@ private:
     
     QHBoxLayout* mainLayout;
     
-    QSplitter* renderAndSettingSplitter;
-    RenderWidget* renderWidget;
+    QSplitter* viewportAndSettingSplitter;
+    ViewportWindow* viewportWindow;
     SettingsTab* settingsTab;
 };

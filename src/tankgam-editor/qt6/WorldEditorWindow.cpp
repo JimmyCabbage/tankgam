@@ -6,19 +6,20 @@ WorldEditorWindow::WorldEditorWindow(QWidget* parent)
     mainLayout = new QHBoxLayout{ this };
     setLayout(mainLayout);
     
-    renderAndSettingSplitter = new QSplitter;
-    mainLayout->addWidget(renderAndSettingSplitter);
+    viewportAndSettingSplitter = new QSplitter;
+    mainLayout->addWidget(viewportAndSettingSplitter);
     {
-        //render stuff
-        renderWidget = new RenderWidget{ editor };
-        renderAndSettingSplitter->addWidget(renderWidget);
+        //viewport stuff
+        viewportWindow = new ViewportWindow{ editor.getViewport() };
+        viewportAndSettingSplitter->addWidget(QWidget::createWindowContainer(viewportWindow));
         
         //settings stuff
         settingsTab = new SettingsTab{ editor };
-        renderAndSettingSplitter->addWidget(settingsTab);
+        viewportAndSettingSplitter->addWidget(settingsTab);
         
-        connect(settingsTab, &SettingsTab::toolSelected, renderWidget, &RenderWidget::toolSelected);
-        connect(settingsTab, &SettingsTab::textureSelected, renderWidget, &RenderWidget::textureSelected);
+        connect(settingsTab, &SettingsTab::refreshViewport, viewportWindow, &ViewportWindow::renderNow);
+        connect(settingsTab, &SettingsTab::toolSelected, viewportWindow, &ViewportWindow::toolSelected);
+        connect(settingsTab, &SettingsTab::textureSelected, viewportWindow, &ViewportWindow::textureSelected);
         connect(settingsTab, &SettingsTab::buildMap, this, [this]() { editor.buildMap(); });
         
         connect(settingsTab, &SettingsTab::changeMapName, this, [this](std::string mapName) { editor.setMapName(std::move(mapName)); });
@@ -31,11 +32,11 @@ WorldEditorWindow::WorldEditorWindow(QWidget* parent)
             
             settingsTab->updateTextboxMapName(mapName.substr(lastSlash));
         });
-        connect(settingsTab, &SettingsTab::loadMap, renderWidget, &RenderWidget::renderNow);
+        connect(settingsTab, &SettingsTab::loadMap, viewportWindow, &ViewportWindow::renderNow);
     }
     
     resize(1600, 900);
-    renderWidget->resize(924, 900);
+    viewportWindow->resize(924, 900);
 }
 
 WorldEditorWindow::~WorldEditorWindow() = default;

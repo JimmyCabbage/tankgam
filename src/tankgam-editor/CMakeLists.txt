@@ -2,7 +2,6 @@ qt_add_executable(tankgam-editor
         qt6/main.cpp
         qt6/WorldEditorWindow.h qt6/WorldEditorWindow.cpp
         qt6/ViewportWindow.h qt6/ViewportWindow.cpp
-        qt6/RenderWidget.h qt6/RenderWidget.cpp
         qt6/SettingsTab.h qt6/SettingsTab.cpp)
 
 #internal logic stuff
