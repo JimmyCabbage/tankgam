@@ -105,6 +105,13 @@ void sortVerticiesClockwise(const glm::vec3& normal, std::vector<glm::vec3>& ver
     verticies = std::move(newVerticies);
 }
 
+static Vertex makeVertexFromData(glm::vec3 pos, glm::vec3 normal, float textureScale, glm::vec3 color)
+{
+    const auto [uAxis, vAxis] = bsp::getTextureAxisFromNormal(normal);
+    const glm::vec2 texCoord = glm::vec2{ glm::dot(pos, uAxis), glm::dot(pos, vAxis) } / textureScale;
+    return Vertex{ pos, color, normal, texCoord };
+}
+
 std::pair<std::vector<Vertex>, std::string> makeFaceVertices(const BrushFace& face, glm::vec3 color)
 {
     std::vector<glm::vec3> vs = face.vertices;
@@ -117,9 +124,7 @@ std::pair<std::vector<Vertex>, std::string> makeFaceVertices(const BrushFace& fa
     
     for (const auto& edgeVertex : vs)
     {
-        const auto [uAxis, vAxis] = bsp::getTextureAxisFromNormal(face.plane.normal);
-        const glm::vec2 texCoord = glm::vec2{ glm::dot(edgeVertex, uAxis), glm::dot(edgeVertex, vAxis) } / face.textureScale;
-        vertexList.emplace_back(edgeVertex, color, face.plane.normal, texCoord);
+        vertexList.push_back(makeVertexFromData(edgeVertex, face.plane.normal, face.textureScale, color));
     }
     
     return std::make_pair(std::move(vertexList), std::move(face.textureName));
@@ -146,9 +151,7 @@ std::vector<std::pair<std::vector<Vertex>, std::string>> makeBrushVertices(const
         
         for (const auto& edgeVertex : face.vertices)
         {
-            const auto [uAxis, vAxis] = bsp::getTextureAxisFromNormal(face.plane.normal);
-            const glm::vec2 texCoord = glm::vec2{ glm::dot(edgeVertex, uAxis), glm::dot(edgeVertex, vAxis) } / face.textureScale;
-            vertexList.emplace_back(edgeVertex, color, face.plane.normal, texCoord);
+            vertexList.push_back(makeVertexFromData(edgeVertex, face.plane.normal, face.textureScale, color));
         }
         
         auto pair = std::make_pair(std::move(vertexList), std::move(face.textureName));
@@ -168,13 +171,13 @@ ViewportCamera setupCamera(Viewport::ViewportType type)
     switch (type)
     {
     case Type::Top:
-        return ViewportCamera{ { middleGrid, initialDistance, middleGrid }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } };
+        return ViewportCamera{ { middleGrid, initialDistance, middleGrid }, { 0.0f, -1.0f, 0.0f }, { -1.0f, 0.0f, 0.0f } };
     case Type::Front:
         return ViewportCamera{ { middleGrid, middleGrid, -initialDistance }, { 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f } };
     case Type::Side:
         return ViewportCamera{ { initialDistance, middleGrid, middleGrid }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } };
     case Type::Projection:
-        return ViewportCamera{ { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f } };
+        return ViewportCamera{ { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f } };
     default:
         throw std::runtime_error("Unknown ViewportType enum");
     }

@@ -217,30 +217,50 @@ void Brush::rotate(glm::vec3 rotation)
         Plane::rotatePlane(plane, rotation, center);
     }
     
-    regenerateVertices();
+    regenerateVertices(false);
 }
 
 void Brush::rotate(size_t faceNum, glm::vec3 rotation)
 {
-    const glm::vec3 newCenter = calculateCenter(faces.verticesList[faceNum]);
-    Plane::rotatePlane(faces.planes[faceNum], rotation, newCenter);
+    Brush prevBrush = *this;
     
-    regenerateVertices();
+    const glm::vec3 faceCenter = calculateCenter(faces.verticesList[faceNum]);
+    Plane::rotatePlane(faces.planes[faceNum], rotation, faceCenter);
+    
+    regenerateVertices(false);
+    
+    size_t numFullFaces = 0;
+    for (size_t i = 0; i < faces.planes.size(); i++)
+    {
+        if (faces.verticesList[i].size() >= 3)
+        {
+            numFullFaces += 1;
+        }
+    }
+    
+    //restore prev state if this resulted in a bad state
+    if (numFullFaces < 4)
+    {
+        *this = prevBrush;
+    }
 }
 
-void Brush::regenerateVertices()
+void Brush::regenerateVertices(bool regenerateCenter)
 {
-    vertices = generateVertices();
-    
-    const glm::vec3 newCenter = calculateCenter(vertices);
-    
-    //flip around planes to face this point
-    for (auto& plane : faces.planes)
+    if (regenerateCenter)
     {
-        if (Plane::classifyPoint(plane, newCenter) == Plane::Classification::Front)
+        vertices = generateVertices();
+        
+        const glm::vec3 newCenter = calculateCenter(vertices);
+        
+        //flip around planes to face this point
+        for (auto& plane: faces.planes)
         {
-            plane.normal = -plane.normal;
-            plane.distance = -plane.distance;
+            if (Plane::classifyPoint(plane, newCenter) == Plane::Classification::Front)
+            {
+                plane.normal = -plane.normal;
+                plane.distance = -plane.distance;
+            }
         }
     }
     
@@ -295,6 +315,12 @@ std::vector<glm::vec3> Brush::generateVertices(bool checkOutside)
                 }
                 
                 const auto vertex = possibleVertex.value();
+                
+                //nan check
+                if (vertex.x != vertex.x || vertex.y != vertex.y || vertex.z != vertex.z)
+                {
+                    continue;
+                }
                 
                 //check we don't already have this
                 bool similar = false;

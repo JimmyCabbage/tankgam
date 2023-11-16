@@ -68,7 +68,7 @@ private:
     std::vector<std::string> textureNames;
     
     std::vector<glm::vec3> vertices;
-    void regenerateVertices();
+    void regenerateVertices(bool regenerateCenter = true);
     std::vector<glm::vec3> generateVertices(bool checkOutside = false);
     
     glm::vec3 center;
