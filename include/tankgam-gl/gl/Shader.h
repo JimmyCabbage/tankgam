@@ -2,7 +2,8 @@
 
 #include <string_view>
 
-#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
+#include <glm/matrix.hpp>
 #include <glad/gl.h>
 
 class Shader

@@ -5,6 +5,8 @@
 
 #include <fmt/format.h>
 
+#include <gl/Vertex.h>
+
 #include "sys/Renderer.h"
 
 TextRenderer::TextRenderer(Renderer& renderer)

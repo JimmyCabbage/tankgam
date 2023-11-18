@@ -6,7 +6,6 @@
 #include <fmt/format.h>
 
 #include "sys/Console.h"
-#include "sys/File.h"
 #include "sys/EventHandler.h"
 #include "sys/Renderer.h"
 #include "sys/Timer.h"
@@ -16,6 +15,8 @@
 #include "Menu.h"
 #include "Event.h"
 #include "EntityManager.h"
+
+#include <util/FileManager.h>
 
 Client::Client(Console& console, FileManager& fileManager, Net& net)
     : console{ console }, fileManager{ fileManager }, net{ net }

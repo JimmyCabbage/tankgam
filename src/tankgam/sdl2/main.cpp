@@ -1,5 +1,4 @@
 #include "sys/Console.h"
-#include "sys/File.h"
 #include "Net.h"
 #include "Server.h"
 #include "Client.h"
@@ -7,13 +6,15 @@
 
 #include "SDL.h"
 
+#include <util/FileManager.h>
+
 int main(int argc, char** argv)
 {
     {
         Console console{};
         console.logf("tankgam engine version %s", TANKGAM_VERSION);
 
-        FileManager fileManager{console};
+        FileManager fileManager{ console };
         fileManager.loadAssetsFile("dev.assets");
         fileManager.loadAssetsFile("tank.assets");
         

@@ -1,4 +1,4 @@
-#include "sys/Renderer/Mesh.h"
+#include "gl/Mesh.h"
 
 #include <vector>
 #include <unordered_map>
@@ -6,7 +6,7 @@
 #include <fmt/format.h>
 #include "tiny_obj_loader.h"
 
-#include "sys/Renderer.h"
+#include "gl/Vertex.h"
 
 Mesh::Mesh(GladGLContext& gl, std::span<const Vertex> vertices)
     : gl{ gl },

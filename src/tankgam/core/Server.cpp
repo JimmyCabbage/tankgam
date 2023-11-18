@@ -3,11 +3,12 @@
 #include <fmt/format.h>
 
 #include "sys/Console.h"
-#include "sys/File.h"
 #include "sys/Timer.h"
 #include "Net.h"
 #include "NetChan.h"
 #include "NetBuf.h"
+
+#include <util/FileManager.h>
 
 Server::Server(Console& console, FileManager& fileManager, Net& net)
     : console{ console }, fileManager{ fileManager }, net{ net }

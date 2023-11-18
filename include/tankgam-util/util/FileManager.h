@@ -6,15 +6,16 @@
 #include <span>
 #include <utility>
 #include <cstdint>
+#include <string>
 
 #include <zip.h>
 
-class Console;
+class Log;
 
 class FileManager
 {
 public:
-    explicit FileManager(Console& console);
+    explicit FileManager(Log& log);
     ~FileManager();
     
     std::vector<char> readFileRaw(std::string_view fileName);
@@ -23,10 +24,12 @@ public:
     
     std::stringstream readFile(std::string_view fileName);
     
+    std::vector<std::string> fileNamesInDir(std::string_view dirName);
+    
     void loadAssetsFile(std::filesystem::path path);
 
 private:
-    Console& console;
+    Log& log;
 
     std::vector<zip_t*> zips;
 };
