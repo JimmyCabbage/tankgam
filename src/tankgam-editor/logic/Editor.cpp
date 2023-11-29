@@ -26,7 +26,7 @@ void Editor::defaultState()
 {
     mapName = "default";
     
-    availableTextures = fileManager.fileNamesInDir("textures/");
+    availableTextures = fileManager.getFileNamesInDir("textures/");
     if (availableTextures.empty())
     {
         throw std::runtime_error{ "No available textures!" };
