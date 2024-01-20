@@ -24,7 +24,7 @@ public:
     
     std::stringstream readFile(std::string_view fileName);
     
-    std::vector<std::string> fileNamesInDir(std::string_view dirName);
+    std::vector<std::string> getFileNamesInDir(std::string_view dirName);
     
     void loadAssetsFile(std::filesystem::path path);
 

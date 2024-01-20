@@ -98,7 +98,7 @@ std::stringstream FileManager::readFile(std::string_view fileName)
     return sstr;
 }
 
-std::vector<std::string> FileManager::fileNamesInDir(std::string_view dirName)
+std::vector<std::string> FileManager::getFileNamesInDir(std::string_view dirName)
 {
     std::vector<std::string> fileNames;
     
