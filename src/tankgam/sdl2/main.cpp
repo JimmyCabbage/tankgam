@@ -52,18 +52,26 @@ int main(int argc, char** argv)
         {
             client = std::make_unique<Client>(console, fileManager, net);
         }
-        
-        for (;;)
+       
+        try
         {
-            if (server && !server->runFrame())
+            for (;;)
             {
-                break;
+                if (server && !server->runFrame())
+                {
+                    break;
+                }
+                
+                if (client && !client->runFrame())
+                {
+                    break;
+                }
             }
-            
-            if (client && !client->runFrame())
-            {
-                break;
-            }
+        }
+        catch (const std::exception& e)
+        {
+            SDL_Log("Run Loop Exception: %s", e.what());
+            return 1;
         }
     }
     

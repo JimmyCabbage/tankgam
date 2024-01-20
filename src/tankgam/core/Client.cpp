@@ -398,7 +398,10 @@ bool Client::consumeEvent(const Event& ev)
         switch (static_cast<KeyPressType>(ev.data1))
         {
         case KeyPressType::DownArrow:
-            commands.emplace();
+            commands.emplace(PlayerCommand{ 5.0f });
+            break;
+        case KeyPressType::UpArrow:
+            commands.emplace(PlayerCommand{ -5.0f });
             break;
         case KeyPressType::Escape:
             disconnect();
@@ -445,8 +448,13 @@ void Client::sendPackets()
     
     while (!commands.empty())
     {
-        netChan->sendData(NetBuf{}, NetMessageType::PlayerCommand);
+        PlayerCommand& cmd = commands.front();
         commands.pop();
+        
+        NetBuf buf{};
+        buf.writeFloat(cmd.addRotation);
+        
+        netChan->sendData(std::move(buf), NetMessageType::PlayerCommand);
     }
 }
 

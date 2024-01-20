@@ -2,5 +2,5 @@
 
 struct PlayerCommand
 {
-    //float addRotation;
+    float addRotation;
 };

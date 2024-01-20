@@ -137,9 +137,8 @@ void Server::handlePackets()
         }
 
         ServerClient* client = nullptr;
-        for (size_t i = 0; i < clients.size(); i++)
+        for (auto& currentClient : clients)
         {
-            ServerClient& currentClient = clients[i];
             if (currentClient.state == ServerClientState::Free || currentClient.netChan->getToAddr() != fromAddr)
             {
                 continue;
@@ -287,7 +286,10 @@ void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, 
 {
     if (msgType == NetMessageType::PlayerCommand)
     {
-        rotationAmount += 5.0f;
+        float rot = 0.0f;
+        buf.readFloat(rot);
+        
+        rotationAmount += rot;
     }
     else if (msgType == NetMessageType::Disconnect)
     {
