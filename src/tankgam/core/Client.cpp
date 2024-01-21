@@ -366,12 +366,12 @@ void Client::handleEvents()
     Event ev{};
     while (eventQueue->popEvent(ev))
     {
-        if (consumeEvent(ev))
+        if (menuVisible && menu->consumeEvent(ev))
         {
             continue;
         }
-
-        if (menuVisible && menu->consumeEvent(ev))
+        
+        if (consumeEvent(ev))
         {
             continue;
         }
