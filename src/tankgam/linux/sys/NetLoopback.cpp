@@ -3,14 +3,15 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
+#include <sys/mman.h>
 #include <sys/un.h>
+#include <sys/file.h>
 #include <unistd.h>
 #include <fcntl.h>
 
 #include <stdexcept>
 #include <algorithm>
 #include <string>
-#include <random>
 
 #include <fmt/format.h>
 
@@ -18,34 +19,22 @@
 
 NetLoopback::NetLoopback(bool initClient, bool initServer)
     : initClient{ initClient }, initServer{ initServer },
+      clientPort{ 0 },
       serverSocket{ -1 }, clientSocket{ -1 }
 {
-    //calculate a random number for our client port
-    {
-        std::random_device dev;
-        std::mt19937 rng{ dev() };
-        std::uniform_int_distribution<std::mt19937::result_type> dist
-        {
-            1,
-            std::numeric_limits<uint16_t>::max()
-        };
-        
-        clientPort = static_cast<uint16_t>(dist(rng));
-    }
-    
     //figure out where to put our sockets
     {
         const char* rawRunDir = getenv("XDG_RUNTIME_DIR");
         if (!rawRunDir)
         {
-            throw std::runtime_error{ "Failed to get environment variable XDG_RUNTIME_DIR" };
+            rawRunDir = "/tmp";
         }
         
-        runDir = rawRunDir + std::string{"/tankgam"};
+        runDir = rawRunDir + std::string{ "/tankgam" };
         
         //make the directory if it doesn't exist
         if (struct stat st = {};
-        stat(runDir.c_str(), &st) == -1)
+            stat(runDir.c_str(), &st) == -1)
         {
             mkdir(runDir.c_str(), 0700);
         }
@@ -78,6 +67,9 @@ NetLoopback::NetLoopback(bool initClient, bool initServer)
             throw std::runtime_error { "Could not open client socket" };
         }
         
+        //use shared memory to allocate a port
+        clientPort = allocClientPort();
+        
         const struct sockaddr_un clientAddr = getClientSockAddr(clientPort);
         
         unlink(getClientName(clientPort).c_str());
@@ -95,6 +87,8 @@ NetLoopback::~NetLoopback()
         close(clientSocket);
         
         unlink(getClientName(clientPort).c_str());
+        
+        freeClientPort(clientPort);
     }
     
     if (initServer)
@@ -124,6 +118,121 @@ void NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAdd
     }
     
     sendPacketServer(std::move(buf), toAddr);
+}
+
+class ClientPortAllocator
+{
+public:
+    ClientPortAllocator()
+    {
+        bool isNewAlloc = false;
+        
+        //first try creating the shared memory
+        shm = shm_open("/tankgam-client-count-shm", O_RDWR | O_CREAT | O_EXCL, 0600);
+        if (shm != -1)
+        {
+            //allocate memory
+            if (ftruncate(shm, sizeof(int) * NUM_PORTS) == -1)
+            {
+                throw std::runtime_error{ "Could not use ftruncate on client count shared memory" };
+            }
+            
+            isNewAlloc = true;
+        }
+        else
+        {
+            shm = shm_open("/tankgam-client-count-shm", O_RDWR | O_CREAT, 0600);
+            if (shm == -1)
+            {
+                throw std::runtime_error{ fmt::format("Could not open client count shared memory: {}", strerror(errno))  };
+            }
+        }
+        
+        if (flock(shm, LOCK_EX) == -1)
+        {
+            throw std::runtime_error{ "Could not lock client count shared memory" };
+        }
+        
+        portArray = static_cast<int*>(mmap(nullptr, PORT_ARRAY_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm, 0));
+        if (portArray == MAP_FAILED)
+        {
+            throw std::runtime_error{ "Could not mmap client count shared memory" };
+        }
+        
+        if (isNewAlloc)
+        {
+            memset(portArray, 0, PORT_ARRAY_SIZE);
+        }
+    }
+    
+    ~ClientPortAllocator()
+    {
+        if (munmap(portArray, PORT_ARRAY_SIZE) == -1)
+        {
+            throw std::runtime_error{ "Could not unmap client count shared memory" };
+        }
+        
+        if (flock(shm, LOCK_UN) == -1)
+        {
+            throw std::runtime_error{ "Could not unlock client count shared memory" };
+        }
+        
+        if (close(shm) == -1)
+        {
+            throw std::runtime_error{ "Could not close client count shared memory" };
+        }
+    }
+    
+    ClientPortAllocator(const ClientPortAllocator&) = delete;
+    ClientPortAllocator& operator=(const ClientPortAllocator&) = delete;
+    
+    std::span<int> getPorts()
+    {
+        return std::span<int>{ portArray, NUM_PORTS };
+    }
+
+private:
+    int shm;
+    
+    static constexpr size_t NUM_PORTS = 64;
+    static constexpr size_t PORT_ARRAY_SIZE = sizeof(int) * NUM_PORTS;
+    int* portArray;
+};
+
+uint16_t NetLoopback::allocClientPort()
+{
+    ClientPortAllocator portAlloc{};
+    const auto ports = portAlloc.getPorts();
+    
+    uint16_t port = 0;
+    
+    bool foundPort = false;
+    for (size_t i = 0; i < ports.size(); i++)
+    {
+        if (ports[i] == 0)
+        {
+            ports[i] = 1;
+            port = i;
+            
+            foundPort = true;
+            break;
+        }
+    }
+    
+    if (!foundPort)
+    {
+        throw std::runtime_error{ "Could not find available client port" };
+    }
+    
+    return port;
+}
+
+void NetLoopback::freeClientPort(uint16_t port)
+{
+    ClientPortAllocator portAlloc{};
+    const auto ports = portAlloc.getPorts();
+    
+    ports[port] = 0;
 }
 
 std::string NetLoopback::getServerName()
@@ -160,7 +269,8 @@ struct sockaddr_un NetLoopback::getClientSockAddr(uint16_t port)
     {
         .sun_family = AF_UNIX,
     };
-    strcpy(clientAddr.sun_path, getClientName(port).c_str());
+    
+    strncpy(clientAddr.sun_path, getClientName(port).c_str(), sizeof clientAddr.sun_path - 1);
     
     return clientAddr;
 }

@@ -33,6 +33,9 @@ private:
     int serverSocket;
     int clientSocket;
     
+    uint16_t allocClientPort();
+    void freeClientPort(uint16_t port);
+    
     std::string getServerName();
     std::string getClientName(uint16_t port);
     uint16_t getPortFromClientName(const std::string& clientName);
