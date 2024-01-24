@@ -15,7 +15,7 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
 {
     try
     {
-        clients.resize(2);
+        clients.resize(6);
         for (auto& client : clients)
         {
             client.state = ServerClientState::Free;
@@ -165,7 +165,7 @@ void Server::handlePackets()
         for (auto& reliableMessage : reliableMessages)
         {
             //reliable messages have their own type
-            NetMessageType reliableMsgType = NetMessageType::Unknown;
+            NetMessageType reliableMsgType;
             {
                 uint8_t tempV;
                 if (!reliableMessage.readUint8(tempV))
