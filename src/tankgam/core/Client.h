@@ -80,10 +80,14 @@ private:
     uint64_t lastTick;
     uint64_t currentTick;
     
+    uint64_t stopTryConnectTick;
+    
     std::queue<PlayerCommand> commands;
     
 //basic commands
     void connectToServer(NetAddr serverAddr);
+    
+    void stopConnect();
 
     void disconnect();
 

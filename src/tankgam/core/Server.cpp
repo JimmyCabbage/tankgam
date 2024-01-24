@@ -233,7 +233,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
             break;
         }
 
-        if (!newClient)
+        if (newClient)
         {
             NetChan tempNetChan{ net, NetSrc::Server };
             tempNetChan.outOfBandPrint(fromAddr, "server_noroom");

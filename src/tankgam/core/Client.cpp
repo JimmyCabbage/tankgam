@@ -150,6 +150,14 @@ void Client::connectToServer(NetAddr serverAddr)
     netChan->outOfBandPrint(serverAddr, "client_connect");
 
     timer->start();
+    stopTryConnectTick = timer->getTotalTicks() + Timer::TICK_RATE * 6;
+}
+
+void Client::stopConnect()
+{
+    clientState = ClientState::Disconnected;
+    
+    timer->stop();
 }
 
 void Client::disconnect()
@@ -199,7 +207,7 @@ void Client::handlePackets()
         for (auto& reliableMessage : reliableMessages)
         {
             //reliable messages have their own type
-            NetMessageType reliableMsgType = NetMessageType::Unknown;
+            NetMessageType reliableMsgType;
             {
                 uint8_t tempV;
                 if (!reliableMessage.readUint8(tempV))
@@ -381,6 +389,14 @@ void Client::handleEvents()
             continue;
         }
     }
+    
+    if (clientState == ClientState::Connecting)
+    {
+        if (timer->getTotalTicks() >= stopTryConnectTick)
+        {
+            stopConnect();
+        }
+    }
 }
 
 bool Client::consumeEvent(const Event& ev)
@@ -472,6 +488,12 @@ void Client::draw()
             Entity* e = entityManager->getGlobalEntity(entity);
             renderer->drawModel(*models[e->modelName], glm::vec3{1.0f}, e->rotation, e->position);
         }
+    }
+    else if (clientState == ClientState::Connecting)
+    {
+        constexpr std::string_view CONNECT_MSG = "Connecting...";
+        constexpr float SIZE = 32.0f;
+        renderer->drawText(CONNECT_MSG, glm::vec2{ renderer->getWidth() / 2 - (SIZE * CONNECT_MSG.size() / 2), renderer->getHeight() / 2 }, SIZE);
     }
 
     if (menuVisible)
