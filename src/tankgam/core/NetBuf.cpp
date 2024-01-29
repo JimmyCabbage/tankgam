@@ -301,6 +301,23 @@ bool NetBuf::readString(std::string& str)
     return true;
 }
 
+bool NetBuf::writeBool(bool boolean)
+{
+    const uint8_t byte = boolean;
+    return writeUint8(byte);
+}
+
+bool NetBuf::readBool(bool& boolean)
+{
+    uint8_t byte;
+    bool ret = readUint8(byte);
+    
+    if (byte == 0) boolean = false;
+    else           boolean = true;
+    
+    return ret;
+}
+
 bool NetBuf::writeUint8(std::uint8_t byte)
 {
     return writeBytes(std::span<std::byte>{ reinterpret_cast<std::byte*>(&byte), sizeof(byte) });

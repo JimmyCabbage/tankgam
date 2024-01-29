@@ -51,7 +51,10 @@ public:
 
     bool writeString(std::string_view str);
     bool readString(std::string& str);
-
+    
+    bool writeBool(bool boolean);
+    bool readBool(bool& boolean);
+    
     bool writeUint8(uint8_t byte);
     bool readUint8(uint8_t& byte);
 
