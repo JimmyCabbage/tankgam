@@ -24,7 +24,7 @@ Renderer::Renderer(Console& console, FileManager& fileManager, std::string_view 
         throw std::runtime_error{ fmt::format("Failed to initialize the SDL2 video subsystem:\n{}", err) };
     }
     
-    window = SDL_CreateWindow(windowName.data(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow(windowName.data(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!window)
     {
         std::string_view err = SDL_GetError();
