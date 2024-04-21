@@ -1,0 +1,19 @@
+DESCRIPTION:
+    supposed to be a tank game made with C++20 and some other libraries
+    engine meant to be portable and modular
+    could not get finished because of difficulties in physics
+
+LICENSING:
+    Code underneath external/ licensed under respective LICENSE files in the respective subdirectory
+    Code underneath src/ and include/ licensed under the Mozilla Public License 2.0 unless otherwise noted
+
+DEPENDENCIES:
+    SDL2
+    OpenGL 4.0
+    glm
+    libzip
+    QT6
+    stb_image (included in repository)
+    tiny_obj_loader (included in repository)
+    fmt (included in repository)
+    glad2 [mx] (included in repository)
