@@ -5,6 +5,10 @@ configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/core/Version.h"
 )
 
+#copy assets files to build directory
+configure_file("${PROJECT_SOURCE_DIR}/dev.assets" "${CMAKE_CURRENT_BINARY_DIR}/dev.assets" COPYONLY)
+configure_file("${PROJECT_SOURCE_DIR}/tank.assets" "${CMAKE_CURRENT_BINARY_DIR}/tank.assets" COPYONLY)
+
 #core source code
 target_sources(tankgam PRIVATE
         core/Menu.h core/Menu.cpp

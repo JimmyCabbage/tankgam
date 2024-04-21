@@ -4,6 +4,10 @@ qt_add_executable(tankgam-editor
         qt6/ViewportWindow.h qt6/ViewportWindow.cpp
         qt6/SettingsTab.h qt6/SettingsTab.cpp)
 
+#copy assets files to build directory
+configure_file("${PROJECT_SOURCE_DIR}/dev.assets" "${CMAKE_CURRENT_BINARY_DIR}/dev.assets" COPYONLY)
+configure_file("${PROJECT_SOURCE_DIR}/tank.assets" "${CMAKE_CURRENT_BINARY_DIR}/tank.assets" COPYONLY)
+
 #internal logic stuff
 target_sources(tankgam-editor PRIVATE
         logic/Viewport.h logic/Viewport.cpp
