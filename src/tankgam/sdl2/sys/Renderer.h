@@ -8,6 +8,7 @@
 #include <span>
 #include <cstdint>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/hash.hpp>
