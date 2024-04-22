@@ -8,6 +8,7 @@ configure_file(
 #copy assets files to build directory
 configure_file("${PROJECT_SOURCE_DIR}/dev.assets" "${CMAKE_CURRENT_BINARY_DIR}/dev.assets" COPYONLY)
 configure_file("${PROJECT_SOURCE_DIR}/tank.assets" "${CMAKE_CURRENT_BINARY_DIR}/tank.assets" COPYONLY)
+configure_file("${PROJECT_SOURCE_DIR}/base_textures.assets" "${CMAKE_CURRENT_BINARY_DIR}/base_textures.assets" COPYONLY)
 
 #core source code
 target_sources(tankgam PRIVATE

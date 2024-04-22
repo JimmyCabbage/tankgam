@@ -7,6 +7,7 @@ qt_add_executable(tankgam-editor
 #copy assets files to build directory
 configure_file("${PROJECT_SOURCE_DIR}/dev.assets" "${CMAKE_CURRENT_BINARY_DIR}/dev.assets" COPYONLY)
 configure_file("${PROJECT_SOURCE_DIR}/tank.assets" "${CMAKE_CURRENT_BINARY_DIR}/tank.assets" COPYONLY)
+configure_file("${PROJECT_SOURCE_DIR}/base_textures.assets" "${CMAKE_CURRENT_BINARY_DIR}/base_textures.assets" COPYONLY)
 
 #internal logic stuff
 target_sources(tankgam-editor PRIVATE
