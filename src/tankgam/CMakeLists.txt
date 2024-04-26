@@ -12,7 +12,7 @@ configure_file("${PROJECT_SOURCE_DIR}/base_textures.assets" "${CMAKE_CURRENT_BIN
 
 #core source code
 target_sources(tankgam PRIVATE
-        core/Menu.h core/Menu.cpp
+        core/Client/Menu.h core/Client/Menu.cpp
         core/Event.h core/Event.cpp
         core/Client.h core/Client.cpp
         core/Server.h core/Server.cpp
@@ -21,10 +21,10 @@ target_sources(tankgam PRIVATE
         core/Entity.h core/Entity.cpp
         core/EntityManager.h core/EntityManager.cpp
         core/Net.h core/Net.cpp
-        core/ClientMenuState.h core/ClientMenuState.cpp
-        core/ClientConnectingState.h core/ClientConnectingState.cpp
-        core/ClientConnectedState.h core/ClientConnectedState.cpp
-        core/IClientState.h
+        core/Client/ClientMenuState.h core/Client/ClientMenuState.cpp
+        core/Client/ClientConnectingState.h core/Client/ClientConnectingState.cpp
+        core/Client/ClientConnectedState.h core/Client/ClientConnectedState.cpp
+        core/Client/IClientState.h
         core/Version.h)
 
 #linux specific source code

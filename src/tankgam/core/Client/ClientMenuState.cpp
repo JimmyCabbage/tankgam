@@ -1,9 +1,9 @@
-#include "ClientMenuState.h"
+#include "Client/ClientMenuState.h"
 
 #include <memory>
 
+#include "Client/ClientConnectingState.h"
 #include "Client.h"
-#include "ClientConnectingState.h"
 #include "Net.h"
 
 ClientMenuState::ClientMenuState(Client& client, Net& net, MenuType menuType)

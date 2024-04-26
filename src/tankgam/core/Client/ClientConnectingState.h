@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "IClientState.h"
+#include "Client/IClientState.h"
 
 class Net;
 class NetChan;

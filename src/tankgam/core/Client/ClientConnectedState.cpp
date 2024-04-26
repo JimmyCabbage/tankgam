@@ -1,4 +1,4 @@
-#include "ClientConnectedState.h"
+#include "Client/ClientConnectedState.h"
 
 #include "sys/Renderer.h"
 #include "sys/Timer.h"

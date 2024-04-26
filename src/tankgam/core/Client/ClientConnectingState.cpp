@@ -1,9 +1,9 @@
-#include "ClientConnectingState.h"
+#include "Client/ClientConnectingState.h"
 
 #include "sys/Timer.h"
 #include "sys/Renderer.h"
+#include "Client/ClientConnectedState.h"
 #include "Client.h"
-#include "ClientConnectedState.h"
 #include "Net.h"
 #include "NetChan.h"
 #include "Entity.h"

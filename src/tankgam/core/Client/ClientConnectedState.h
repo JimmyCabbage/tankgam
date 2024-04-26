@@ -5,7 +5,7 @@
 #include <vector>
 #include <queue>
 
-#include "IClientState.h"
+#include "Client/IClientState.h"
 #include "PlayerCommand.h"
 
 class Net;

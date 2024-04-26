@@ -8,18 +8,13 @@
 #include "sys/Console.h"
 #include "sys/EventHandler.h"
 #include "sys/Renderer.h"
-#include "sys/Timer.h"
-#include "Net.h"
+#include "Client/ClientMenuState.h"
 #include "NetChan.h"
-#include "NetBuf.h"
-#include "Menu.h"
 #include "Event.h"
-#include "EntityManager.h"
-#include "ClientMenuState.h"
 
 #include <util/FileManager.h>
 
-#include "IClientState.h"
+#include "Client/IClientState.h"
 
 Client::Client(Console& console, FileManager& fileManager, Net& net)
     : console{ console }, fileManager{ fileManager }, net{ net }

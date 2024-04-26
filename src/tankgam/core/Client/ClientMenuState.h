@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Menu.h"
-#include "IClientState.h"
+#include "Client/IClientState.h"
+#include "Client/Menu.h"
 
 class Renderer;
 class Client;
