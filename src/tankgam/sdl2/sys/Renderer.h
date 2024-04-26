@@ -62,13 +62,11 @@ public:
     void endDraw();
     
     void loadMesh(std::string_view meshName, std::span<const Vertex> vertices);
-    
     void loadMesh(std::string_view meshName, std::string_view meshFileName);
     
     void loadTexture(std::string_view textureName, std::string_view textureFileName);
     
     std::unique_ptr<Model> createModel(std::string_view meshName, std::string_view textureName, ShaderType shaderType);
-    
     std::unique_ptr<Model> createModel(std::string_view modelFileName);
     
     void drawModel(Model& model, glm::vec3 scale, glm::quat rotation, glm::vec3 translate);
@@ -103,8 +101,8 @@ private:
     
     std::vector<Texture> textures;
     std::vector<std::string> textureNames;
-    
-    std::unordered_map<std::string, Model> loadedModels;
+
+    std::unordered_map<std::string, Model> fileLoadedModels;
     
     size_t findMesh(std::string_view meshName);
     

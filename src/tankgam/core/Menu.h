@@ -43,7 +43,7 @@ private:
 class Menu
 {
 public:
-    explicit Menu(Renderer& renderer);
+    explicit Menu();
     ~Menu();
     
     Menu(const Menu&) = delete;
@@ -57,11 +57,9 @@ public:
     
     MenuList& currentList();
 
-    void draw();
+    void draw(Renderer& renderer);
 
 private:
-    Renderer& renderer;
-    
     std::vector<MenuList> lists;
     
     size_t currList;

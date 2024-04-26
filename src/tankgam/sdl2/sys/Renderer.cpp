@@ -158,7 +158,7 @@ std::unique_ptr<Model> Renderer::createModel(std::string_view meshName, std::str
 
 std::unique_ptr<Model> Renderer::createModel(std::string_view modelFileName)
 {
-    if (auto it = loadedModels.find(modelFileName.data()); it != loadedModels.end())
+    if (auto it = fileLoadedModels.find(modelFileName.data()); it != fileLoadedModels.end())
     {
         auto model = std::make_unique<Model>();
         model->meshIndex = it->second.meshIndex;

@@ -74,8 +74,8 @@ void MenuList::useCurrentChoice()
     callback(currChoice);
 }
 
-Menu::Menu(Renderer& renderer)
-    : renderer{ renderer }, currList{ 0 }
+Menu::Menu()
+    : currList{ 0 }
 {
 }
 
@@ -122,7 +122,7 @@ MenuList& Menu::currentList()
     return lists[currList];
 }
 
-void Menu::draw()
+void Menu::draw(Renderer& renderer)
 {
     for (size_t i = 0; i < lists[currList].choices.size(); i++)
     {

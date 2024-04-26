@@ -21,6 +21,10 @@ target_sources(tankgam PRIVATE
         core/Entity.h core/Entity.cpp
         core/EntityManager.h core/EntityManager.cpp
         core/Net.h core/Net.cpp
+        core/ClientMenuState.h core/ClientMenuState.cpp
+        core/ClientConnectingState.h core/ClientConnectingState.cpp
+        core/ClientConnectedState.h core/ClientConnectedState.cpp
+        core/IClientState.h
         core/Version.h)
 
 #linux specific source code

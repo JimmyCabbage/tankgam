@@ -6,7 +6,7 @@
 
 //since the 64 bit api of the tick system in sdl2 is only available past 2.0.18
 //add this inbetween function to get it working on old sdl2 versions
-static inline uint64_t GetTicks()
+static uint64_t GetTicks()
 {
 #if SDL_VERSION_ATLEAST(2, 0, 18)
     return SDL_GetTicks64();

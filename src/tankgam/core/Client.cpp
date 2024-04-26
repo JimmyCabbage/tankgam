@@ -15,18 +15,17 @@
 #include "Menu.h"
 #include "Event.h"
 #include "EntityManager.h"
+#include "ClientMenuState.h"
 
 #include <util/FileManager.h>
+
+#include "IClientState.h"
 
 Client::Client(Console& console, FileManager& fileManager, Net& net)
     : console{ console }, fileManager{ fileManager }, net{ net }
 {
-    clientState = ClientState::Disconnected;
-
     try
     {
-        netChan = std::make_unique<NetChan>(net, NetSrc::Client);
-
         console.log("Client: Init Event Subsystem...");
         eventQueue = std::make_unique<EventQueue>();
         eventHandler = std::make_unique<EventHandler>(*eventQueue);
@@ -34,38 +33,15 @@ Client::Client(Console& console, FileManager& fileManager, Net& net)
         console.log("Client: Init Renderer Subsystem...");
         renderer = std::make_unique<Renderer>(console, fileManager, "src");
 
-        console.log("Client: Init Timer Subsystem...");
-        timer = std::make_unique<Timer>();
-
-        console.log("Client: Init Menu Subsystem...");
-        menu = std::make_unique<Menu>(*renderer);
-
-        const auto mainListCallback = [this](size_t choice) -> void
-        {
-            switch (choice)
-            {
-            case 0:
-                connectToServer(NetAddr{ NetAddrType::Loopback, 0 });
-                break;
-            case 1:
-                shutdown();
-                break;
-            }
-        };
-        MenuList mainList{ mainListCallback };
-        mainList.addChoice("Start Game");
-        mainList.addChoice("End Game");
-        menu->addList(std::move(mainList));
+        pushState(std::make_unique<ClientMenuState>(*this, net, MenuType::MainMenu));
     }
     catch (const std::exception& e)
     {
         console.log(fmt::format("Client: Init Error:\n{}", e.what()));
-        throw e;
+        throw;
     }
 
     running = true;
-
-    menuVisible = true;
 
     console.log("Client: Initialized");
 }
@@ -79,13 +55,9 @@ bool Client::runFrame()
 {
     try
     {
-        handlePackets();
-
         handleEvents();
 
-        //tryRunTicks();
-
-        sendPackets();
+        stateStack.top()->update(*this, *renderer);
         
         draw();
     }
@@ -100,12 +72,10 @@ bool Client::runFrame()
 
 void Client::shutdown()
 {
-    disconnect();
-    
     running = false;
 }
 
-void Client::showMenu()
+/*void Client::showMenu()
 {
     menuVisible = true;
 }
@@ -113,6 +83,26 @@ void Client::showMenu()
 void Client::hideMenu()
 {
     menuVisible = false;
+}*/
+
+void Client::pushState(std::shared_ptr<IClientState> clientState)
+{
+    if (!stateStack.empty())
+    {
+        stateStack.top()->pause();
+    }
+
+    stateStack.push(std::move(clientState));
+}
+
+void Client::popState()
+{
+    stateStack.pop();
+
+    if (!stateStack.empty())
+    {
+        stateStack.top()->resume();
+    }
 }
 
 #if 0
@@ -144,39 +134,7 @@ void Client::changeState(ClientState state)
 }
 #endif
 
-void Client::connectToServer(NetAddr serverAddr)
-{
-    clientState = ClientState::Connecting;
-    netChan->outOfBandPrint(serverAddr, "client_connect");
-
-    timer->start();
-    stopTryConnectTick = timer->getTotalTicks() + Timer::TICK_RATE * 6;
-}
-
-void Client::stopConnect()
-{
-    clientState = ClientState::Disconnected;
-    
-    timer->stop();
-}
-
-void Client::disconnect()
-{
-    if (clientState == ClientState::Disconnected)
-    {
-        return;
-    }
-    
-    netChan->sendData(NetBuf{}, NetMessageType::Disconnect);
-    clientState = ClientState::Disconnected;
-
-    timer->stop();
-    
-    netChan = std::make_unique<NetChan>(net, NetSrc::Client);
-    
-    showMenu();
-}
-
+#if 0
 void Client::handlePackets()
 {
     NetBuf buf{};
@@ -312,7 +270,7 @@ void Client::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
         
         clientState = ClientState::Connected;
         
-        hideMenu();
+        //hideMenu();
     }
     else if (msgType == NetMessageType::CreateEntity)
     {
@@ -366,6 +324,7 @@ void Client::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType)
         }
     }
 }
+#endif
 
 void Client::handleEvents()
 {
@@ -374,12 +333,13 @@ void Client::handleEvents()
     Event ev{};
     while (eventQueue->popEvent(ev))
     {
-        if (menuVisible && menu->consumeEvent(ev))
+        if (consumeEvent(ev))
         {
             continue;
         }
-        
-        if (consumeEvent(ev))
+
+        std::shared_ptr<IClientState> currentState = stateStack.top();
+        if (currentState->consumeEvent(ev))
         {
             continue;
         }
@@ -387,14 +347,6 @@ void Client::handleEvents()
         if (renderer->consumeEvent(ev))
         {
             continue;
-        }
-    }
-    
-    if (clientState == ClientState::Connecting)
-    {
-        if (timer->getTotalTicks() >= stopTryConnectTick)
-        {
-            stopConnect();
         }
     }
 }
@@ -406,28 +358,12 @@ bool Client::consumeEvent(const Event& ev)
     case EventType::Quit:
         shutdown();
         return true;
-    case EventType::KeyDown:
-        if (clientState != ClientState::Connected)
-        {
-            break;
-        }
-        switch (static_cast<KeyPressType>(ev.data1))
-        {
-        case KeyPressType::DownArrow:
-            commands.emplace(PlayerCommand{ 5.0f });
-            break;
-        case KeyPressType::UpArrow:
-            commands.emplace(PlayerCommand{ -5.0f });
-            break;
-        case KeyPressType::Escape:
-            disconnect();
-            break;
-        }
+    default:
+        return false;
     }
-
-    return false;
 }
 
+#if 0
 void Client::tryRunTicks()
 {
     if (clientState != ClientState::Connected)
@@ -473,6 +409,7 @@ void Client::sendPackets()
         netChan->sendData(std::move(buf), NetMessageType::PlayerCommand);
     }
 }
+#endif
 
 void Client::draw()
 {
@@ -480,26 +417,8 @@ void Client::draw()
 
     renderer->drawText("HELLO WORLD", glm::vec2{ 0.0f, 0.0f }, 100.0f);
 
-    if (clientState == ClientState::Connected)
-    {
-        auto entities = entityManager->getGlobalEntities();
-        for (auto entity : entities)
-        {
-            Entity* e = entityManager->getGlobalEntity(entity);
-            renderer->drawModel(*models[e->modelName], glm::vec3{1.0f}, e->rotation, e->position);
-        }
-    }
-    else if (clientState == ClientState::Connecting)
-    {
-        constexpr std::string_view CONNECT_MSG = "Connecting...";
-        constexpr float SIZE = 32.0f;
-        renderer->drawText(CONNECT_MSG, glm::vec2{ renderer->getWidth() / 2 - (SIZE * CONNECT_MSG.size() / 2), renderer->getHeight() / 2 }, SIZE);
-    }
-
-    if (menuVisible)
-    {
-        menu->draw();
-    }
+    std::shared_ptr<IClientState> currentState = stateStack.top();
+    currentState->draw(*renderer);
 
     renderer->endDraw();
 }

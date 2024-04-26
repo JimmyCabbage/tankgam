@@ -1,13 +1,10 @@
 #pragma once
 
 #include <memory>
-#include <array>
-#include <unordered_map>
-#include <queue>
+#include <stack>
 
 #include "Event.h"
 #include "EntityManager.h"
-#include "PlayerCommand.h"
 
 class Console;
 class FileManager;
@@ -22,17 +19,13 @@ class NetChan;
 class NetBuf;
 struct NetAddr;
 enum class NetMessageType : uint8_t;
-
-enum class ClientState
-{
-    Disconnected,
-    Connecting,
-    Connected,
-};
+class IClientState;
 
 class Client
 {
 public:
+    friend class IClientState;
+
     Client(Console& console, FileManager& fileManager, Net& net);
     ~Client();
 
@@ -43,21 +36,15 @@ public:
 
     void shutdown();
 
-    void showMenu();
-
-    void hideMenu();
-
-    //void changeState(ClientState state);
+    void pushState(std::shared_ptr<IClientState> clientState);
+    void popState();
 
 private:
     Console& console;
 
     FileManager& fileManager;
 
-    ClientState clientState;
-
     Net& net;
-    std::unique_ptr<NetChan> netChan;
 
     std::unique_ptr<EventQueue> eventQueue;
 
@@ -65,48 +52,17 @@ private:
 
     std::unique_ptr<Renderer> renderer;
 
-    std::unique_ptr<Timer> timer;
-
-    std::unique_ptr<Menu> menu;
-    
-    std::unique_ptr<EntityManager> entityManager;
-    
-    std::unordered_map<std::string, std::unique_ptr<Model>> models;
-
     bool running;
 
-    bool menuVisible;
-    
     uint64_t lastTick;
     uint64_t currentTick;
-    
-    uint64_t stopTryConnectTick;
-    
-    std::queue<PlayerCommand> commands;
-    
-//basic commands
-    void connectToServer(NetAddr serverAddr);
-    
-    void stopConnect();
 
-    void disconnect();
+    std::stack<std::shared_ptr<IClientState>> stateStack;
 
 //main loop stuff
-    void handlePackets();
-
-    void handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr);
-
-    void handleReliablePacket(NetBuf& buf, const NetMessageType& msgType);
-    
-    void handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType);
-
     void handleEvents();
 
     bool consumeEvent(const Event& ev);
-
-    void tryRunTicks();
-    
-    void sendPackets();
 
     void draw();
 };
