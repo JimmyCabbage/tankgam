@@ -19,7 +19,6 @@ enum class NetMessageType : uint8_t
     Unknown = 0,
     EntitySynchronize = 1,
     PlayerCommand = 2,
-    Disconnect = 3,
     Synchronize = 1 | (1 << 7),
     CreateEntity = 2 | (1 << 7),
     DestroyEntity = 3 | (1 << 7),
@@ -41,12 +40,15 @@ public:
     NetAddr getToAddr() const;
 
     //for sending a string without a direct connection
-    void outOfBandPrint(NetAddr toAddr, std::string_view str);
+    static void outOfBandPrint(Net& net, NetSrc src, NetAddr toAddr, std::string_view str);
 
     //for sending data without a connection
-    void outOfBand(NetAddr toAddr, std::span<const std::byte> data);
+    static void outOfBand(Net& net, NetSrc src, NetAddr toAddr, NetBuf sendBuf);
 
-    void trySendReliable();
+    //for sending data without a connection
+    static void outOfBand(Net& net, NetSrc src, NetAddr toAddr, std::span<const std::byte> data);
+
+    void trySendReliable(uint32_t salt);
 
     //reliable
     void addReliableData(NetBuf sendBuf, NetMessageType msgType);
@@ -55,12 +57,12 @@ public:
     void addReliableData(std::span<const std::byte> data, NetMessageType msgType);
 
     //unreliable
-    void sendData(NetBuf sendBuf, NetMessageType msgType);
+    void sendData(NetBuf sendBuf, NetMessageType msgType, uint32_t salt);
 
     //unreliable
-    void sendData(std::span<const std::byte> data, NetMessageType msgType);
+    void sendData(std::span<const std::byte> data, NetMessageType msgType, uint32_t salt);
 
-    bool processHeader(NetBuf& inBuf, NetMessageType& outType, std::vector<NetBuf>& outReliableMessages);
+    bool processHeader(NetBuf& inBuf, NetMessageType& outType, std::vector<NetBuf>& outReliableMessages, uint32_t expectedSalt);
 
 private:
     Net& net;
@@ -84,6 +86,7 @@ private:
     struct OutHeader
     {
         NetMessageType msgType;
+        uint32_t salt;
         uint32_t sequence;
         uint32_t ack;
         uint64_t ackBits;
@@ -94,6 +97,7 @@ private:
     struct InHeader
     {
         NetMessageType msgType;
+        uint32_t salt;
         uint32_t sequence;
         uint32_t ack;
         uint64_t ackBits;
@@ -101,9 +105,9 @@ private:
         std::vector<OutPacketInfo> reliableMessages;
     };
 
-    void writeHeader(NetBuf& outBuf, NetMessageType msgType);
+    void writeHeader(NetBuf& outBuf, NetMessageType msgType, uint32_t salt);
 
-    bool readHeader(NetBuf& inBuf, InHeader& outHeader);
+    bool readHeader(NetBuf& inBuf, InHeader& outHeader, uint32_t expectedSalt);
 
     //keeps track of if a packet has been recieved
     std::array<uint32_t, PACKET_BUFFER_SIZE> outgoingSequenceBuffer;

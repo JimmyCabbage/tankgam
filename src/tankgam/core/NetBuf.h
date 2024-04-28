@@ -25,7 +25,9 @@ public:
 
     std::span<const std::byte> getData() const;
 
+    //reset buffer to start writing at the beginning
     void beginWrite();
+    //reset buffer to start reading at the beginning
     void beginRead();
     
     bool writeUint16(uint16_t v);

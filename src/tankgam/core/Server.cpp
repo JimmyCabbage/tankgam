@@ -1,5 +1,7 @@
 #include "Server.h"
 
+#include <random>
+
 #include <fmt/format.h>
 
 #include "sys/Console.h"
@@ -20,6 +22,10 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
         {
             client.state = ServerClientState::Free;
             client.netChan = std::make_unique<NetChan>(net, NetSrc::Server);
+            client.lastRecievedTime = 0;
+            client.clientSalt = 0;
+            client.serverSalt = 0;
+            client.combinedSalt = 0;
         }
 
         console.log("Server: Init Timer Subsystem...");
@@ -34,7 +40,7 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
     catch (const std::exception& e)
     {
         console.log(fmt::format("Server: Init Error:\n{}", e.what()));
-        throw e;
+        throw;
     }
 
     running = true;
@@ -45,6 +51,20 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
 Server::~Server()
 {
     console.log("Server: Quitting");
+
+    for (auto& client : clients)
+    {
+        if (client.state == ServerClientState::Free)
+        {
+            continue;
+        }
+
+        //disconnect all clients
+        const bool forceDisconnect = client.state == ServerClientState::Connected ||
+                client.state == ServerClientState::Spawned;
+
+        disconnectClient(client, forceDisconnect);
+    }
 }
 
 bool Server::runFrame()
@@ -62,7 +82,7 @@ bool Server::runFrame()
     catch (const std::exception& e)
     {
         console.log(fmt::format("Server: Runtime Error:\n{}", e.what()));
-        throw e;
+        throw;
     }
 
     return running;
@@ -86,10 +106,11 @@ EntityId Server::allocateGlobalEntity(Entity globalEntity)
             continue;
         }
         
-        NetBuf sendBuf{};
-        sendBuf.writeUint16(netEntityId);
-        Entity::serialize(*newEntity, sendBuf);
-        client.netChan->addReliableData(std::move(sendBuf), NetMessageType::CreateEntity);
+        NetBuf saltedBuf = getSaltedBuffer(client);
+        saltedBuf.writeUint16(netEntityId);
+        Entity::serialize(*newEntity, saltedBuf);
+
+        client.netChan->addReliableData(std::move(saltedBuf), NetMessageType::CreateEntity);
     }
     
     return netEntityId;
@@ -106,20 +127,36 @@ void Server::freeGlobalEntity(EntityId netEntityId)
             continue;
         }
         
-        NetBuf sendBuf{};
-        sendBuf.writeUint16(netEntityId);
+        NetBuf saltedBuf = getSaltedBuffer(client);
+        saltedBuf.writeUint16(netEntityId);
         
-        client.netChan->addReliableData(std::move(sendBuf), NetMessageType::DestroyEntity);
+        client.netChan->addReliableData(std::move(saltedBuf), NetMessageType::DestroyEntity);
     }
 }
 
-void Server::disconnectClient(ServerClient& client)
+void Server::disconnectClient(ServerClient& client, bool forceDisconnect)
 {
     console.logf("Server: Disconnect client from %d", (int)client.netChan->getToAddr().port);
-    
+
+    if (forceDisconnect)
+    {
+        //just shoot off a bunch of disconnect packets, hope one of them reaches
+        for (int i = 0; i < 3; i++)
+        {
+            NetBuf sendBuf;
+            sendBuf.writeString("server_disconnect");
+            sendBuf.writeUint32(client.combinedSalt);
+
+            NetChan::outOfBand(net, NetSrc::Server, client.netChan->getToAddr(), std::move(sendBuf));
+        }
+    }
+
     client.state = ServerClientState::Free;
     client.netChan = std::make_unique<NetChan>(net, NetSrc::Server);
     client.lastRecievedTime = 0;
+    client.clientSalt = 0;
+    client.serverSalt = 0;
+    client.combinedSalt = 0;
 }
 
 void Server::handlePackets()
@@ -128,18 +165,28 @@ void Server::handlePackets()
     NetAddr fromAddr{};
     while (net.getPacket(NetSrc::Server, buf, fromAddr))
     {
-        //read the first byte of the msg
+        ///read the first byte of the msg
         //if it's -1 then it's an unconnected message
-        if (*reinterpret_cast<const uint32_t*>(buf.getData().data()) == -1)
+        uint32_t header;
+        if (!buf.readUint32(header))
+        {
+            continue;
+        }
+
+        if (header == -1)
         {
             handleUnconnectedPacket(buf, fromAddr);
             continue;
         }
 
+        //reset read head
+        buf.beginRead();
+
         ServerClient* client = nullptr;
         for (auto& currentClient : clients)
         {
-            if (currentClient.state == ServerClientState::Free || currentClient.netChan->getToAddr() != fromAddr)
+            if (currentClient.state == ServerClientState::Free ||
+                currentClient.netChan->getToAddr() != fromAddr)
             {
                 continue;
             }
@@ -156,7 +203,7 @@ void Server::handlePackets()
         
         NetMessageType msgType = NetMessageType::Unknown;
         std::vector<NetBuf> reliableMessages;
-        if (!client->netChan->processHeader(buf, msgType, reliableMessages) ||
+        if (!client->netChan->processHeader(buf, msgType, reliableMessages, client->combinedSalt) ||
             msgType == NetMessageType::Unknown)
         {
             continue;
@@ -170,6 +217,7 @@ void Server::handlePackets()
                 uint8_t tempV;
                 if (!reliableMessage.readUint8(tempV))
                 {
+                    console.logf("Unknown type of %d", tempV);
                     continue;
                 }
 
@@ -193,34 +241,50 @@ void Server::handlePackets()
         {
             continue;
         }
-        
-        //client timeout
-        if (client.lastRecievedTime + Timer::TICK_RATE * 10 < timer->getTotalTicks())
-        {
-            disconnectClient(client);
-        }
 
         //if we don't send any unreliable info
-        client.netChan->trySendReliable();
+        client.netChan->trySendReliable(client.combinedSalt);
+
+        //client timeout
+        if (client.lastRecievedTime + Timer::TICK_RATE * 30 < timer->getTotalTicks())
+        {
+            const bool forceDisconnect = client.state == ServerClientState::Connected ||
+                client.state == ServerClientState::Spawned;
+
+            disconnectClient(client, forceDisconnect);
+            continue;
+        }
     }
 }
 
 void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
 {
-    //read the -1 header
-    {
-        uint32_t byte;
-        buf.readUint32(byte);
-    }
-
     std::string str;
     if (!buf.readString(str)) //couldn't read str
     {
         return;
     }
 
+    console.logf("Server: Unconnected packet: %s\n", str.c_str());
+
     if (str == "client_connect")
     {
+        uint32_t clientSalt;
+        if (!buf.readUint32(clientSalt))
+        {
+            return;
+        }
+
+        //check if client already exists
+        for (auto& client : clients)
+        {
+            if (client.state != ServerClientState::Free &&
+                client.clientSalt == clientSalt)
+            {
+                return;
+            }
+        }
+
         ServerClient* newClient = nullptr;
         for (auto& client : clients)
         {
@@ -235,8 +299,62 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
 
         if (!newClient)
         {
-            NetChan tempNetChan{ net, NetSrc::Server };
-            tempNetChan.outOfBandPrint(fromAddr, "server_noroom");
+            NetChan::outOfBandPrint(net, NetSrc::Server, fromAddr, "server_noroom");
+            return;
+        }
+
+        newClient->state = ServerClientState::Challenging;
+        newClient->netChan->setToAddr(fromAddr);
+        newClient->lastRecievedTime = timer->getTotalTicks();
+
+        //fill out salts
+        newClient->clientSalt = clientSalt;
+        {
+            std::random_device dev;
+            std::mt19937 rng{ dev() };
+            std::uniform_int_distribution<std::mt19937::result_type> dist{ 1 };
+
+            newClient->serverSalt = dist(rng);
+        }
+        newClient->combinedSalt = newClient->clientSalt ^ newClient->serverSalt;
+
+        //send back a challenge
+        {
+            NetBuf sendBuf;
+            sendBuf.writeString("server_challenge");
+            sendBuf.writeUint32(newClient->clientSalt);
+            sendBuf.writeUint32(newClient->serverSalt);
+
+            NetChan::outOfBand(net, NetSrc::Server, fromAddr, std::move(sendBuf));
+        }
+        
+        //console.logf("Server: New client challenging from %d", (int)fromAddr.port);
+    }
+    else if (str == "client_challenge")
+    {
+        uint32_t combinedSalt;
+        if (!buf.readUint32(combinedSalt))
+        {
+            return;
+        }
+
+        ServerClient* newClient = nullptr;
+        for (auto& client : clients)
+        {
+            if (client.state != ServerClientState::Challenging)
+            {
+                continue;
+            }
+
+            if (combinedSalt == client.combinedSalt)
+            {
+                newClient = &client;
+                break;
+            }
+        }
+
+        if (!newClient)
+        {
             return;
         }
 
@@ -244,9 +362,45 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
         newClient->netChan->setToAddr(fromAddr);
         newClient->lastRecievedTime = timer->getTotalTicks();
 
-        newClient->netChan->outOfBandPrint(fromAddr, "server_connect");
-        
-        console.logf("Server: New client connecting from %d", (int)fromAddr.port);
+        {
+            NetBuf sendBuf;
+            sendBuf.writeString("server_connect");
+            sendBuf.writeUint32(newClient->combinedSalt);
+
+            NetChan::outOfBand(net, NetSrc::Server, fromAddr, std::move(sendBuf));
+        }
+
+        //console.logf("Server: New client connecting from %d", (int)fromAddr.port);
+    }
+    else if (str == "client_disconnect")
+    {
+        uint32_t combinedSalt;
+        if (!buf.readUint32(combinedSalt))
+        {
+            return;
+        }
+
+        ServerClient* disconnectingClient = nullptr;
+        for (auto& client : clients)
+        {
+            if (client.state == ServerClientState::Free || client.state == ServerClientState::Challenging)
+            {
+                continue;
+            }
+
+            if (combinedSalt == client.combinedSalt)
+            {
+                disconnectingClient = &client;
+                break;
+            }
+        }
+
+        if (!disconnectingClient)
+        {
+            return;
+        }
+
+        disconnectClient(*disconnectingClient, false);
     }
 }
 
@@ -263,7 +417,7 @@ void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, Se
         NetBuf sendBuf{};
         sendBuf.writeUint64(clientTime);
         sendBuf.writeUint64(timer->getTotalTicks());
-        
+
         std::vector<EntityId> globalEntities = entityManager->getGlobalEntities();
         sendBuf.writeUint32(static_cast<uint32_t>(globalEntities.size()));
         for (EntityId entityId : globalEntities)
@@ -273,11 +427,11 @@ void Server::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, Se
             {
                 throw std::runtime_error{ "This should never happen (global entity not available?!)" };
             }
-            
+
             sendBuf.writeUint16(entityId);
             Entity::serialize(*globalEntity, sendBuf);
         }
-        
+
         client.netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
     }
 }
@@ -288,13 +442,17 @@ void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, 
     {
         float rot = 0.0f;
         buf.readFloat(rot);
-        
+
         rotationAmount += rot;
     }
-    else if (msgType == NetMessageType::Disconnect)
-    {
-        disconnectClient(client);
-    }
+}
+
+NetBuf Server::getSaltedBuffer(ServerClient& client)
+{
+    NetBuf saltedBuf;
+    saltedBuf.writeUint32(client.combinedSalt);
+
+    return saltedBuf;
 }
 
 void Server::handleEvents()
@@ -351,6 +509,6 @@ void Server::sendPackets()
             Entity::serialize(*entity, sendBuf);
         }
         
-        client.netChan->sendData(std::move(sendBuf), NetMessageType::EntitySynchronize);
+        client.netChan->sendData(std::move(sendBuf), NetMessageType::EntitySynchronize, client.clientSalt ^ client.serverSalt);
     }
 }

@@ -1,25 +1,42 @@
 #include "Client/ClientConnectingState.h"
 
+#include <random>
+
 #include "sys/Timer.h"
 #include "sys/Renderer.h"
 #include "Client/ClientConnectedState.h"
 #include "Client.h"
+#include "sys/Console.h"
 #include "Net.h"
 #include "NetChan.h"
 #include "Entity.h"
 #include "EntityManager.h"
 
-ClientConnectingState::ClientConnectingState(Net& net, NetAddr serverAddr)
-    : net{ net }
+ClientConnectingState::ClientConnectingState(Client& client, Renderer& renderer, Console& console, Net& net, NetAddr serverAddr)
+    : client{ client }, renderer{ renderer }, console{ console }, net{ net }, serverAddr{ serverAddr }
 {
     netChan = std::make_unique<NetChan>(net, NetSrc::Client);
-    netChan->outOfBandPrint(serverAddr, "client_connect");
 
     timer = std::make_unique<Timer>();
     timer->start();
-    stopTryConnectTick = timer->getTotalTicks() + Timer::TICK_RATE * 6;
+    stopTryConnectTick = timer->getTotalTicks() + Timer::TICK_RATE * 30;
+    nextSendTick = 0;
 
-    connected = false;
+    connectState = ConnectState::Connecting;
+
+    //generate a random client connection salt
+    {
+        std::random_device dev;
+        std::mt19937 rng{ dev() };
+        std::uniform_int_distribution<std::mt19937::result_type> dist{ 1 };
+
+        clientSalt = dist(rng);
+    }
+    trySendConnectionRequest();
+
+    //zero is an invalid salt
+    serverSalt = 0;
+    combinedSalt = 0;
 }
 
 ClientConnectingState::~ClientConnectingState() = default;
@@ -30,6 +47,11 @@ void ClientConnectingState::pause()
 
 void ClientConnectingState::resume()
 {
+    if (connectState == ConnectState::GiveUp ||
+        connectState == ConnectState::Connected)
+    {
+        client.popState();
+    }
 }
 
 bool ClientConnectingState::consumeEvent(const Event& ev)
@@ -37,23 +59,68 @@ bool ClientConnectingState::consumeEvent(const Event& ev)
     return false;
 }
 
-void ClientConnectingState::update(Client& client, Renderer& renderer)
+void ClientConnectingState::update()
 {
+    if (connectState == ConnectState::GiveUp) //if we want to die, die
+    {
+        client.popState();
+        return;
+    }
+    else if (connectState == ConnectState::Connected) //if we're already connected, don't do nothing
+    {
+        return;
+    }
+
+    //has it been long enough? die
+    const uint64_t currentTick = timer->getTotalTicks();
+    if (currentTick >= stopTryConnectTick)
+    {
+        connectState = ConnectState::GiveUp;
+        return;
+    }
+
+    if (connectState == ConnectState::Connecting) //try to send another connection packet if it's been long enough
+    {
+        trySendConnectionRequest();
+    }
+    else if (connectState == ConnectState::Challenging) //try to send another challenge packet if it's been long enough
+    {
+        trySendChallengeRequest();
+    }
+    else if (connectState == ConnectState::AlmostConnected)
+    {
+        trySendSynchronizeRequest();
+    }
+
     NetBuf buf{};
     NetAddr fromAddr{};
-    while (netChan && net.getPacket(NetSrc::Client, buf, fromAddr))
+    while (net.getPacket(NetSrc::Client, buf, fromAddr))
     {
         //read the first byte of the msg
         //if it's -1 then it's an unconnected message
-        if (*reinterpret_cast<const uint32_t*>(buf.getData().data()) == -1)
+        uint32_t header;
+        if (!buf.readUint32(header))
+        {
+            continue;
+        }
+
+        if (header == -1)
         {
             handleUnconnectedPacket(buf, fromAddr);
             continue;
         }
 
+        //reset read head
+        buf.beginRead();
+
+        if (connectState != ConnectState::AlmostConnected)
+        {
+            continue;
+        }
+
         NetMessageType msgType;
         std::vector<NetBuf> reliableMessages;
-        if (!netChan->processHeader(buf, msgType, reliableMessages) ||
+        if (!netChan->processHeader(buf, msgType, reliableMessages, combinedSalt) ||
             msgType == NetMessageType::Unknown)
         {
             continue;
@@ -67,13 +134,17 @@ void ClientConnectingState::update(Client& client, Renderer& renderer)
                 uint8_t tempV;
                 if (!reliableMessage.readUint8(tempV))
                 {
+                    console.logf("Unknown type of %d", tempV);
                     continue;
                 }
 
                 reliableMsgType = static_cast<NetMessageType>(tempV);
             }
 
-            handleReliablePacket(client, renderer, reliableMessage, reliableMsgType);
+            if (handleReliablePacket(reliableMessage, reliableMsgType))
+            {
+                return;
+            }
         }
 
         if (msgType == NetMessageType::SendReliables)
@@ -81,55 +152,87 @@ void ClientConnectingState::update(Client& client, Renderer& renderer)
             continue;
         }
 
-        handleUnreliablePacket(client, renderer, buf, msgType);
+        handleUnreliablePacket(buf, msgType);
     }
 
     if (netChan)
     {
         //if we never sent a reliable
-        netChan->trySendReliable();
+        netChan->trySendReliable(combinedSalt);
     }
 }
 
 void ClientConnectingState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
 {
-    //read the -1 header
-    {
-        uint32_t byte;
-        buf.readUint32(byte);
-    }
-
     std::string str;
     if (!buf.readString(str)) //couldn't read str
     {
         return;
     }
 
-    if (str == "server_connect")
+    console.logf("Client: Unconnected packet: %s\n", str.c_str());
+
+    if (str == "server_challenge")
     {
+        if (connectState == ConnectState::Challenging)
+        {
+            return;
+        }
+
+        uint32_t clientSaltOfServer;
+        if (!buf.readUint32(clientSaltOfServer))
+        {
+            return;
+        }
+
+        if (clientSaltOfServer != clientSalt)
+        {
+            return;
+        }
+
+        if (!buf.readUint32(serverSalt))
+        {
+            return;
+        }
+
+        combinedSalt = clientSalt ^ serverSalt;
+        connectState = ConnectState::Challenging;
+
+        nextSendTick = 0;
+        trySendChallengeRequest();
+    }
+    else if (str == "server_connect")
+    {
+        if (connectState == ConnectState::AlmostConnected)
+        {
+            return;
+        }
+
+        uint32_t mixedSalt;
+        if (!buf.readUint32(mixedSalt))
+        {
+            return;
+        }
+
+        if (mixedSalt != combinedSalt)
+        {
+            return;
+        }
+
         netChan->setToAddr(fromAddr);
-
-        //synchronize time
-        const uint64_t oldClientTime = timer->getTotalTicks();
-
-        NetBuf sendBuf{};
-        sendBuf.writeUint64(oldClientTime);
-
-        netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
+        connectState = ConnectState::AlmostConnected;
 
         //prepare entity manager
         entityManager = std::make_unique<EntityManager>();
+
+        nextSendTick = 0;
+        trySendSynchronizeRequest();
     }
 }
 
-void ClientConnectingState::handleReliablePacket(Client& client, Renderer& renderer, NetBuf& buf, const NetMessageType& msgType)
+bool ClientConnectingState::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
 {
-    if (!entityManager || !timer)
-    {
-        return;
-    }
-
-    if (msgType == NetMessageType::Synchronize && !connected)
+    if (msgType == NetMessageType::Synchronize)
     {
         //time stuff
         uint64_t prevTime;
@@ -167,44 +270,22 @@ void ClientConnectingState::handleReliablePacket(Client& client, Renderer& rende
             }
         }
 
-        connected = true;
-        client.pushState(std::make_shared<ClientConnectedState>(net, std::move(netChan), std::move(timer),
+        connectState = ConnectState::Connected;
+        client.pushState(std::make_unique<ClientConnectedState>(client, renderer, console,
+            net, serverAddr,
+            std::move(netChan), std::move(timer),
             std::move(entityManager),
-            std::move(models)));
+            std::move(models),
+            clientSalt, serverSalt));
 
-        //hideMenu();
+        return true;
     }
-    else if (msgType == NetMessageType::CreateEntity)
-    {
-        EntityId netEntityId;
-        buf.readUint16(netEntityId);
 
-        entityManager->allocateGlobalEntity(netEntityId);
-        Entity* newEntity = entityManager->getGlobalEntity(netEntityId);
-
-        Entity::deserialize(*newEntity, buf);
-
-        if (!models.contains(newEntity->modelName))
-        {
-            models[newEntity->modelName] = renderer.createModel(newEntity->modelName);
-        }
-    }
-    else if (msgType == NetMessageType::DestroyEntity)
-    {
-        EntityId netEntityId;
-        buf.readUint16(netEntityId);
-
-        entityManager->freeGlobalEntity(netEntityId);
-    }
+    return false;
 }
 
-void ClientConnectingState::handleUnreliablePacket(Client& client, Renderer& renderer, NetBuf& buf, const NetMessageType& msgType)
+void ClientConnectingState::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType)
 {
-    if (!entityManager)
-    {
-        return;
-    }
-
     if (msgType == NetMessageType::EntitySynchronize)
     {
         uint32_t numEntities;
@@ -232,14 +313,82 @@ void ClientConnectingState::handleUnreliablePacket(Client& client, Renderer& ren
     }
 }
 
-void ClientConnectingState::draw(Renderer& renderer)
+void ClientConnectingState::draw()
 {
+    if (connectState == ConnectState::GiveUp ||
+        connectState == ConnectState::Connected)
+    {
+        return;
+    }
+
     constexpr std::string_view CONNECT_MSG = "Connecting...";
     constexpr float SIZE = 32.0f;
     renderer.drawText(CONNECT_MSG, glm::vec2{ renderer.getWidth() / 2 - (SIZE * CONNECT_MSG.size() / 2), renderer.getHeight() / 2 }, SIZE);
 }
 
-bool ClientConnectingState::isFinished()
+NetBuf ClientConnectingState::getSaltedBuffer()
 {
-    return !connected;
+    NetBuf saltedBuf;
+    saltedBuf.writeUint32(combinedSalt);
+
+    return saltedBuf;
+}
+
+void ClientConnectingState::trySendConnectionRequest()
+{
+    if (connectState != ConnectState::Connecting)
+    {
+        throw std::runtime_error{ "Cannot send connection request after connected" };
+    }
+
+    const uint64_t currentTick = timer->getTotalTicks();
+    if (currentTick >= nextSendTick)
+    {
+        NetBuf sendBuf;
+        sendBuf.writeString("client_connect");
+        sendBuf.writeUint32(clientSalt);
+
+        NetChan::outOfBand(net, NetSrc::Client, serverAddr, std::move(sendBuf));
+        nextSendTick = currentTick + Timer::TICK_RATE * 5;
+    }
+}
+
+void ClientConnectingState::trySendChallengeRequest()
+{
+    if (connectState != ConnectState::Challenging)
+    {
+        throw std::runtime_error{ "Cannot send connection request after challenge recieved" };
+    }
+
+    const uint64_t currentTick = timer->getTotalTicks();
+    if (currentTick >= nextSendTick)
+    {
+        NetBuf sendBuf;
+        sendBuf.writeString("client_challenge");
+        sendBuf.writeUint32(combinedSalt);
+
+        NetChan::outOfBand(net, NetSrc::Client, serverAddr, std::move(sendBuf));
+        nextSendTick = currentTick + Timer::TICK_RATE * 5;
+    }
+}
+
+void ClientConnectingState::trySendSynchronizeRequest()
+{
+    if (connectState != ConnectState::AlmostConnected)
+    {
+        throw std::runtime_error{ "Cannot send sync request after already synchronized" };
+    }
+
+    const uint64_t currentTick = timer->getTotalTicks();
+    if (currentTick >= nextSendTick)
+    {
+        //synchronize time
+        const uint64_t oldClientTime = timer->getTotalTicks();
+
+        NetBuf sendBuf{};
+        sendBuf.writeUint64(oldClientTime);
+
+        netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
+        nextSendTick = currentTick + Timer::TICK_RATE * 5;
+    }
 }

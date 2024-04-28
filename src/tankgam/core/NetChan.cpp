@@ -31,7 +31,7 @@ NetAddr NetChan::getToAddr() const
     return netAddr;
 }
 
-void NetChan::outOfBandPrint(NetAddr toAddr, std::string_view str)
+void NetChan::outOfBandPrint(Net& net, NetSrc src, NetAddr toAddr, std::string_view str)
 {
     std::span<const std::byte> strByte{ reinterpret_cast<const std::byte*>(str.data()), str.size() };
 
@@ -40,19 +40,27 @@ void NetChan::outOfBandPrint(NetAddr toAddr, std::string_view str)
     std::copy(strByte.begin(), strByte.end(), data.begin());
     data.push_back(std::byte{ '\0' });
 
-    outOfBand(toAddr, data);
+    NetChan::outOfBand(net, src, toAddr, data);
 }
 
-void NetChan::outOfBand(NetAddr toAddr, std::span<const std::byte> data)
+//for sending data without a connection
+void NetChan::outOfBand(Net& net, NetSrc src, NetAddr toAddr, NetBuf sendBuf)
+{
+    std::span<const std::byte> data = sendBuf.getData();
+
+    NetChan::outOfBand(net, src, toAddr, data);
+}
+
+void NetChan::outOfBand(Net& net, NetSrc src, NetAddr toAddr, std::span<const std::byte> data)
 {
     NetBuf buf{};
     buf.writeUint32(-1);
     buf.writeBytes(data);
 
-    net.sendPacket(netSrc, std::move(buf), toAddr);
+    net.sendPacket(src, std::move(buf), toAddr);
 }
 
-void NetChan::trySendReliable()
+void NetChan::trySendReliable(uint32_t salt)
 {
     const bool reliable = shouldTrySendReliable;
     shouldTrySendReliable = true;
@@ -85,7 +93,7 @@ void NetChan::trySendReliable()
     
     if (unacked)
     {
-        sendData(std::span<const std::byte> {}, NetMessageType::SendReliables);
+        sendData(std::span<const std::byte> {}, NetMessageType::SendReliables, salt);
     }
 }
 
@@ -116,12 +124,12 @@ void NetChan::addReliableData(std::span<const std::byte> data, NetMessageType ms
     newPacket.data = std::move(msgBuf);
 }
 
-void NetChan::sendData(NetBuf sendBuf, NetMessageType msgType)
+void NetChan::sendData(NetBuf sendBuf, NetMessageType msgType, uint32_t salt)
 {
-    sendData(sendBuf.getData(), msgType);
+    sendData(sendBuf.getData(), msgType, salt);
 }
 
-void NetChan::sendData(std::span<const std::byte> data, NetMessageType msgType)
+void NetChan::sendData(std::span<const std::byte> data, NetMessageType msgType, uint32_t salt)
 {
     if (netAddr.type == NetAddrType::Unknown)
     {
@@ -137,7 +145,7 @@ void NetChan::sendData(std::span<const std::byte> data, NetMessageType msgType)
     }
 
     NetBuf sendBuf{};
-    writeHeader(sendBuf, msgType);
+    writeHeader(sendBuf, msgType, salt);
 
     sendBuf.writeBytes(data);
 
@@ -146,10 +154,10 @@ void NetChan::sendData(std::span<const std::byte> data, NetMessageType msgType)
     shouldTrySendReliable = false; //we sent some reliable data with this packet, don't try again this cycle
 }
 
-bool NetChan::processHeader(NetBuf& inBuf, NetMessageType& outType, std::vector<NetBuf>& outReliableMessages)
+bool NetChan::processHeader(NetBuf& inBuf, NetMessageType& outType, std::vector<NetBuf>& outReliableMessages, uint32_t expectedSalt)
 {
     InHeader header{};
-    if (!readHeader(inBuf, header))
+    if (!readHeader(inBuf, header, expectedSalt))
     {
         return false;
     }
@@ -210,12 +218,13 @@ bool NetChan::processHeader(NetBuf& inBuf, NetMessageType& outType, std::vector<
     return true;
 }
 
-void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType)
+void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType, uint32_t salt)
 {
     //for organizational purposes
     OutHeader header
     {
         .msgType = msgType,
+        .salt = salt,
         .sequence = ++outgoingSequence,
         .ack = incomingReliableSequence,
         .ackBits = 0,
@@ -264,6 +273,7 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType)
     header.reliableMessages = std::move(reliableMessages);
 
     outBuf.writeUint8(static_cast<uint8_t>(header.msgType));
+    outBuf.writeUint32(header.salt);
     outBuf.writeUint32(header.sequence);
     outBuf.writeUint32(header.ack);
     outBuf.writeUint64(header.ackBits);
@@ -276,7 +286,7 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType)
     }
 }
 
-bool NetChan::readHeader(NetBuf& inBuf, InHeader& outHeader)
+bool NetChan::readHeader(NetBuf& inBuf, InHeader& outHeader, uint32_t expectedSalt)
 {
     {
         uint8_t tempV;
@@ -287,6 +297,10 @@ bool NetChan::readHeader(NetBuf& inBuf, InHeader& outHeader)
 
         outHeader.msgType = static_cast<NetMessageType>(tempV);
     }
+
+    //check the salt header
+    if (!inBuf.readUint32(outHeader.salt))      return false;
+    if (outHeader.salt != expectedSalt)            return false;
 
     if (!inBuf.readUint32(outHeader.sequence))          return false;
     if (!inBuf.readUint32(outHeader.ack))               return false;

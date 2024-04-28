@@ -6,8 +6,10 @@ class Renderer;
 
 class IClientState
 {
-public:
+protected:
     IClientState() = default;
+
+public:
     virtual ~IClientState() = default;
 
     // called when new state is made
@@ -17,8 +19,6 @@ public:
     virtual void resume() = 0;
 
     virtual bool consumeEvent(const Event& ev) = 0;
-    virtual void update(Client& client, Renderer& renderer) = 0;
-    virtual void draw(Renderer& renderer) = 0;
-
-    virtual bool isFinished() = 0;
+    virtual void update() = 0;
+    virtual void draw() = 0;
 };

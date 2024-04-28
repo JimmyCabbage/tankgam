@@ -6,24 +6,24 @@
 #include "Client.h"
 #include "Net.h"
 
-ClientMenuState::ClientMenuState(Client& client, Net& net, MenuType menuType)
-    : type{ menuType }
+ClientMenuState::ClientMenuState(Client& client, Renderer& renderer, Console& console, Net& net, MenuType menuType)
+    : renderer{ renderer }, type{ menuType }
 {
     switch (type)
     {
     case MenuType::MainMenu:
         {
-            const auto mainListCallback = [this, &client, &net](size_t choice) -> void
+            const auto mainListCallback = [this, &client, &renderer, &console, &net](size_t choice) -> void
             {
                 switch (choice)
                 {
                 case 0:
-                    client.pushState(std::make_shared<ClientConnectingState>(net,
+                    client.pushState(std::make_shared<ClientConnectingState>(client, renderer, console, net,
                         NetAddr{ NetAddrType::Loopback, 0 }));
                     break;
-                //case 1:
-                    //shutdown();
-                    //break;
+                case 1:
+                    client.shutdown();
+                    break;
                 }
             };
 
@@ -51,18 +51,13 @@ bool ClientMenuState::consumeEvent(const Event& ev)
     return menu.consumeEvent(ev);
 }
 
-void ClientMenuState::update(Client& client, Renderer& renderer)
+void ClientMenuState::update()
 {
 }
 
-void ClientMenuState::draw(Renderer& renderer)
+void ClientMenuState::draw()
 {
     menu.draw(renderer);
-}
-
-bool ClientMenuState::isFinished()
-{
-    return false;
 }
 
 MenuType ClientMenuState::getMenuType() const

@@ -28,7 +28,7 @@ Client::Client(Console& console, FileManager& fileManager, Net& net)
         console.log("Client: Init Renderer Subsystem...");
         renderer = std::make_unique<Renderer>(console, fileManager, "src");
 
-        pushState(std::make_unique<ClientMenuState>(*this, net, MenuType::MainMenu));
+        pushState(std::make_shared<ClientMenuState>(*this, *renderer, console, net, MenuType::MainMenu));
     }
     catch (const std::exception& e)
     {
@@ -52,14 +52,14 @@ bool Client::runFrame()
     {
         handleEvents();
 
-        stateStack.top()->update(*this, *renderer);
+        stateStack.top()->update();
         
         draw();
     }
     catch (const std::exception& e)
     {
         console.log(fmt::format("Client: Runtime Error:\n{}", e.what()));
-        throw e;
+        throw;
     }
 
     return running;
@@ -94,10 +94,12 @@ void Client::popState()
 {
     stateStack.pop();
 
-    if (!stateStack.empty())
+    if (stateStack.empty())
     {
-        stateStack.top()->resume();
+        throw std::runtime_error{ "Client cannot have an empty state stack!" };
     }
+
+    stateStack.top()->resume();
 }
 
 #if 0
@@ -412,8 +414,7 @@ void Client::draw()
 
     renderer->drawText("HELLO WORLD", glm::vec2{ 0.0f, 0.0f }, 100.0f);
 
-    std::shared_ptr<IClientState> currentState = stateStack.top();
-    currentState->draw(*renderer);
+    stateStack.top()->draw();
 
     renderer->endDraw();
 }

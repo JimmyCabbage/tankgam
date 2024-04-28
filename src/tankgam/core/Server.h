@@ -18,6 +18,7 @@ enum class NetMessageType : uint8_t;
 enum class ServerClientState
 {
     Free,
+    Challenging,
     Connected,
     Spawned
 };
@@ -29,6 +30,9 @@ struct ServerClient
     std::unique_ptr<NetChan> netChan;
     
     uint64_t lastRecievedTime;
+    uint32_t clientSalt;
+    uint32_t serverSalt;
+    uint32_t combinedSalt;
 };
 
 class Server
@@ -67,7 +71,7 @@ private:
     
     void freeGlobalEntity(EntityId netEntityId);
     
-    void disconnectClient(ServerClient& client);
+    void disconnectClient(ServerClient& client, bool forceDisconnect);
     
 //main loop stuff
     void handlePackets();
@@ -77,6 +81,8 @@ private:
     void handleReliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client);
     
     void handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client);
+
+    NetBuf getSaltedBuffer(ServerClient& client);
 
     void handleEvents();
 

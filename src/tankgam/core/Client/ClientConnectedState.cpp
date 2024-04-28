@@ -2,17 +2,25 @@
 
 #include "sys/Renderer.h"
 #include "sys/Timer.h"
+#include "sys/Console.h"
 #include "Client.h"
 #include "NetChan.h"
 #include "EntityManager.h"
 
-ClientConnectedState::ClientConnectedState(Net& net, std::unique_ptr<NetChan> netChan, std::unique_ptr<Timer> timer,
+ClientConnectedState::ClientConnectedState(Client& client, Renderer& renderer, Console& console,
+        Net& net, NetAddr serverAddr,
+        std::unique_ptr<NetChan> netChan, std::unique_ptr<Timer> timer,
         std::unique_ptr<EntityManager> entityManager,
-        std::unordered_map<std::string, std::unique_ptr<Model>> models)
-    : net{ net },
+        std::unordered_map<std::string, std::unique_ptr<Model>> models,
+        uint32_t clientSalt, uint32_t serverSalt)
+    : client{ client }, renderer{ renderer }, console{ console },
+      net{ net }, serverAddr{ serverAddr },
       netChan{ std::move(netChan) }, timer{ std::move(timer) },
       entityManager{ std::move(entityManager) },
-      models{ std::move(models) }
+      models{ std::move(models) },
+      clientSalt{ clientSalt },
+      serverSalt{ serverSalt },
+      combinedSalt{ clientSalt ^ serverSalt }
 {
 }
 
@@ -54,7 +62,7 @@ bool ClientConnectedState::consumeEvent(const Event& ev)
 }
 
 
-void ClientConnectedState::update(Client& client, Renderer& renderer)
+void ClientConnectedState::update()
 {
     NetBuf buf{};
     NetAddr fromAddr{};
@@ -62,15 +70,24 @@ void ClientConnectedState::update(Client& client, Renderer& renderer)
     {
         //read the first byte of the msg
         //if it's -1 then it's an unconnected message
-        if (*reinterpret_cast<const uint32_t*>(buf.getData().data()) == -1)
+        uint32_t header;
+        if (!buf.readUint32(header))
+        {
+            continue;
+        }
+
+        if (header == -1)
         {
             handleUnconnectedPacket(buf, fromAddr);
             continue;
         }
 
+        //reset read head
+        buf.beginRead();
+
         NetMessageType msgType;
         std::vector<NetBuf> reliableMessages;
-        if (!netChan->processHeader(buf, msgType, reliableMessages) ||
+        if (!netChan->processHeader(buf, msgType, reliableMessages, combinedSalt) ||
             msgType == NetMessageType::Unknown)
         {
             continue;
@@ -90,7 +107,7 @@ void ClientConnectedState::update(Client& client, Renderer& renderer)
                 reliableMsgType = static_cast<NetMessageType>(tempV);
             }
 
-            handleReliablePacket(client, renderer, reliableMessage, reliableMsgType);
+            handleReliablePacket(reliableMessage, reliableMsgType);
         }
 
         if (msgType == NetMessageType::SendReliables)
@@ -98,55 +115,31 @@ void ClientConnectedState::update(Client& client, Renderer& renderer)
             continue;
         }
 
-        handleUnreliablePacket(client, renderer, buf, msgType);
+        handleUnreliablePacket(buf, msgType);
     }
 
-    //if we never sent a reliable
-    netChan->trySendReliable();
-
     sendPackets();
+
+    //if we never sent a reliable
+    netChan->trySendReliable(combinedSalt);
 }
 
 void ClientConnectedState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr)
 {
-    //read the -1 header
-    {
-        uint32_t byte;
-        buf.readUint32(byte);
-    }
-
     std::string str;
     if (!buf.readString(str)) //couldn't read str
     {
         return;
     }
 
-    if (str == "server_connect")
-    {
-        netChan->setToAddr(fromAddr);
-
-        //synchronize time
-        const uint64_t oldClientTime = timer->getTotalTicks();
-
-        NetBuf sendBuf{};
-        sendBuf.writeUint64(oldClientTime);
-
-        netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
-
-        //prepare entity manager
-        entityManager = std::make_unique<EntityManager>();
-    }
+    console.logf("Client: Unconnected packet: %s\n", str.c_str());
 }
 
-void ClientConnectedState::handleReliablePacket(Client& client, Renderer& renderer, NetBuf& buf, const NetMessageType& msgType)
+void ClientConnectedState::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
 {
-    if (!entityManager || !timer)
-    {
-        return;
-    }
-
     if (msgType == NetMessageType::CreateEntity)
     {
+        console.log("CREATE");
         EntityId netEntityId;
         buf.readUint16(netEntityId);
 
@@ -162,6 +155,7 @@ void ClientConnectedState::handleReliablePacket(Client& client, Renderer& render
     }
     else if (msgType == NetMessageType::DestroyEntity)
     {
+        console.log("DESTROY");
         EntityId netEntityId;
         buf.readUint16(netEntityId);
 
@@ -169,13 +163,8 @@ void ClientConnectedState::handleReliablePacket(Client& client, Renderer& render
     }
 }
 
-void ClientConnectedState::handleUnreliablePacket(Client& client, Renderer& renderer, NetBuf& buf, const NetMessageType& msgType)
+void ClientConnectedState::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType)
 {
-    if (!entityManager)
-    {
-        return;
-    }
-
     if (msgType == NetMessageType::EntitySynchronize)
     {
         uint32_t numEntities;
@@ -210,15 +199,15 @@ void ClientConnectedState::sendPackets()
         PlayerCommand& cmd = commands.front();
         commands.pop();
 
-        NetBuf buf{};
-        buf.writeFloat(cmd.addRotation);
+        NetBuf sendBuf{};
+        sendBuf.writeFloat(cmd.addRotation);
 
-        netChan->sendData(std::move(buf), NetMessageType::PlayerCommand);
+        netChan->sendData(std::move(sendBuf), NetMessageType::PlayerCommand, combinedSalt);
     }
 }
 
 
-void ClientConnectedState::draw(Renderer& renderer)
+void ClientConnectedState::draw()
 {
     auto entities = entityManager->getGlobalEntities();
     for (EntityId entity : entities)
@@ -228,16 +217,27 @@ void ClientConnectedState::draw(Renderer& renderer)
     }
 }
 
-bool ClientConnectedState::isFinished()
+NetBuf ClientConnectedState::getSaltedBuffer()
 {
-    return false;
+    NetBuf saltedBuf;
+    saltedBuf.writeUint32(combinedSalt);
+
+    return std::move(saltedBuf);
 }
 
 void ClientConnectedState::disconnect()
 {
-    netChan->sendData(NetBuf{}, NetMessageType::Disconnect);
+    //just shoot off a bunch of disconnect packets, hope one of them reaches
+    for (int i = 0; i < 3; i++)
+    {
+        NetBuf sendBuf;
+        sendBuf.writeString("client_disconnect");
+        sendBuf.writeUint32(combinedSalt);
+
+        NetChan::outOfBand(net, NetSrc::Client, serverAddr, std::move(sendBuf));
+    }
 
     timer->stop();
 
-    netChan = std::make_unique<NetChan>(net, NetSrc::Client);
+    client.popState();
 }

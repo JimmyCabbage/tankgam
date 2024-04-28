@@ -7,8 +7,9 @@
 
 #include "Client/IClientState.h"
 #include "PlayerCommand.h"
+#include "Net.h"
 
-class Net;
+class Console;
 class NetChan;
 class NetBuf;
 class Timer;
@@ -22,38 +23,50 @@ class Renderer;
 class ClientConnectedState : public IClientState
 {
 public:
-    ClientConnectedState(Net& net, std::unique_ptr<NetChan> netChan, std::unique_ptr<Timer> timer,
+    ClientConnectedState(Client& client, Renderer& renderer, Console& console,
+        Net& net, NetAddr serverAddr,
+        std::unique_ptr<NetChan> netChan, std::unique_ptr<Timer> timer,
         std::unique_ptr<EntityManager> entityManager,
-        std::unordered_map<std::string, std::unique_ptr<Model>> models);
+        std::unordered_map<std::string, std::unique_ptr<Model>> models,
+        uint32_t clientSalt, uint32_t serverSalt);
     ~ClientConnectedState() override;
 
     void pause() override;
     void resume() override;
 
     bool consumeEvent(const Event& ev) override;
-    void update(Client& client, Renderer& renderer) override;
+    void update() override;
 
 private:
     void handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAddr);
-    void handleReliablePacket(Client& client, Renderer& renderer, NetBuf& buf, const NetMessageType& msgType);
-    void handleUnreliablePacket(Client& client, Renderer& renderer, NetBuf& buf, const NetMessageType& msgType);
+    void handleReliablePacket(NetBuf& buf, const NetMessageType& msgType);
+    void handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType);
 
     void sendPackets();
 
 public:
-    void draw(Renderer& renderer) override;
-
-    bool isFinished() override;
+    void draw() override;
 
 private:
+    Client& client;
+    Renderer& renderer;
+    Console& console;
+
     Net& net;
+    NetAddr serverAddr;
     std::unique_ptr<NetChan> netChan;
     std::unique_ptr<Timer> timer;
 
     std::unordered_map<std::string, std::unique_ptr<Model>> models;
     std::unique_ptr<EntityManager> entityManager;
 
+    uint32_t clientSalt;
+    uint32_t serverSalt;
+    uint32_t combinedSalt;
+
     std::queue<PlayerCommand> commands;
+
+    NetBuf getSaltedBuffer();
 
     void disconnect();
 };
