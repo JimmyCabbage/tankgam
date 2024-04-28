@@ -20,7 +20,6 @@ ClientConnectingState::ClientConnectingState(Client& client, Renderer& renderer,
     timer = std::make_unique<Timer>();
     timer->start();
     stopTryConnectTick = timer->getTotalTicks() + Timer::TICK_RATE * 30;
-    nextSendTick = 0;
 
     connectState = ConnectState::Connecting;
 
@@ -32,6 +31,7 @@ ClientConnectingState::ClientConnectingState(Client& client, Renderer& renderer,
 
         clientSalt = dist(rng);
     }
+    nextSendTick = 0;
     trySendConnectionRequest();
 
     //zero is an invalid salt
