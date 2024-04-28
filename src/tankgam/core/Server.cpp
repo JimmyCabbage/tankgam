@@ -106,11 +106,11 @@ EntityId Server::allocateGlobalEntity(Entity globalEntity)
             continue;
         }
         
-        NetBuf saltedBuf = getSaltedBuffer(client);
-        saltedBuf.writeUint16(netEntityId);
-        Entity::serialize(*newEntity, saltedBuf);
+        NetBuf sendBuf{};
+        sendBuf.writeUint16(netEntityId);
+        Entity::serialize(*newEntity, sendBuf);
 
-        client.netChan->addReliableData(std::move(saltedBuf), NetMessageType::CreateEntity);
+        client.netChan->addReliableData(std::move(sendBuf), NetMessageType::CreateEntity);
     }
     
     return netEntityId;
@@ -127,10 +127,10 @@ void Server::freeGlobalEntity(EntityId netEntityId)
             continue;
         }
         
-        NetBuf saltedBuf = getSaltedBuffer(client);
-        saltedBuf.writeUint16(netEntityId);
+        NetBuf sendBuf{};
+        sendBuf.writeUint16(netEntityId);
         
-        client.netChan->addReliableData(std::move(saltedBuf), NetMessageType::DestroyEntity);
+        client.netChan->addReliableData(std::move(sendBuf), NetMessageType::DestroyEntity);
     }
 }
 
@@ -445,14 +445,6 @@ void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, 
 
         rotationAmount += rot;
     }
-}
-
-NetBuf Server::getSaltedBuffer(ServerClient& client)
-{
-    NetBuf saltedBuf;
-    saltedBuf.writeUint32(client.combinedSalt);
-
-    return saltedBuf;
 }
 
 void Server::handleEvents()

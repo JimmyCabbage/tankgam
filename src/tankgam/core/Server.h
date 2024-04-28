@@ -82,8 +82,6 @@ private:
     
     void handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, ServerClient& client);
 
-    NetBuf getSaltedBuffer(ServerClient& client);
-
     void handleEvents();
 
     void tryRunTicks();

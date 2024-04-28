@@ -66,7 +66,5 @@ private:
 
     std::queue<PlayerCommand> commands;
 
-    NetBuf getSaltedBuffer();
-
     void disconnect();
 };

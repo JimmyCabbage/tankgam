@@ -139,7 +139,7 @@ void ClientConnectedState::handleReliablePacket(NetBuf& buf, const NetMessageTyp
 {
     if (msgType == NetMessageType::CreateEntity)
     {
-        console.log("CREATE");
+        //console.log("CREATE");
         EntityId netEntityId;
         buf.readUint16(netEntityId);
 
@@ -155,7 +155,7 @@ void ClientConnectedState::handleReliablePacket(NetBuf& buf, const NetMessageTyp
     }
     else if (msgType == NetMessageType::DestroyEntity)
     {
-        console.log("DESTROY");
+        //console.log("DESTROY");
         EntityId netEntityId;
         buf.readUint16(netEntityId);
 
@@ -215,14 +215,6 @@ void ClientConnectedState::draw()
         const Entity* e = entityManager->getGlobalEntity(entity);
         renderer.drawModel(*models[e->modelName], glm::vec3{1.0f}, e->rotation, e->position);
     }
-}
-
-NetBuf ClientConnectedState::getSaltedBuffer()
-{
-    NetBuf saltedBuf;
-    saltedBuf.writeUint32(combinedSalt);
-
-    return std::move(saltedBuf);
 }
 
 void ClientConnectedState::disconnect()

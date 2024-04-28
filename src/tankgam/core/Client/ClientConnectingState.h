@@ -66,8 +66,6 @@ private:
         GiveUp
     } connectState;
 
-    NetBuf getSaltedBuffer();
-
     void trySendConnectionRequest();
     void trySendChallengeRequest();
     void trySendSynchronizeRequest();

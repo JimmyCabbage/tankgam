@@ -326,14 +326,6 @@ void ClientConnectingState::draw()
     renderer.drawText(CONNECT_MSG, glm::vec2{ renderer.getWidth() / 2 - (SIZE * CONNECT_MSG.size() / 2), renderer.getHeight() / 2 }, SIZE);
 }
 
-NetBuf ClientConnectingState::getSaltedBuffer()
-{
-    NetBuf saltedBuf;
-    saltedBuf.writeUint32(combinedSalt);
-
-    return saltedBuf;
-}
-
 void ClientConnectingState::trySendConnectionRequest()
 {
     if (connectState != ConnectState::Connecting)
