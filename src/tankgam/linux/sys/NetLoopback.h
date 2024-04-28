@@ -46,6 +46,6 @@ private:
     bool getPacketServer(NetBuf& buf, NetAddr& fromAddr);
     bool getPacketClient(NetBuf& buf, NetAddr& fromAddr);
     
-    void sendPacketServer(NetBuf buf, const NetAddr& toAddr);
-    void sendPacketClient(NetBuf buf, const NetAddr& toAddr);
+    void sendPacketAsClient(NetBuf buf, const NetAddr& toAddr);
+    void sendPacketAsServer(NetBuf buf, const NetAddr& toAddr);
 };

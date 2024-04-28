@@ -113,11 +113,11 @@ void NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAdd
 {
     if (src == NetSrc::Server)
     {
-        sendPacketClient(std::move(buf), toAddr);
+        sendPacketAsServer(std::move(buf), toAddr);
         return;
     }
     
-    sendPacketServer(std::move(buf), toAddr);
+    sendPacketAsClient(std::move(buf), toAddr);
 }
 
 class ClientPortAllocator
@@ -347,7 +347,7 @@ bool NetLoopback::getPacketClient(NetBuf& buf, NetAddr& fromAddr)
     return true;
 }
 
-void NetLoopback::sendPacketServer(NetBuf buf, const NetAddr& toAddr)
+void NetLoopback::sendPacketAsClient(NetBuf buf, const NetAddr& toAddr)
 {
     const struct sockaddr_un serverAddr = getServerSockAddr();
     
@@ -360,7 +360,7 @@ void NetLoopback::sendPacketServer(NetBuf buf, const NetAddr& toAddr)
     }
 }
 
-void NetLoopback::sendPacketClient(NetBuf buf, const NetAddr& toAddr)
+void NetLoopback::sendPacketAsServer(NetBuf buf, const NetAddr& toAddr)
 {
     const struct sockaddr_un clientAddr = getClientSockAddr(toAddr.port);
     
