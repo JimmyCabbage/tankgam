@@ -35,7 +35,7 @@ private:
     ShaderType shaderType;
 };
 
-class Console;
+class Log;
 class FileManager;
 class Mesh;
 class Texture;
@@ -45,7 +45,7 @@ class TextRenderer;
 class Renderer
 {
 public:
-    Renderer(Console& console, FileManager& fileManager, std::string_view windowName);
+    Renderer(Log& log, FileManager& fileManager, std::string_view windowName);
     ~Renderer();
     
     Renderer(const Renderer&) = delete;
@@ -74,7 +74,7 @@ public:
     void drawText(std::string_view text, glm::vec2 position, float size);
     
 private:
-    Console& console;
+    Log& log;
     
     FileManager& fileManager;
     

@@ -12,8 +12,8 @@
 
 #include <util/FileManager.h>
 
-Server::Server(Console& console, FileManager& fileManager, Net& net)
-    : console{ console }, fileManager{ fileManager }, net{ net }
+Server::Server(Log& log, FileManager& fileManager, Net& net)
+    : log{ log }, fileManager{ fileManager }, net{ net }
 {
     try
     {
@@ -28,7 +28,7 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
             client.combinedSalt = 0;
         }
 
-        console.log("Server: Init Timer Subsystem...");
+        log.log("Server: Init Timer Subsystem...");
         timer = std::make_unique<Timer>();
         timer->start();
         
@@ -39,18 +39,18 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
     }
     catch (const std::exception& e)
     {
-        console.log(LogLevel::Error, fmt::format("Server: Init Error:\n{}", e.what()));
+        log.log(LogLevel::Error, fmt::format("Server: Init Error:\n{}", e.what()));
         throw;
     }
 
     running = true;
 
-    console.log("Server: Initialized");
+    log.log("Server: Initialized");
 }
 
 Server::~Server()
 {
-    console.log("Server: Quitting");
+    log.log("Server: Quitting");
 
     for (auto& client : clients)
     {
@@ -81,7 +81,7 @@ bool Server::runFrame()
     }
     catch (const std::exception& e)
     {
-        console.log(LogLevel::Error, fmt::format("Server: Runtime Error:\n{}", e.what()));
+        log.log(LogLevel::Error, fmt::format("Server: Runtime Error:\n{}", e.what()));
         throw;
     }
 
@@ -136,7 +136,7 @@ void Server::freeGlobalEntity(EntityId netEntityId)
 
 void Server::disconnectClient(ServerClient& client, bool forceDisconnect)
 {
-    console.logf("Server: Disconnect client from %d", (int)client.netChan->getToAddr().port);
+    log.logf("Server: Disconnect client from %d", (int)client.netChan->getToAddr().port);
 
     if (forceDisconnect)
     {
@@ -219,7 +219,7 @@ void Server::handlePackets()
                 uint8_t tempV;
                 if (!reliableMessage.readUint8(tempV))
                 {
-                    console.logf("Unknown type of %d", tempV);
+                    log.logf("Unknown type of %d", tempV);
                     continue;
                 }
 
@@ -267,7 +267,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
         return;
     }
 
-    console.logf("Server: Unconnected packet: %s\n", str.c_str());
+    log.logf("Server: Unconnected packet: %s\n", str.c_str());
 
     if (str == "client_connect")
     {
@@ -283,7 +283,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
             if (client.state != ServerClientState::Free &&
                 client.clientSalt == clientSalt)
             {
-                console.logf("Server: Client tried to connect from %d twice", (int)fromAddr.port);
+                log.logf("Server: Client tried to connect from %d twice", (int)fromAddr.port);
                 return;
             }
         }
@@ -331,7 +331,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
             NetChan::outOfBand(net, NetSrc::Server, fromAddr, std::move(sendBuf));
         }
         
-        console.logf("Server: New client challenging from %d", (int)fromAddr.port);
+        log.logf("Server: New client challenging from %d", (int)fromAddr.port);
     }
     else if (str == "client_challenge")
     {
@@ -373,7 +373,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
             NetChan::outOfBand(net, NetSrc::Server, fromAddr, std::move(sendBuf));
         }
 
-        console.logf("Server: New client connecting from %d", (int)fromAddr.port);
+        log.logf("Server: New client connecting from %d", (int)fromAddr.port);
     }
     else if (str == "client_disconnect")
     {

@@ -16,34 +16,34 @@
 
 #include "Client/IClientState.h"
 
-Client::Client(Console& console, FileManager& fileManager, Net& net)
-    : console{ console }, fileManager{ fileManager }, net{ net }
+Client::Client(Log& log, FileManager& fileManager, Net& net)
+    : log{ log }, fileManager{ fileManager }, net{ net }
 {
     try
     {
-        console.log("Client: Init Event Subsystem...");
+        log.log("Client: Init Event Subsystem...");
         eventQueue = std::make_unique<EventQueue>();
         eventHandler = std::make_unique<EventHandler>(*eventQueue);
 
-        console.log("Client: Init Renderer Subsystem...");
-        renderer = std::make_unique<Renderer>(console, fileManager, "src");
+        log.log("Client: Init Renderer Subsystem...");
+        renderer = std::make_unique<Renderer>(log, fileManager, "src");
 
-        pushState(std::make_shared<ClientMenuState>(*this, *renderer, console, net, MenuType::MainMenu));
+        pushState(std::make_shared<ClientMenuState>(*this, *renderer, log, net, MenuType::MainMenu));
     }
     catch (const std::exception& e)
     {
-        console.log(LogLevel::Error, fmt::format("Client: Init Error:\n{}", e.what()));
+        log.log(LogLevel::Error, fmt::format("Client: Init Error:\n{}", e.what()));
         throw;
     }
 
     running = true;
 
-    console.log("Client: Initialized");
+    log.log("Client: Initialized");
 }
 
 Client::~Client()
 {
-    console.log("Client: Quitting");
+    log.log("Client: Quitting");
 }
 
 bool Client::runFrame()
@@ -58,7 +58,7 @@ bool Client::runFrame()
     }
     catch (const std::exception& e)
     {
-        console.log(LogLevel::Error, fmt::format("Client: Runtime Error:\n{}", e.what()));
+        log.log(LogLevel::Error, fmt::format("Client: Runtime Error:\n{}", e.what()));
         throw;
     }
 

@@ -6,7 +6,7 @@
 #include "Event.h"
 #include "EntityManager.h"
 
-class Console;
+class Log;
 class FileManager;
 class EventHandler;
 class Renderer;
@@ -26,7 +26,7 @@ class Client
 public:
     friend class IClientState;
 
-    Client(Console& console, FileManager& fileManager, Net& net);
+    Client(Log& log, FileManager& fileManager, Net& net);
     ~Client();
 
     Client(const Client&) = delete;
@@ -40,7 +40,7 @@ public:
     void popState();
 
 private:
-    Console& console;
+    Log& log;
 
     FileManager& fileManager;
 

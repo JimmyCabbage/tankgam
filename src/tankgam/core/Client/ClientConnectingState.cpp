@@ -12,8 +12,8 @@
 #include "Entity.h"
 #include "EntityManager.h"
 
-ClientConnectingState::ClientConnectingState(Client& client, Renderer& renderer, Console& console, Net& net, NetAddr serverAddr)
-    : client{ client }, renderer{ renderer }, console{ console }, net{ net }, serverAddr{ serverAddr }
+ClientConnectingState::ClientConnectingState(Client& client, Renderer& renderer, Log& log, Net& net, NetAddr serverAddr)
+    : client{ client }, renderer{ renderer }, log{ log }, net{ net }, serverAddr{ serverAddr }
 {
     netChan = std::make_unique<NetChan>(net, NetSrc::Client);
 
@@ -140,7 +140,7 @@ void ClientConnectingState::update()
                 uint8_t tempV;
                 if (!reliableMessage.readUint8(tempV))
                 {
-                    console.logf("Unknown type of %d", tempV);
+                    log.logf("Client: Unknown message type of %d", tempV);
                     continue;
                 }
 
@@ -176,7 +176,7 @@ void ClientConnectingState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAd
         return;
     }
 
-    console.logf("Client: Unconnected packet: %s\n", str.c_str());
+    log.logf("Client: Unconnected packet: %s\n", str.c_str());
 
     if (str == "server_challenge")
     {
@@ -193,7 +193,7 @@ void ClientConnectingState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAd
 
         if (clientSaltOfServer != clientSalt)
         {
-            console.logf("Client: Client & server's client salt does not match: %d vs %d\n",
+            log.logf("Client: Client & server's client salt does not match: %d vs %d\n",
                 clientSalt, clientSaltOfServer);
             return;
         }
@@ -279,7 +279,7 @@ bool ClientConnectingState::handleReliablePacket(NetBuf& buf, const NetMessageTy
         }
 
         connectState = ConnectState::Connected;
-        client.pushState(std::make_unique<ClientConnectedState>(client, renderer, console,
+        client.pushState(std::make_unique<ClientConnectedState>(client, renderer, log,
             net, serverAddr,
             std::move(netChan), std::move(timer),
             std::move(entityManager),
@@ -351,7 +351,7 @@ void ClientConnectingState::trySendConnectionRequest()
         NetChan::outOfBand(net, NetSrc::Client, serverAddr, std::move(sendBuf));
         nextSendTick = currentTick + Timer::TICK_RATE * 5;
 
-        console.log("Client: Attempted to send connection packet...\n");
+        log.log("Client: Attempted to send connection packet...\n");
     }
 }
 
@@ -372,7 +372,7 @@ void ClientConnectingState::trySendChallengeRequest()
         NetChan::outOfBand(net, NetSrc::Client, serverAddr, std::move(sendBuf));
         nextSendTick = currentTick + Timer::TICK_RATE * 5;
 
-        console.log("Client: Attempted to send challenge packet...\n");
+        log.log("Client: Attempted to send challenge packet...\n");
     }
 }
 
@@ -395,6 +395,6 @@ void ClientConnectingState::trySendSynchronizeRequest()
         netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
         nextSendTick = currentTick + Timer::TICK_RATE * 5;
 
-        console.log("Client: Attempted to send synchronization packet...\n");
+        log.log("Client: Attempted to send synchronization packet...\n");
     }
 }

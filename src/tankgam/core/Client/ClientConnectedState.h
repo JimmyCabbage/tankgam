@@ -9,7 +9,7 @@
 #include "PlayerCommand.h"
 #include "Net.h"
 
-class Console;
+class Log;
 class NetChan;
 class NetBuf;
 class Timer;
@@ -23,7 +23,7 @@ class Renderer;
 class ClientConnectedState : public IClientState
 {
 public:
-    ClientConnectedState(Client& client, Renderer& renderer, Console& console,
+    ClientConnectedState(Client& client, Renderer& renderer, Log& log,
         Net& net, NetAddr serverAddr,
         std::unique_ptr<NetChan> netChan, std::unique_ptr<Timer> timer,
         std::unique_ptr<EntityManager> entityManager,
@@ -50,7 +50,7 @@ public:
 private:
     Client& client;
     Renderer& renderer;
-    Console& console;
+    Log& log;
 
     Net& net;
     NetAddr serverAddr;

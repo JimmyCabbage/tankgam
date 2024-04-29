@@ -7,13 +7,13 @@
 #include "NetChan.h"
 #include "EntityManager.h"
 
-ClientConnectedState::ClientConnectedState(Client& client, Renderer& renderer, Console& console,
+ClientConnectedState::ClientConnectedState(Client& client, Renderer& renderer, Log& log,
         Net& net, NetAddr serverAddr,
         std::unique_ptr<NetChan> netChan, std::unique_ptr<Timer> timer,
         std::unique_ptr<EntityManager> entityManager,
         std::unordered_map<std::string, std::unique_ptr<Model>> models,
         uint32_t clientSalt, uint32_t serverSalt)
-    : client{ client }, renderer{ renderer }, console{ console },
+    : client{ client }, renderer{ renderer }, log{ log },
       net{ net }, serverAddr{ serverAddr },
       netChan{ std::move(netChan) }, timer{ std::move(timer) },
       entityManager{ std::move(entityManager) },
@@ -138,7 +138,7 @@ void ClientConnectedState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAdd
         return;
     }
 
-    console.logf("Client: Unconnected packet: %s\n", str.c_str());
+    log.logf("Client: Unconnected packet: %s\n", str.c_str());
 }
 
 void ClientConnectedState::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)

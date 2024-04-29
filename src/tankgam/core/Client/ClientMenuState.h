@@ -5,7 +5,7 @@
 
 class Client;
 class Renderer;
-class Console;
+class Log;
 class Net;
 
 enum class MenuType
@@ -16,7 +16,7 @@ enum class MenuType
 class ClientMenuState : public IClientState
 {
 public:
-    ClientMenuState(Client& client, Renderer& renderer, Console& console, Net& net, MenuType menuType);
+    ClientMenuState(Client& client, Renderer& renderer, Log& log, Net& net, MenuType menuType);
     ~ClientMenuState() override;
 
     void pause() override;

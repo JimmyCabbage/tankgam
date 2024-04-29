@@ -13,8 +13,8 @@
 
 #include <util/FileManager.h>
 
-Renderer::Renderer(Console& console, FileManager& fileManager, std::string_view windowName)
-    : console{ console }, fileManager{ fileManager },
+Renderer::Renderer(Log& log, FileManager& fileManager, std::string_view windowName)
+    : log{ log }, fileManager{ fileManager },
       width{ 1024 }, height{ 724 },
       gl{}
 {

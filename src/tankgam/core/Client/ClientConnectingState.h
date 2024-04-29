@@ -7,7 +7,7 @@
 #include "Client/IClientState.h"
 #include "Net.h"
 
-class Console;
+class Log;
 class NetChan;
 class NetBuf;
 class Timer;
@@ -20,7 +20,7 @@ class Renderer;
 class ClientConnectingState : public IClientState
 {
 public:
-    ClientConnectingState(Client& client, Renderer& renderer, Console& console,
+    ClientConnectingState(Client& client, Renderer& renderer, Log& log,
         Net& net, NetAddr serverAddr);
     ~ClientConnectingState() override;
 
@@ -41,7 +41,7 @@ public:
 private:
     Client& client;
     Renderer& renderer;
-    Console& console;
+    Log& log;
 
     Net& net;
     NetAddr serverAddr;

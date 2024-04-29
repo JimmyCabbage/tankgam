@@ -6,7 +6,7 @@
 
 #include "EntityManager.h"
 
-class Console;
+class Log;
 class FileManager;
 class Timer;
 class Net;
@@ -38,7 +38,7 @@ struct ServerClient
 class Server
 {
 public:
-    Server(Console& console, FileManager& fileManager, Net& net);
+    Server(Log& log, FileManager& fileManager, Net& net);
     ~Server();
 
     Server(const Server&) = delete;
@@ -49,7 +49,7 @@ public:
     void shutdown();
 
 private:
-    Console& console;
+    Log& log;
 
     FileManager& fileManager;
 
