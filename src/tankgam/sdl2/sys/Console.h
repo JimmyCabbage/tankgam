@@ -31,6 +31,5 @@ public:
     void log(std::string_view line) override;
     
 private:
-    bool printDebug;
     //std::vector<std::string> lines;
 };

@@ -176,7 +176,7 @@ void ClientConnectingState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAd
         return;
     }
 
-    log.logf("Client: Unconnected packet: %s\n", str.c_str());
+    log.logf(LogLevel::Debug, "Client: Unconnected packet: %s\n", str.c_str());
 
     if (str == "server_challenge")
     {

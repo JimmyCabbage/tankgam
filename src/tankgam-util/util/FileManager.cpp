@@ -25,7 +25,7 @@ FileManager::~FileManager()
 
 std::vector<char> FileManager::readFileRaw(std::string_view fileName)
 {
-    log.logf("Reading file: %s", fileName.data());
+    log.logf(LogLevel::Debug, "Reading file: %s", fileName.data());
     
     std::ifstream file{ fileName.data(), std::ios::binary | std::ios::ate };
     if (!file.is_open())
@@ -78,7 +78,7 @@ std::vector<char> FileManager::readFileRaw(std::string_view fileName)
 
 void FileManager::writeFileRaw(std::string_view fileName, std::span<char> buffer)
 {
-    log.logf("Writing file: %s", fileName.data());
+    log.logf(LogLevel::Debug, "Writing file: %s", fileName.data());
     
     std::ofstream file{ fileName.data(), std::ios::binary | std::ios::ate };
     if (!file.is_open())
@@ -166,7 +166,7 @@ std::vector<std::string> FileManager::getFileNamesInDir(std::string_view dirName
 void FileManager::loadAssetsFile(std::filesystem::path path)
 {
     const std::string pathStr = path.string();
-    log.logf("Reading assets file: %s", pathStr.data());
+    log.logf(LogLevel::Debug, "Reading assets file: %s", pathStr.data());
 
     int err = 0;
     zip_t* handle = zip_open(pathStr.data(), ZIP_RDONLY, &err);

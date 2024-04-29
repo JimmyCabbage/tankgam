@@ -4,7 +4,6 @@
 
 enum class LogLevel
 {
-    Verbose     = 1 << 0,
     Debug       = 1 << 1,
     Info        = 1 << 2,
     Warning     = 1 << 3,

@@ -138,7 +138,7 @@ void ClientConnectedState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAdd
         return;
     }
 
-    log.logf("Client: Unconnected packet: %s\n", str.c_str());
+    log.logf(LogLevel::Debug, "Client: Unconnected packet: %s\n", str.c_str());
 }
 
 void ClientConnectedState::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)

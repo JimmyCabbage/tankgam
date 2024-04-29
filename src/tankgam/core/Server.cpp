@@ -267,7 +267,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
         return;
     }
 
-    log.logf("Server: Unconnected packet: %s\n", str.c_str());
+    log.logf(LogLevel::Debug, "Server: Unconnected packet: %s\n", str.c_str());
 
     if (str == "client_connect")
     {

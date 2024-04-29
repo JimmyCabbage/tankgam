@@ -3,9 +3,15 @@
 #include <cstdarg>
 
 Console::Console(bool printDebug)
-    : printDebug{ printDebug }
 {
-
+    if (printDebug)
+    {
+        SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_DEBUG);
+    }
+    else
+    {
+        SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+    }
 }
 
 Console::~Console() = default;
@@ -45,16 +51,9 @@ void Console::log(LogLevel logLevel, std::string_view line)
     SDL_LogPriority priority = SDL_LOG_PRIORITY_VERBOSE;
     switch (logLevel)
     {
-    case LogLevel::Verbose:
-        priority = SDL_LOG_PRIORITY_VERBOSE;
-        break;
     case LogLevel::Debug:
-        if (printDebug)
-        {
-            priority = SDL_LOG_PRIORITY_DEBUG;
-            break;
-        }
-        return;
+        priority = SDL_LOG_PRIORITY_DEBUG;
+        break;
     case LogLevel::Info:
         priority = SDL_LOG_PRIORITY_INFO;
         break;
