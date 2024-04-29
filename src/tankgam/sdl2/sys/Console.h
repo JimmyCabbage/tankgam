@@ -31,5 +31,7 @@ public:
     void log(std::string_view line) override;
     
 private:
+    void sdl2LogOutputFunction(int category, SDL_LogPriority priority, const char* msg);
+
     //std::vector<std::string> lines;
 };

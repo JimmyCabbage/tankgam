@@ -16,10 +16,10 @@
 
 int main(int argc, char** argv)
 {
-    {
-        Console console{ ENABLE_LOG_DEBUG };
-        console.logf("tankgam engine version %s", TANKGAM_VERSION);
+    Console console{ ENABLE_LOG_DEBUG };
+    console.logf("tankgam engine version %s", TANKGAM_VERSION);
 
+    {
         FileManager fileManager{ console };
         fileManager.loadAssetsFile("dev.assets");
         fileManager.loadAssetsFile("tank.assets");

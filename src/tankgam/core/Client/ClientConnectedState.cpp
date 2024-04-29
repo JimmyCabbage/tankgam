@@ -107,6 +107,7 @@ void ClientConnectedState::update()
                 uint8_t tempV;
                 if (!reliableMessage.readUint8(tempV))
                 {
+                    log.logf(LogLevel::Warning, "Client: Unknown message type of %d", tempV);
                     continue;
                 }
 
