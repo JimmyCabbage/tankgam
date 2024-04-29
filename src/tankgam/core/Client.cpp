@@ -32,7 +32,7 @@ Client::Client(Console& console, FileManager& fileManager, Net& net)
     }
     catch (const std::exception& e)
     {
-        console.log(fmt::format("Client: Init Error:\n{}", e.what()));
+        console.log(LogLevel::Error, fmt::format("Client: Init Error:\n{}", e.what()));
         throw;
     }
 
@@ -58,7 +58,7 @@ bool Client::runFrame()
     }
     catch (const std::exception& e)
     {
-        console.log(fmt::format("Client: Runtime Error:\n{}", e.what()));
+        console.log(LogLevel::Error, fmt::format("Client: Runtime Error:\n{}", e.what()));
         throw;
     }
 

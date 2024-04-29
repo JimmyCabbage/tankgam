@@ -39,7 +39,7 @@ Server::Server(Console& console, FileManager& fileManager, Net& net)
     }
     catch (const std::exception& e)
     {
-        console.log(fmt::format("Server: Init Error:\n{}", e.what()));
+        console.log(LogLevel::Error, fmt::format("Server: Init Error:\n{}", e.what()));
         throw;
     }
 
@@ -54,7 +54,7 @@ Server::~Server()
 
     for (auto& client : clients)
     {
-        if (client.state == ServerClientState::Free)
+        if (client.state != ServerClientState::Connected)
         {
             continue;
         }
@@ -81,7 +81,7 @@ bool Server::runFrame()
     }
     catch (const std::exception& e)
     {
-        console.log(fmt::format("Server: Runtime Error:\n{}", e.what()));
+        console.log(LogLevel::Error, fmt::format("Server: Runtime Error:\n{}", e.what()));
         throw;
     }
 
@@ -140,15 +140,11 @@ void Server::disconnectClient(ServerClient& client, bool forceDisconnect)
 
     if (forceDisconnect)
     {
-        //just shoot off a bunch of disconnect packets, hope one of them reaches
-        for (int i = 0; i < 3; i++)
-        {
-            NetBuf sendBuf;
-            sendBuf.writeString("server_disconnect");
-            sendBuf.writeUint32(client.combinedSalt);
+        NetBuf sendBuf;
+        sendBuf.writeString("server_disconnect");
+        sendBuf.writeUint32(client.combinedSalt);
 
-            NetChan::outOfBand(net, NetSrc::Server, client.netChan->getToAddr(), std::move(sendBuf));
-        }
+        NetChan::outOfBand(net, NetSrc::Server, client.netChan->getToAddr(), std::move(sendBuf));
     }
 
     client.state = ServerClientState::Free;
@@ -165,17 +161,23 @@ void Server::handlePackets()
     NetAddr fromAddr{};
     while (net.getPacket(NetSrc::Server, buf, fromAddr))
     {
-        ///read the first byte of the msg
-        //if it's -1 then it's an unconnected message
-        uint32_t header;
-        if (!buf.readUint32(header))
+        //read the first 2 bytes of the msg
+        uint16_t header;
+        if (!buf.readUint16(header))
         {
             continue;
         }
 
-        if (header == -1)
+        //if it matches the out of band then it's an unconnected message
+        if (header == NetChan::OUT_OF_BAND_MAGIC_NUMBER)
         {
             handleUnconnectedPacket(buf, fromAddr);
+            continue;
+        }
+
+        //if it's not reliable magic number then it's broken
+        if (header != NetChan::RELIABLE_MAGIC_NUMBER)
+        {
             continue;
         }
 
@@ -281,6 +283,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
             if (client.state != ServerClientState::Free &&
                 client.clientSalt == clientSalt)
             {
+                console.logf("Server: Client tried to connect from %d twice", (int)fromAddr.port);
                 return;
             }
         }
@@ -328,7 +331,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
             NetChan::outOfBand(net, NetSrc::Server, fromAddr, std::move(sendBuf));
         }
         
-        //console.logf("Server: New client challenging from %d", (int)fromAddr.port);
+        console.logf("Server: New client challenging from %d", (int)fromAddr.port);
     }
     else if (str == "client_challenge")
     {
@@ -370,7 +373,7 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
             NetChan::outOfBand(net, NetSrc::Server, fromAddr, std::move(sendBuf));
         }
 
-        //console.logf("Server: New client connecting from %d", (int)fromAddr.port);
+        console.logf("Server: New client connecting from %d", (int)fromAddr.port);
     }
     else if (str == "client_disconnect")
     {
@@ -501,6 +504,6 @@ void Server::sendPackets()
             Entity::serialize(*entity, sendBuf);
         }
         
-        client.netChan->sendData(std::move(sendBuf), NetMessageType::EntitySynchronize, client.clientSalt ^ client.serverSalt);
+        client.netChan->sendData(std::move(sendBuf), NetMessageType::EntitySynchronize, client.combinedSalt);
     }
 }

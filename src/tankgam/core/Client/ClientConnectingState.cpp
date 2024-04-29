@@ -96,17 +96,23 @@ void ClientConnectingState::update()
     NetAddr fromAddr{};
     while (net.getPacket(NetSrc::Client, buf, fromAddr))
     {
-        //read the first byte of the msg
-        //if it's -1 then it's an unconnected message
-        uint32_t header;
-        if (!buf.readUint32(header))
+        //read the first 2 bytes of the msg
+        uint16_t header;
+        if (!buf.readUint16(header))
         {
             continue;
         }
 
-        if (header == -1)
+        //if it matches the out of band then it's an unconnected message
+        if (header == NetChan::OUT_OF_BAND_MAGIC_NUMBER)
         {
             handleUnconnectedPacket(buf, fromAddr);
+            continue;
+        }
+
+        //if it's not reliable magic number then it's broken
+        if (header != NetChan::RELIABLE_MAGIC_NUMBER)
+        {
             continue;
         }
 
@@ -187,6 +193,8 @@ void ClientConnectingState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAd
 
         if (clientSaltOfServer != clientSalt)
         {
+            console.logf("Client: Client & server's client salt does not match: %d vs %d\n",
+                clientSalt, clientSaltOfServer);
             return;
         }
 
@@ -342,6 +350,8 @@ void ClientConnectingState::trySendConnectionRequest()
 
         NetChan::outOfBand(net, NetSrc::Client, serverAddr, std::move(sendBuf));
         nextSendTick = currentTick + Timer::TICK_RATE * 5;
+
+        console.log("Client: Attempted to send connection packet...\n");
     }
 }
 
@@ -361,6 +371,8 @@ void ClientConnectingState::trySendChallengeRequest()
 
         NetChan::outOfBand(net, NetSrc::Client, serverAddr, std::move(sendBuf));
         nextSendTick = currentTick + Timer::TICK_RATE * 5;
+
+        console.log("Client: Attempted to send challenge packet...\n");
     }
 }
 
@@ -382,5 +394,7 @@ void ClientConnectingState::trySendSynchronizeRequest()
 
         netChan->addReliableData(std::move(sendBuf), NetMessageType::Synchronize);
         nextSendTick = currentTick + Timer::TICK_RATE * 5;
+
+        console.log("Client: Attempted to send synchronization packet...\n");
     }
 }

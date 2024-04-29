@@ -8,10 +8,16 @@
 
 #include <util/FileManager.h>
 
+#if NDEBUG
+    static constexpr bool ENABLE_LOG_DEBUG = false;
+#else
+    static constexpr bool ENABLE_LOG_DEBUG = true;
+#endif
+
 int main(int argc, char** argv)
 {
     {
-        Console console{};
+        Console console{ ENABLE_LOG_DEBUG };
         console.logf("tankgam engine version %s", TANKGAM_VERSION);
 
         FileManager fileManager{ console };

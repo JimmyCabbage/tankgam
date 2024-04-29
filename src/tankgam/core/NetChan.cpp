@@ -54,7 +54,7 @@ void NetChan::outOfBand(Net& net, NetSrc src, NetAddr toAddr, NetBuf sendBuf)
 void NetChan::outOfBand(Net& net, NetSrc src, NetAddr toAddr, std::span<const std::byte> data)
 {
     NetBuf buf{};
-    buf.writeUint32(-1);
+    buf.writeUint16(OUT_OF_BAND_MAGIC_NUMBER);
     buf.writeBytes(data);
 
     net.sendPacket(src, std::move(buf), toAddr);
@@ -223,6 +223,7 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType, uint32_t salt)
     //for organizational purposes
     OutHeader header
     {
+        .magic = RELIABLE_MAGIC_NUMBER,
         .msgType = msgType,
         .salt = salt,
         .sequence = ++outgoingSequence,
@@ -272,6 +273,7 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType, uint32_t salt)
     header.numReliableMessages = static_cast<uint8_t>(reliableMessages.size());
     header.reliableMessages = std::move(reliableMessages);
 
+    outBuf.writeUint16(header.magic);
     outBuf.writeUint8(static_cast<uint8_t>(header.msgType));
     outBuf.writeUint32(header.salt);
     outBuf.writeUint32(header.sequence);
@@ -288,6 +290,10 @@ void NetChan::writeHeader(NetBuf& outBuf, NetMessageType msgType, uint32_t salt)
 
 bool NetChan::readHeader(NetBuf& inBuf, InHeader& outHeader, uint32_t expectedSalt)
 {
+    //check the magic number
+    if (!inBuf.readUint16(outHeader.magic))      return false;
+    if (outHeader.magic != RELIABLE_MAGIC_NUMBER)   return false;
+
     {
         uint8_t tempV;
         if (!inBuf.readUint8(tempV))

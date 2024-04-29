@@ -11,7 +11,7 @@
 class Console : public Log
 {
 public:
-    Console();
+    explicit Console(bool printDebug);
     ~Console() override;
     
     Console(const Console&) = delete;
@@ -19,10 +19,18 @@ public:
     
     //printf style log
     //note: this will probably lead to some exploits that'll kill me
+    void logf(LogLevel logLevel, std::string_view format, ...) override;
+
+    //logs at LogLevel::Info by default
     void logf(std::string_view format, ...) override;
-    
+
+    //single line
+    void log(LogLevel logLevel, std::string_view line) override;
+
+    //logs at LogLevel::Info by default
     void log(std::string_view line) override;
     
 private:
-    std::vector<std::string> lines;
+    bool printDebug;
+    //std::vector<std::string> lines;
 };

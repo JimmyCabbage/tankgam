@@ -39,6 +39,8 @@ public:
 
     NetAddr getToAddr() const;
 
+    static constexpr uint16_t OUT_OF_BAND_MAGIC_NUMBER = 15625;
+
     //for sending a string without a direct connection
     static void outOfBandPrint(Net& net, NetSrc src, NetAddr toAddr, std::string_view str);
 
@@ -47,6 +49,8 @@ public:
 
     //for sending data without a connection
     static void outOfBand(Net& net, NetSrc src, NetAddr toAddr, std::span<const std::byte> data);
+
+    static constexpr uint16_t RELIABLE_MAGIC_NUMBER = 3125;
 
     void trySendReliable(uint32_t salt);
 
@@ -85,6 +89,7 @@ private:
 
     struct OutHeader
     {
+        uint16_t magic;
         NetMessageType msgType;
         uint32_t salt;
         uint32_t sequence;
@@ -96,6 +101,7 @@ private:
 
     struct InHeader
     {
+        uint16_t magic;
         NetMessageType msgType;
         uint32_t salt;
         uint32_t sequence;
