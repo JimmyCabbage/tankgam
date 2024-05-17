@@ -4,3 +4,4 @@ src/tankgam/core/Version.h
 cmake-build*
 build*
 out
+compile_commands.json
