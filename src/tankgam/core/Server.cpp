@@ -4,13 +4,13 @@
 
 #include <fmt/format.h>
 
-#include "sys/Console.h"
 #include "sys/Timer.h"
 #include "Net.h"
 #include "NetChan.h"
 #include "NetBuf.h"
 
 #include <util/FileManager.h>
+#include <util/Log.h>
 
 Server::Server(Log& log, FileManager& fileManager, Net& net)
     : log{ log }, fileManager{ fileManager }, net{ net }
@@ -452,7 +452,7 @@ void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, 
 
         rotationAmount += rot;
 
-        log.logf(LogLevel::Debug, "Server: Rotation command recieved from: %d (tick %d)", client.netChan->getToAddr().port, timer->getTotalTicks());
+        //log.logf(LogLevel::Debug, "Server: Rotation command recieved from: %d (tick %d)", client.netChan->getToAddr().port, timer->getTotalTicks());
     }
 }
 

@@ -229,7 +229,7 @@ void ClientConnectedState::sendPackets()
 
         netChan->sendData(std::move(sendBuf), NetMessageType::PlayerCommand, combinedSalt);
 
-        log.logf(LogLevel::Debug, "Client: Sent rotation command from on tick %d", timer->getTotalTicks());
+        //log.logf(LogLevel::Debug, "Client: Sent rotation command from on tick %d", timer->getTotalTicks());
     }
 }
 
