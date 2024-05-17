@@ -9,6 +9,7 @@
 #include <string_view>
 #include <array>
 #include <numeric>
+#include <stdexcept>
 
 #include "Net.h"
 #include "NetBuf.h"
@@ -24,6 +25,21 @@ enum class NetMessageType : uint8_t
     DestroyEntity = 3 | (1 << 7),
     SendReliables = std::numeric_limits<uint8_t>::max(),
 };
+
+constexpr const char* NetMessageTypeToString(const NetMessageType m)
+{
+    switch (m)
+    {
+    case NetMessageType::Unknown: return "Unknown";
+    case NetMessageType::EntitySynchronize: return "EntitySynchronize";
+    case NetMessageType::PlayerCommand: return "PlayerCommand";
+    case NetMessageType::Synchronize: return "Synchronize";
+    case NetMessageType::CreateEntity: return "CreateEntity";
+    case NetMessageType::DestroyEntity: return "DestroyEntity";
+    case NetMessageType::SendReliables: return "SendReliables";
+    default: throw std::invalid_argument{ "UNKNOWN ENUM" };
+    }
+}
 
 class NetChan
 {

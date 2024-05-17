@@ -20,7 +20,7 @@ public:
     NetLoopback& operator=(const NetLoopback&) = delete;
     
     bool getPacket(const NetSrc& src, NetBuf& buf, NetAddr& fromAddr);
-    void sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAddr);
+    bool sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAddr);
     
 private:
     bool initClient;
@@ -46,6 +46,6 @@ private:
     bool getPacketServer(NetBuf& buf, NetAddr& fromAddr);
     bool getPacketClient(NetBuf& buf, NetAddr& fromAddr);
     
-    void sendPacketAsClient(NetBuf buf, const NetAddr& toAddr);
-    void sendPacketAsServer(NetBuf buf, const NetAddr& toAddr);
+    bool sendPacketAsClient(NetBuf buf, const NetAddr& toAddr);
+    bool sendPacketAsServer(NetBuf buf, const NetAddr& toAddr);
 };

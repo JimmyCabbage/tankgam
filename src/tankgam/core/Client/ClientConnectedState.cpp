@@ -114,6 +114,8 @@ void ClientConnectedState::update()
                 reliableMsgType = static_cast<NetMessageType>(tempV);
             }
 
+            //log.logf(LogLevel::Debug, "Client: Recieved Reliable msg from server: %s", NetMessageTypeToString(reliableMsgType));
+
             handleReliablePacket(reliableMessage, reliableMsgType);
         }
 
@@ -122,6 +124,7 @@ void ClientConnectedState::update()
             continue;
         }
 
+        //log.logf(LogLevel::Debug, "Client: Recieved Unreliable msg from server: %s", NetMessageTypeToString(msgType));
         handleUnreliablePacket(buf, msgType);
     }
 
@@ -210,6 +213,8 @@ void ClientConnectedState::sendPackets()
         sendBuf.writeFloat(cmd.addRotation);
 
         netChan->sendData(std::move(sendBuf), NetMessageType::PlayerCommand, combinedSalt);
+
+        log.logf(LogLevel::Debug, "Client: Sent rotation command from on tick %d", timer->getTotalTicks());
     }
 }
 

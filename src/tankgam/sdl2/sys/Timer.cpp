@@ -16,7 +16,7 @@ static uint64_t GetTicks()
 }
 
 Timer::Timer()
-    : enabled{ false }, startTime{ 0 }
+    : enabled{ false }, startTime{ GetTicks() }
 {
     if (SDL_InitSubSystem(SDL_INIT_TIMER) != 0)
     {

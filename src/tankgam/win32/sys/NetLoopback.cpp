@@ -39,7 +39,7 @@ bool NetLoopback::getPacket(const NetSrc& src, NetBuf& buf, NetAddr& fromAddr)
     return true;
 }
 
-void NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& /*toAddr*/)
+bool NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& /*toAddr*/)
 {
     NetLoopbackBuf& loop = getOppositeLoopback(src);
     
@@ -48,6 +48,8 @@ void NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& /*toA
     const size_t i = loop.send++ % loop.msgs.size();
     
     loop.msgs[i] = std::move(buf);
+
+    return true;
 }
 
 NetLoopbackBuf& NetLoopback::getLoopback(const NetSrc& src)

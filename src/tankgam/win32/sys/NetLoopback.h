@@ -26,7 +26,7 @@ public:
     NetLoopback& operator=(const NetLoopback&) = delete;
     
     bool getPacket(const NetSrc& src, NetBuf& buf, NetAddr& fromAddr);
-    void sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAddr);
+    bool sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAddr);
     
 private:
     NetLoopbackBuf clientLoopback;

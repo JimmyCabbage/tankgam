@@ -109,15 +109,14 @@ bool NetLoopback::getPacket(const NetSrc& src, NetBuf& buf, NetAddr& fromAddr)
     return getPacketClient(buf, fromAddr);
 }
 
-void NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAddr)
+bool NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAddr)
 {
     if (src == NetSrc::Server)
     {
-        sendPacketAsServer(std::move(buf), toAddr);
-        return;
+        return sendPacketAsServer(std::move(buf), toAddr);
     }
     
-    sendPacketAsClient(std::move(buf), toAddr);
+    return sendPacketAsClient(std::move(buf), toAddr);
 }
 
 class ClientPortAllocator
@@ -347,28 +346,45 @@ bool NetLoopback::getPacketClient(NetBuf& buf, NetAddr& fromAddr)
     return true;
 }
 
-void NetLoopback::sendPacketAsClient(NetBuf buf, const NetAddr& toAddr)
+bool NetLoopback::sendPacketAsClient(NetBuf buf, const NetAddr& toAddr)
 {
     const struct sockaddr_un serverAddr = getServerSockAddr();
     
     std::span<const std::byte> data = buf.getData();
-    
-    if (sendto(clientSocket, data.data(), data.size(), 0,
-               reinterpret_cast<const struct sockaddr*>(&serverAddr), sizeof(struct sockaddr_un)) == -1)
+
+    const ssize_t res = sendto(clientSocket, data.data(), data.size(), 0,
+        reinterpret_cast<const struct sockaddr*>(&serverAddr), sizeof(struct sockaddr_un));
+    if (res == -1)
     {
-        throw std::runtime_error{ fmt::format("Server sento err: {}", strerror(errno)) };
+        if (errno == ENOENT)
+        {
+            return false;
+        }
+
+        throw std::runtime_error{ fmt::format("Server sento err: {}({})", strerror(errno), errno) };
     }
+
+    return true;
 }
 
-void NetLoopback::sendPacketAsServer(NetBuf buf, const NetAddr& toAddr)
+bool NetLoopback::sendPacketAsServer(NetBuf buf, const NetAddr& toAddr)
 {
     const struct sockaddr_un clientAddr = getClientSockAddr(toAddr.port);
-    
+
     std::span<const std::byte> data = buf.getData();
     
-    if (sendto(serverSocket, data.data(), data.size(), 0,
-               reinterpret_cast<const struct sockaddr*>(&clientAddr), sizeof(struct sockaddr_un)) == -1)
+    const ssize_t res = sendto(serverSocket, data.data(), data.size(), 0,
+        reinterpret_cast<const struct sockaddr*>(&clientAddr), sizeof(struct sockaddr_un));
+
+    if (res == -1)
     {
-        throw std::runtime_error{ fmt::format("Client sento err: {}", strerror(errno)) };
+        if (errno == ENOENT)
+        {
+            return false;
+        }
+
+        throw std::runtime_error{ fmt::format("Client sento err: {}({})", strerror(errno), errno) };
     }
+
+    return true;
 }

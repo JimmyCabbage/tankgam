@@ -219,7 +219,7 @@ void Server::handlePackets()
                 uint8_t tempV;
                 if (!reliableMessage.readUint8(tempV))
                 {
-                    log.logf("Unknown type of %d", tempV);
+                    log.logf(LogLevel::Warning, "Unknown type of %d", tempV);
                     continue;
                 }
 
@@ -447,6 +447,8 @@ void Server::handleUnreliablePacket(NetBuf& buf, const NetMessageType& msgType, 
         buf.readFloat(rot);
 
         rotationAmount += rot;
+
+        log.logf(LogLevel::Debug, "Server: Rotation command recieved from: %d (tick %d)", client.netChan->getToAddr().port, timer->getTotalTicks());
     }
 }
 
