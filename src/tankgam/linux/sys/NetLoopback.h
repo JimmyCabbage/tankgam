@@ -9,11 +9,12 @@
 
 struct NetAddr;
 enum class NetSrc;
+class Log;
 
 class NetLoopback
 {
 public:
-    NetLoopback(bool initClient = true, bool initServer = true);
+    NetLoopback(Log& log, bool initClient = true, bool initServer = true);
     ~NetLoopback();
     
     NetLoopback(const NetLoopback&) = delete;
@@ -23,6 +24,7 @@ public:
     bool sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAddr);
     
 private:
+    Log& log;
     bool initClient;
     bool initServer;
     

@@ -1,7 +1,9 @@
 #include "Net.h"
 
-Net::Net(bool initClient, bool initServer)
-    : netLoopback{ initClient, initServer }
+#include <util/Log.h>
+
+Net::Net(Log& log, bool initClient, bool initServer)
+    : log{ log }, netLoopback{ log, initClient, initServer }
 {
 }
 

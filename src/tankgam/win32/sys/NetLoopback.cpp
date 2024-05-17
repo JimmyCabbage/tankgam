@@ -3,10 +3,13 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include <util/Log.h>
+
 #include "Net.h"
 
-NetLoopback::NetLoopback(bool /* initClient */, bool /* initServer */)
-    : clientLoopback{ {}, 0, 0 }, serverLoopback{ {}, 0, 0 }
+NetLoopback::NetLoopback(Log& log, bool /* initClient */, bool /* initServer */)
+    : log{ log },
+      clientLoopback{ {}, 0, 0 }, serverLoopback{ {}, 0, 0 }
 {
 }
 

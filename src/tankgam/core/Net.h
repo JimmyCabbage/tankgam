@@ -28,10 +28,12 @@ enum class NetSrc
     Server,
 };
 
+class Log;
+
 class Net
 {
 public:
-    Net(bool initClient = true, bool initServer = true);
+    Net(Log& log, bool initClient = true, bool initServer = true);
     ~Net();
 
     Net(const Net&) = delete;
@@ -41,5 +43,6 @@ public:
     void sendPacket(NetSrc src, NetBuf buf, NetAddr toAddr);
 
 private:
+    Log& log;
     NetLoopback netLoopback;
 };

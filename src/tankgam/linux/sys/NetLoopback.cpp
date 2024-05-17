@@ -15,10 +15,13 @@
 
 #include <fmt/format.h>
 
+#include <util/Log.h>
+
 #include "Net.h"
 
-NetLoopback::NetLoopback(bool initClient, bool initServer)
-    : initClient{ initClient }, initServer{ initServer },
+NetLoopback::NetLoopback(Log& log, bool initClient, bool initServer)
+    : log{ log },
+      initClient{ initClient }, initServer{ initServer },
       clientPort{ 0 },
       serverSocket{ -1 }, clientSocket{ -1 }
 {
@@ -31,11 +34,13 @@ NetLoopback::NetLoopback(bool initClient, bool initServer)
         }
         
         runDir = rawRunDir + std::string{ "/tankgam" };
+        log.logf(LogLevel::Info, "Net: Using directory %s for sockets", runDir.c_str());
         
         //make the directory if it doesn't exist
         if (struct stat st = {};
             stat(runDir.c_str(), &st) == -1)
         {
+            log.logf(LogLevel::Info, "Net: Creating directory %s", runDir.c_str());
             mkdir(runDir.c_str(), 0700);
         }
     }
@@ -122,7 +127,8 @@ bool NetLoopback::sendPacket(const NetSrc& src, NetBuf buf, const NetAddr& toAdd
 class ClientPortAllocator
 {
 public:
-    ClientPortAllocator()
+    ClientPortAllocator(Log& log)
+        : log{ log }
     {
         bool isNewAlloc = false;
         
@@ -130,6 +136,8 @@ public:
         shm = shm_open("/tankgam-client-count-shm", O_RDWR | O_CREAT | O_EXCL, 0600);
         if (shm != -1)
         {
+            log.log(LogLevel::Info, "Net: Allocating shared memory for local client ports");
+
             //allocate memory
             if (ftruncate(shm, sizeof(int) * NUM_PORTS) == -1)
             {
@@ -140,6 +148,8 @@ public:
         }
         else
         {
+            log.log(LogLevel::Info, "Net: Opening shared memory for local client ports");
+
             shm = shm_open("/tankgam-client-count-shm", O_RDWR | O_CREAT, 0600);
             if (shm == -1)
             {
@@ -147,6 +157,7 @@ public:
             }
         }
         
+        log.log(LogLevel::Info, "Net: Locking shared memory for local client ports");
         if (flock(shm, LOCK_EX) == -1)
         {
             throw std::runtime_error{ "Could not lock client count shared memory" };
@@ -168,17 +179,18 @@ public:
     {
         if (munmap(portArray, PORT_ARRAY_SIZE) == -1)
         {
-            throw std::runtime_error{ "Could not unmap client count shared memory" };
+            log.log("Net: Could not unmap client count shared memory");
         }
         
+        log.log(LogLevel::Info, "Net: Unlocking shared memory for local client ports");
         if (flock(shm, LOCK_UN) == -1)
         {
-            throw std::runtime_error{ "Could not unlock client count shared memory" };
+            log.log("Net: Could not unlock client count shared memory");
         }
         
         if (close(shm) == -1)
         {
-            throw std::runtime_error{ "Could not close client count shared memory" };
+            log.log("Net: Could not close client count shared memory");
         }
     }
     
@@ -191,6 +203,7 @@ public:
     }
 
 private:
+    Log& log;
     int shm;
     
     static constexpr size_t NUM_PORTS = 64;
@@ -200,7 +213,7 @@ private:
 
 uint16_t NetLoopback::allocClientPort()
 {
-    ClientPortAllocator portAlloc{};
+    ClientPortAllocator portAlloc{ log };
     const auto ports = portAlloc.getPorts();
     
     uint16_t port = 0;
@@ -222,16 +235,20 @@ uint16_t NetLoopback::allocClientPort()
     {
         throw std::runtime_error{ "Could not find available client port" };
     }
+
+    log.logf(LogLevel::Info, "Net: Chose client port %d", port);
     
     return port;
 }
 
 void NetLoopback::freeClientPort(uint16_t port)
 {
-    ClientPortAllocator portAlloc{};
+    ClientPortAllocator portAlloc{ log };
     const auto ports = portAlloc.getPorts();
     
     ports[port] = 0;
+
+    log.logf(LogLevel::Info, "Net: Freed client port %d", port);
 }
 
 std::string NetLoopback::getServerName()

@@ -44,7 +44,7 @@ int main(int argc, char** argv)
             initServer = true;
         }
         
-        Net net{ initClient, initServer };
+        Net net{ console, initClient, initServer };
         
         std::unique_ptr<Server> server;
         std::unique_ptr<Client> client;
