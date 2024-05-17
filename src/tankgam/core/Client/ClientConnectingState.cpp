@@ -113,6 +113,7 @@ void ClientConnectingState::update()
         //if it's not reliable magic number then it's broken
         if (header != NetChan::RELIABLE_MAGIC_NUMBER)
         {
+			log.logf(LogLevel::Warning, "Client: Recieved incorrect magic number of %d", header);
             continue;
         }
 
