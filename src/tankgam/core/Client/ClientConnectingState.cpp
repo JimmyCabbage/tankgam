@@ -31,6 +31,8 @@ ClientConnectingState::ClientConnectingState(Client& client, Renderer& renderer,
 
         clientSalt = dist(rng);
     }
+    log.logf(LogLevel::Debug, "Client: Chose salt of %d", clientSalt);
+
     nextSendTick = 0;
     trySendConnectionRequest();
 
@@ -113,7 +115,7 @@ void ClientConnectingState::update()
         //if it's not reliable magic number then it's broken
         if (header != NetChan::RELIABLE_MAGIC_NUMBER)
         {
-			log.logf(LogLevel::Warning, "Client: Recieved incorrect magic number of %d", header);
+            log.logf(LogLevel::Warning, "Client: Recieved incorrect magic number of %d", header);
             continue;
         }
 
@@ -204,8 +206,12 @@ void ClientConnectingState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAd
             return;
         }
 
+        log.logf(LogLevel::Debug, "Client: Recieved server salt of %d", serverSalt);
+
         combinedSalt = clientSalt ^ serverSalt;
         connectState = ConnectState::Challenging;
+
+        log.logf(LogLevel::Debug, "Client: Recieved combined salt of %d", combinedSalt);
 
         nextSendTick = 0;
         trySendChallengeRequest();

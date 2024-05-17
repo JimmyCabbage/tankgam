@@ -66,5 +66,5 @@ private:
 
     std::queue<PlayerCommand> commands;
 
-    void disconnect();
+    void disconnect(bool serverProbablyAlive);
 };

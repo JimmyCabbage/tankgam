@@ -48,7 +48,7 @@ bool ClientConnectedState::consumeEvent(const Event& ev)
             commands.emplace(PlayerCommand{ -5.0f });
             break;
         case KeyPressType::Escape:
-            disconnect();
+            disconnect(true);
             break;
         default:
             return false;
@@ -144,6 +144,20 @@ void ClientConnectedState::handleUnconnectedPacket(NetBuf& buf, NetAddr& fromAdd
     }
 
     log.logf(LogLevel::Debug, "Client: Unconnected packet: %s\n", str.c_str());
+
+    if (str == "server_disconnect")
+    {
+        uint32_t salt;
+        if (!buf.readUint32(salt))
+        {
+            return;
+        }
+
+        if (salt == combinedSalt)
+        {
+            disconnect(false);
+        }
+    }
 }
 
 void ClientConnectedState::handleReliablePacket(NetBuf& buf, const NetMessageType& msgType)
@@ -230,16 +244,19 @@ void ClientConnectedState::draw()
     }
 }
 
-void ClientConnectedState::disconnect()
+void ClientConnectedState::disconnect(bool serverProbablyAlive)
 {
-    //just shoot off a bunch of disconnect packets, hope one of them reaches
-    for (int i = 0; i < 3; i++)
+    if (serverProbablyAlive)
     {
-        NetBuf sendBuf;
-        sendBuf.writeString("client_disconnect");
-        sendBuf.writeUint32(combinedSalt);
+        //just shoot off a bunch of disconnect packets, hope one of them reaches
+        for (int i = 0; i < 3; i++)
+        {
+            NetBuf sendBuf;
+            sendBuf.writeString("client_disconnect");
+            sendBuf.writeUint32(combinedSalt);
 
-        NetChan::outOfBand(net, NetSrc::Client, serverAddr, std::move(sendBuf));
+            NetChan::outOfBand(net, NetSrc::Client, serverAddr, std::move(sendBuf));
+        }
     }
 
     timer->stop();

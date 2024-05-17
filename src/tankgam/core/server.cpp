@@ -320,10 +320,10 @@ void Server::handleUnconnectedPacket(NetBuf& buf, const NetAddr& fromAddr)
 
             newClient->serverSalt = dist(rng);
         }
-        log.logf(LogLevel::Debug, "Server: Chose server salt of %d", newClient->serverSalt);
-
+        log.logf(LogLevel::Debug, "Server: Chose server salt of %d", newClient->serverSalt); 
+    
         newClient->combinedSalt = newClient->clientSalt ^ newClient->serverSalt;
-        log.logf(LogLevel::Debug, "Server: Combined salt of %d", newClient->combinedSalt);
+        log.logf(LogLevel::Debug, "Server: Combined salt of %d", newClient->combinedSalt); 
 
         //send back a challenge
         {
