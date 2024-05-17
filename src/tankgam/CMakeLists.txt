@@ -54,6 +54,10 @@ if(${MSVC})
     target_compile_options(tankgam PRIVATE /W4)
 else()
     target_compile_options(tankgam PRIVATE -Wall -Wextra -Wpedantic)
+    #debugging
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        target_compile_options(tankgam PRIVATE -g)
+    endif()
 endif()
 
 #C++ settings
