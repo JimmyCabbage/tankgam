@@ -1,5 +1,7 @@
 #include "Client/Menu.h"
 
+#include <algorithm>
+
 #include <fmt/format.h>
 
 #include "sys/Renderer.h"
@@ -124,18 +126,20 @@ MenuList& Menu::currentList()
 
 void Menu::draw(Renderer& renderer)
 {
+    const int windowSize = std::max(400, std::max(renderer.getWidth(), renderer.getHeight()));
+    const float size = windowSize / 30.0f;
+
     for (size_t i = 0; i < lists[currList].choices.size(); i++)
     {
-        constexpr float SIZE = 32.0f;
-        const float x = SIZE * 2.0f;
-        const float y = i * SIZE * 1.5f + SIZE * 2.0f;
+        const float x = size * 2.0f;
+        const float y = i * size * 1.5f + size * 2.0f;
 
         const auto& choice = lists[currList].choices[i];
-        renderer.drawText(choice, glm::vec2{ x, y }, SIZE);
+        renderer.drawText(choice, glm::vec2{ x, y }, size);
 
         if (i == lists[currList].currChoice)
         {
-            renderer.drawText(">", glm::vec2{ x - SIZE * 1.25f, y }, SIZE);
+            renderer.drawText(">", glm::vec2{ x - size * 1.25f, y }, size);
         }
     }
 }
