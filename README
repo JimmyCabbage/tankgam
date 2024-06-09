@@ -13,6 +13,7 @@ DEPENDENCIES:
     glm
     libzip
     QT6
+    JoltPhysics
     stb_image (included in repository)
     tiny_obj_loader (included in repository)
     fmt (included in repository)
