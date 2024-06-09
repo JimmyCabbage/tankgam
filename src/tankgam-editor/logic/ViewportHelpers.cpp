@@ -1,5 +1,7 @@
 #include "ViewportHelpers.h"
 
+#include <algorithm>
+
 #include <util/Bsp.h>
 
 #include "Common.h"

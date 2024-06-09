@@ -10,6 +10,9 @@ enum class LogLevel
     Error       = 1 << 4
 };
 
+// returns "Unknown" if unknown level is passed
+const char* logLevelToString(LogLevel level);
+
 //a virtual pure class used to implement generic logging
 class Log
 {

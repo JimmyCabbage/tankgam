@@ -1,6 +1,7 @@
 #include "Viewport.h"
 
 #include <string_view>
+#include <algorithm>
 
 #include <gl/Vertex.h>
 #include <util/Brush.h>

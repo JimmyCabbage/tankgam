@@ -7,6 +7,19 @@ StdLog::StdLog() = default;
 
 StdLog::~StdLog() = default;
 
+void StdLog::logf(LogLevel logLevel, std::string_view format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    
+    char buf[512];
+    std::vsnprintf(buf, sizeof buf, format.data(), args);
+    
+    va_end(args);
+
+    log(logLevel, buf);
+}
+
 void StdLog::logf(std::string_view format, ...)
 {
     va_list args;
@@ -14,12 +27,19 @@ void StdLog::logf(std::string_view format, ...)
     
     char buf[512];
     std::vsnprintf(buf, sizeof buf, format.data(), args);
-    std::printf("%s\n", buf);
     
     va_end(args);
+
+    log(LogLevel::Info, buf);
+}
+
+void StdLog::log(LogLevel logLevel, std::string_view line)
+{
+    const char* levelName = logLevelToString(logLevel);
+    std::printf("%s: %s\n", levelName, line.data());
 }
 
 void StdLog::log(std::string_view line)
 {
-    std::printf("%s\n", line.data());
+    log(LogLevel::Info, line);
 }
