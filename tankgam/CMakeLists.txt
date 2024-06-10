@@ -92,3 +92,12 @@ target_include_directories(tankgam PRIVATE "${PROJECT_SOURCE_DIR}/external/glad2
 #fmt files
 target_sources(tankgam PRIVATE "${PROJECT_SOURCE_DIR}/external/fmt/src/format.cc")
 target_include_directories(tankgam PRIVATE "${PROJECT_SOURCE_DIR}/external/fmt/include")
+
+#install commands
+install(TARGETS tankgam)
+install(FILES
+    "${PROJECT_SOURCE_DIR}/dev.assets"
+    "${PROJECT_SOURCE_DIR}/base_textures.assets"
+    "${PROJECT_SOURCE_DIR}/tank.assets"
+    TYPE DATA
+)
