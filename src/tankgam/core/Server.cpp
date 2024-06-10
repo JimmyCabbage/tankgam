@@ -178,6 +178,7 @@ void Server::handlePackets()
         //if it's not reliable magic number then it's broken
         if (header != NetChan::RELIABLE_MAGIC_NUMBER)
         {
+            log.log(LogLevel::Warning, "Server: Ignoring packet with mismatched magic number");
             continue;
         }
 
