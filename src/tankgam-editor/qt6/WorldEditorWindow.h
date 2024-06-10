@@ -26,6 +26,7 @@ private:
     QAction* openFileAction;
     QAction* saveFileAction;
     QAction* saveAsFileAction;
+    QAction* buildFileAction;
     QMenu* fileMenu;
 
     void createFileMenu();

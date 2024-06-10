@@ -28,7 +28,6 @@ WorldEditorWindow::WorldEditorWindow(QWidget* parent)
         connect(settingsTab, &SettingsTab::refreshViewport, viewportWindow, &ViewportWindow::renderNow);
         connect(settingsTab, &SettingsTab::toolSelected, viewportWindow, &ViewportWindow::toolSelected);
         connect(settingsTab, &SettingsTab::textureSelected, viewportWindow, &ViewportWindow::textureSelected);
-        connect(settingsTab, &SettingsTab::buildMap, this, [this]() { editor.buildMap(); });
     }
     
     resize(1600, 900);
@@ -71,7 +70,7 @@ void WorldEditorWindow::createFileMenu()
 
     saveAsFileAction = new QAction{ "Save &As", this };
     saveAsFileAction->setShortcuts(QKeySequence::SaveAs);
-    saveAsFileAction->setStatusTip("Save the map file");
+    saveAsFileAction->setStatusTip("Save the map file with a specific file name");
     connect(saveAsFileAction, &QAction::triggered, this, [this]()
         {
             QString fileName = QFileDialog::getSaveFileName(this, "Save File", "", "Map Files (*.map)");
@@ -81,11 +80,17 @@ void WorldEditorWindow::createFileMenu()
             editor.saveMap();
         });
 
+    buildFileAction = new QAction{ "&Build Map", this };
+    buildFileAction->setStatusTip("Build the map");
+    connect(buildFileAction, &QAction::triggered, this, [this]() { editor.buildMap(); });
+
     fileMenu = menuBar()->addMenu("&File");
     fileMenu->addAction(newFileAction);
     fileMenu->addAction(openFileAction);
     fileMenu->addAction(saveFileAction);
     fileMenu->addAction(saveAsFileAction);
+    fileMenu->addSeparator();
+    fileMenu->addAction(buildFileAction);
 }
 
 void WorldEditorWindow::createEditMenu()

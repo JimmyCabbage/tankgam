@@ -460,6 +460,11 @@ void Editor::openMap(std::filesystem::path fileName)
 
 void Editor::buildMap()
 {
+    if (mapPath.empty())
+    {
+        return;
+    }
+
     BspBuilder bspBuilder;
     bspBuilder.addBrushes(brushes);
     

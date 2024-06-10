@@ -33,8 +33,6 @@ signals:
     void toolSelected(ViewportToolType viewportToolType);
     
     void textureSelected(std::string textureName);
-
-    void buildMap();
     
 private:
     Editor& editor;
@@ -46,5 +44,4 @@ private:
     QComboBox* toolsDropdown;
     QLabel* texturesDropdownLabel;
     QComboBox* texturesDropdown;
-    QPushButton* buildMapButton;
 };
