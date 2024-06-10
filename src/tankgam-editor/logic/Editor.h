@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <span>
+#include <filesystem>
 
 #include <glad/gl.h>
 
@@ -18,17 +19,14 @@ public:
     Editor();
     ~Editor();
     
-private:
-    void defaultState();
-    
 public:
     FileManager& getFileManager();
     
     Viewport& getViewport();
     
-    void setMapName(std::string newMapName);
+    void setMapName(std::filesystem::path newMapPath);
     
-    std::string getMapName() const;
+    std::filesystem::path getMapPath() const;
     
     std::span<const std::string> getAvailableTextures() const;
     
@@ -50,9 +48,11 @@ public:
     
     void rotateSelected(glm::vec3 rotDir);
     
-    void saveMap();
+    void newMap();
+
+    bool saveMap();
     
-    void loadMap(std::string fileName);
+    void openMap(std::filesystem::path fileName);
     
     void buildMap();
     
@@ -61,7 +61,7 @@ private:
     FileManager fileManager;
     Viewport viewport;
     
-    std::string mapName;
+    std::filesystem::path mapPath;
     
     std::vector<std::string> availableTextures;
     std::vector<std::string> usedTextures;
