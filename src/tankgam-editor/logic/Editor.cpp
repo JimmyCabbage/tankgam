@@ -17,34 +17,10 @@ Editor::Editor()
 {
     fileManager.loadAssetsFile("base_textures.assets");
     
-    defaultState();
+    newMap();
 }
 
 Editor::~Editor() = default;
-
-void Editor::defaultState()
-{
-    mapName = "default";
-    
-    availableTextures = fileManager.getFileNamesInDir("textures/");
-    if (availableTextures.empty())
-    {
-        throw std::runtime_error{ "No available textures!" };
-    }
-    usedTextures.clear();
-    
-    brushes.clear();
-    selectedBrushes.clear();
-    selectedBrushesIndices.clear();
-    selectedFaces.clear();
-    
-    beginVec = {};
-    endVec = {};
-    defaultBeginSize = { -GRID_UNIT, -GRID_UNIT, -GRID_UNIT };
-    defaultEndSize = { GRID_UNIT, 0, GRID_UNIT };
-    
-    viewport.update();
-}
 
 FileManager& Editor::getFileManager()
 {
@@ -56,14 +32,14 @@ Viewport& Editor::getViewport()
     return viewport;
 }
 
-void Editor::setMapName(std::string newMapName)
+void Editor::setMapName(std::filesystem::path newMapPath)
 {
-    mapName = std::move(newMapName);
+    mapPath = std::move(newMapPath);
 }
 
-std::string Editor::getMapName() const
+std::filesystem::path Editor::getMapPath() const
 {
-    return mapName;
+    return mapPath;
 }
 
 std::span<const std::string> Editor::getAvailableTextures() const
@@ -272,18 +248,42 @@ void Editor::rotateSelected(glm::vec3 rotDir)
     viewport.update();
 }
 
-void Editor::saveMap()
+void Editor::newMap()
 {
-    if (mapName.empty())
+    mapPath = "";
+    
+    availableTextures = fileManager.getFileNamesInDir("textures/");
+    if (availableTextures.empty())
     {
-        return;
+        throw std::runtime_error{ "No available textures!" };
+    }
+    usedTextures.clear();
+    
+    brushes.clear();
+    selectedBrushes.clear();
+    selectedBrushesIndices.clear();
+    selectedFaces.clear();
+    
+    beginVec = {};
+    endVec = {};
+    defaultBeginSize = { -GRID_UNIT, -GRID_UNIT, -GRID_UNIT };
+    defaultEndSize = { GRID_UNIT, 0, GRID_UNIT };
+    
+    viewport.update();
+}
+
+bool Editor::saveMap()
+{
+    if (mapPath.empty())
+    {
+        return false;
     }
     
-    std::ofstream file{ mapName + ".map" };
+    std::ofstream file{ mapPath };
     
     if (!file.is_open())
     {
-        return;
+        return false;
     }
     
     for (std::string_view texture : usedTextures)
@@ -333,20 +333,21 @@ void Editor::saveMap()
         }
         file << '\n';
     }
+
+    return true;
 }
 
-void Editor::loadMap(std::string fileName)
+void Editor::openMap(std::filesystem::path fileName)
 {
-    defaultState();
-    
-    //remove extension if present
-    mapName = fileName.substr(0, fileName.find_last_of('.'));
+    newMap();
+
+    mapPath = fileName;
     
     std::ifstream file{ fileName };
     
     if (!file.is_open())
     {
-        throw std::runtime_error{ fmt::format("Failed to open file {}", fileName) };
+        throw std::runtime_error{ fmt::format("Failed to open file {}", fileName.string()) };
     }
     
     std::vector<glm::vec3> normals;
@@ -463,7 +464,7 @@ void Editor::buildMap()
     bspBuilder.addBrushes(brushes);
     
     bsp::File file = bspBuilder.build();
-    file.header.mapName = mapName;
+    file.header.mapName = mapPath.stem();
     
-    bsp::writeFile(fmt::format("{}.tgmap", mapName), file);
+    bsp::writeFile(fmt::format("{}.tgmap", mapPath.stem().string()), file);
 }

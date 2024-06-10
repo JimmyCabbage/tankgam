@@ -3,12 +3,15 @@
 #include <QVBoxLayout>
 #include <QSplitter>
 #include <QPushButton>
+#include <QMainWindow>
+#include <QMenuBar>
+#include <QMenu>
 
 #include "ViewportWindow.h"
 #include "Editor.h"
 #include "SettingsTab.h"
 
-class WorldEditorWindow : public QWidget
+class WorldEditorWindow : public QMainWindow
 {
     Q_OBJECT
     
@@ -18,6 +21,18 @@ public:
     
 private:
     Editor editor;
+
+    QAction* newFileAction;
+    QAction* openFileAction;
+    QAction* saveFileAction;
+    QAction* saveAsFileAction;
+    QMenu* fileMenu;
+
+    void createFileMenu();
+
+    QMenu* editMenu;
+
+    void createEditMenu();
     
     QHBoxLayout* mainLayout;
     

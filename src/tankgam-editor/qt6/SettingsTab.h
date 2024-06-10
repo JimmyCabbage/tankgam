@@ -26,14 +26,6 @@ private slots:
 
     void currentTextChangedTextures(const QString& text);
     
-    //file
-    void editingFinishedMapName();
-    
-    void clickedLoadMap();
-    
-public slots:
-    void updateTextboxMapName(std::string mapName);
-    
 signals:
     //general
     void refreshViewport();
@@ -43,13 +35,6 @@ signals:
     void textureSelected(std::string textureName);
 
     void buildMap();
-    
-    //file
-    void changeMapName(std::string mapName);
-    
-    void saveMap();
-    
-    void loadMap(std::string mapName);
     
 private:
     Editor& editor;
@@ -62,11 +47,4 @@ private:
     QLabel* texturesDropdownLabel;
     QComboBox* texturesDropdown;
     QPushButton* buildMapButton;
-    
-    QVBoxLayout* fileTabLayout;
-    QWidget* fileTab;
-    QLabel* mapNameLabel;
-    QLineEdit* mapNameEntry;
-    QPushButton* saveMapButton;
-    QPushButton* loadMapButton;
 };
