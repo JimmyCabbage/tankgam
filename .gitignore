@@ -1,6 +1,7 @@
 .*
-src/tankgam/core/Version.h
+tankgam/src/core/Version.h
 !/.gitignore
 cmake-build*
 build*
 out
+compile_commands.json

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(tankgam VERSION 0.3.0 LANGUAGES C CXX)
+project(tankgam VERSION 0.4.0 LANGUAGES C CXX)
 
 option(TANKGAM_BUILD_EDITOR "Build the tankgam editor" ON)
 
@@ -18,4 +18,10 @@ find_package(glm REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(libzip REQUIRED)
 
-add_subdirectory(src)
+add_subdirectory(tankgam-util)
+add_subdirectory(tankgam-gl)
+add_subdirectory(tankgam)
+
+if(TANKGAM_BUILD_EDITOR)
+    add_subdirectory(tankgam-editor)
+endif(TANKGAM_BUILD_EDITOR)
