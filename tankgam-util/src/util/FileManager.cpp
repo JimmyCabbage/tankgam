@@ -181,12 +181,12 @@ void FileManager::loadAssetsFile(std::filesystem::path path)
         
         const std::vector<std::filesystem::path> altPaths =
         {
-            "../share/",
+            "../share/tankgam/",
 #ifdef __unix__
-            //"/usr/local/games/share/",
-            //"/usr/games/share/",
-            "/usr/local/share/",
-            "/usr/share/",
+            //"/usr/local/games/share/tankgam/",
+            //"/usr/games/share/tankgam/",
+            "/usr/local/share/tankgam/",
+            "/usr/share/tankgam/",
 #endif
         };
 
