@@ -7,20 +7,23 @@ LICENSING:
     Code underneath external/ licensed under respective LICENSE files in the respective subdirectory
     Code underneath src/ and include/ licensed under the Mozilla Public License 2.0 unless otherwise noted
 
-GAME DEPENDENCIES:
-    SDL2
-    OpenGL 4.0
+SHARED DEPENDENCIES:
     glm
-    libzip
-    JoltPhysics
-    stb_image (included in repository)
-    tiny_obj_loader (included in repository)
     fmt (included in repository)
     glad2 [mx] (included in repository)
 
-EDITOR DEPENDENCIES:
+tankgam-util DEPENDENCIES:
+    libzip
+
+tankgam-gl DEPENDENCIES:
+    stb_image (included in repository)
+    tiny_obj_loader (included in repository)
+
+tankgam DEPENDENCIES:
+    SDL2
+    OpenGL 4.0
+    JoltPhysics
+
+tankgam-editor DEPENDENCIES:
     QT6
     OpenGL 4.2
-    glm
-    fmt (included in repository)
-    glad2 [mx] (included in repository)
