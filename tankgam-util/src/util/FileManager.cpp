@@ -177,7 +177,48 @@ void FileManager::loadAssetsFile(std::filesystem::path path)
         const std::string errorStr = zip_error_strerror(&error);
         zip_error_fini(&error);
 
-        throw std::runtime_error{ fmt::format("Failed to read assets file {}, err: {}", pathStr, errorStr) };
+        log.log(LogLevel::Warning ,fmt::format("Failed to read assets file {}, err: {}, attempting alternative directories", pathStr, errorStr));
+        
+        const std::vector<std::filesystem::path> altPaths =
+        {
+            "../share/tankgam/",
+#ifdef __unix__
+            //"/usr/local/games/share/tankgam/",
+            //"/usr/games/share/tankgam/",
+            "/usr/local/share/tankgam/",
+            "/usr/share/tankgam/",
+#endif
+        };
+
+        bool foundFile = false;
+        for (const auto& altPath : altPaths)
+        {
+            std::filesystem::path share = altPath;
+            share += path.filename();
+            log.log(LogLevel::Warning, fmt::format("Trying path \"{}\"", share.string()));
+            const std::string sharePathStr = share.string();
+
+            err = 0;
+            handle = zip_open(sharePathStr.data(), ZIP_RDONLY, &err);
+            if (handle)
+            {
+                foundFile = true;
+                break;
+            }
+            else
+            {
+                zip_error_init_with_code(&error, err);
+                const std::string shareErrorStr = zip_error_strerror(&error);
+                zip_error_fini(&error);
+
+                log.log(LogLevel::Warning ,fmt::format("Failed to read assets file {}, err: {}, attempting next alt. directory", sharePathStr, shareErrorStr));
+            }
+        }
+
+        if (!foundFile)
+        {
+            throw std::runtime_error{ fmt::format("Failed to read assets file {}", pathStr) };
+        }
     }
 
     zips.push_back(handle);
