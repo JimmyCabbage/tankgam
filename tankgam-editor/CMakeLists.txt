@@ -52,3 +52,14 @@ target_include_directories(tankgam-editor PRIVATE "${PROJECT_SOURCE_DIR}/externa
 #fmt files
 target_sources(tankgam-editor PRIVATE "${PROJECT_SOURCE_DIR}/external/fmt/src/format.cc")
 target_include_directories(tankgam-editor PRIVATE "${PROJECT_SOURCE_DIR}/external/fmt/include")
+
+#install commands
+install(TARGETS tankgam-editor)
+
+#main tankgam part should take care of this
+#install(FILES
+#    "${PROJECT_SOURCE_DIR}/dev.assets"
+#    "${PROJECT_SOURCE_DIR}/base_textures.assets"
+#    "${PROJECT_SOURCE_DIR}/tank.assets"
+#    TYPE DATA
+#)
