@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(tankgam VERSION 0.4.0 LANGUAGES C CXX)
+project(tankgam VERSION 0.5.0 LANGUAGES C CXX)
 
 option(TANKGAM_BUILD_EDITOR "Build the tankgam editor" ON)
 
