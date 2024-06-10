@@ -1,8 +1,8 @@
 qt_add_executable(tankgam-editor
-        qt6/main.cpp
-        qt6/WorldEditorWindow.h qt6/WorldEditorWindow.cpp
-        qt6/ViewportWindow.h qt6/ViewportWindow.cpp
-        qt6/SettingsTab.h qt6/SettingsTab.cpp)
+        src/qt6/main.cpp
+        src/qt6/WorldEditorWindow.h src/qt6/WorldEditorWindow.cpp
+        src/qt6/ViewportWindow.h src/qt6/ViewportWindow.cpp
+        src/qt6/SettingsTab.h src/qt6/SettingsTab.cpp)
 
 #copy assets files to build directory
 configure_file("${PROJECT_SOURCE_DIR}/dev.assets" "${CMAKE_CURRENT_BINARY_DIR}/dev.assets" COPYONLY)
@@ -11,12 +11,12 @@ configure_file("${PROJECT_SOURCE_DIR}/base_textures.assets" "${CMAKE_CURRENT_BIN
 
 #internal logic stuff
 target_sources(tankgam-editor PRIVATE
-        logic/Viewport.h logic/Viewport.cpp
-        logic/ViewportCamera.h logic/ViewportCamera.cpp
-        logic/ViewportToolType.h
-        logic/ViewportHelpers.h logic/ViewportHelpers.cpp
-        logic/Editor.h logic/Editor.cpp
-        logic/StdLog.h logic/StdLog.cpp)
+        src/logic/Viewport.h src/logic/Viewport.cpp
+        src/logic/ViewportCamera.h src/logic/ViewportCamera.cpp
+        src/logic/ViewportToolType.h
+        src/logic/ViewportHelpers.h src/logic/ViewportHelpers.cpp
+        src/logic/Editor.h src/logic/Editor.cpp
+        src/logic/StdLog.h src/logic/StdLog.cpp)
 
 #we want ALL the warnings
 if(MSVC)
@@ -42,14 +42,13 @@ target_link_libraries(tankgam-editor PRIVATE tankgam-gl tankgam-util)
 target_link_libraries(tankgam-editor PRIVATE Qt::Core Qt::Gui Qt::Widgets glm::glm)
 
 #move up some directories to be up
-target_include_directories(tankgam-editor PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/logic")
-target_include_directories(tankgam-editor PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/math")
-target_include_directories(tankgam-editor PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/qt6")
+target_include_directories(tankgam-editor PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/logic/")
+target_include_directories(tankgam-editor PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/qt6/")
 
 #glad2 files
-target_sources(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/glad2/src/gl.c")
-target_include_directories(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/glad2/include")
+target_sources(tankgam-editor PRIVATE "${PROJECT_SOURCE_DIR}/external/glad2/src/gl.c")
+target_include_directories(tankgam-editor PRIVATE "${PROJECT_SOURCE_DIR}/external/glad2/include")
 
 #fmt files
-target_sources(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/fmt/src/format.cc")
-target_include_directories(tankgam-editor PRIVATE "${CMAKE_SOURCE_DIR}/external/fmt/include")
+target_sources(tankgam-editor PRIVATE "${PROJECT_SOURCE_DIR}/external/fmt/src/format.cc")
+target_include_directories(tankgam-editor PRIVATE "${PROJECT_SOURCE_DIR}/external/fmt/include")
