@@ -5,7 +5,7 @@ DESCRIPTION:
 
 LICENSING:
     Code underneath external/ licensed under respective LICENSE files in the respective subdirectory
-    Code underneath src/ and include/ licensed under the Mozilla Public License 2.0 unless otherwise noted
+    Any other directory's code is licensed under the Mozilla Public License 2.0 unless otherwise noted
 
 SHARED DEPENDENCIES:
     glm
