@@ -339,6 +339,12 @@ bool Editor::saveMap()
 
 void Editor::openMap(std::filesystem::path fileName)
 {
+    if (fileName.empty())
+    {
+        stdLog.log(LogLevel::Warning, "Not opening empty file.");
+        return;
+    }
+
     newMap();
 
     mapPath = fileName;
