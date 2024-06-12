@@ -11,7 +11,7 @@ enum class LogLevel
 };
 
 // returns "Unknown" if unknown level is passed
-const char* logLevelToString(LogLevel level);
+const char* getLogLevelString(LogLevel level);
 
 //a virtual pure class used to implement generic logging
 class Log

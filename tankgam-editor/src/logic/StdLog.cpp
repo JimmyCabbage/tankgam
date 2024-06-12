@@ -35,7 +35,7 @@ void StdLog::logf(std::string_view format, ...)
 
 void StdLog::log(LogLevel logLevel, std::string_view line)
 {
-    const char* levelName = logLevelToString(logLevel);
+    const char* levelName = getLogLevelString(logLevel);
     std::printf("%s: %s\n", levelName, line.data());
 }
 

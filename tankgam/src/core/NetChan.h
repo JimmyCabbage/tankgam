@@ -26,7 +26,7 @@ enum class NetMessageType : uint8_t
     SendReliables = std::numeric_limits<uint8_t>::max(),
 };
 
-constexpr const char* NetMessageTypeToString(const NetMessageType m)
+constexpr const char* getNetMessageTypeString(const NetMessageType m)
 {
     switch (m)
     {

@@ -1,6 +1,6 @@
 #include "util/Log.h"
 
-const char* logLevelToString(LogLevel level)
+const char* getLogLevelString(LogLevel level)
 {
     const char* levelName = "Unknown";
     switch (level)

@@ -115,7 +115,7 @@ void ClientConnectedState::update()
                 reliableMsgType = static_cast<NetMessageType>(tempV);
             }
 
-            //log.logf(LogLevel::Debug, "Client: Recieved Reliable msg from server: %s", NetMessageTypeToString(reliableMsgType));
+            //log.logf(LogLevel::Debug, "Client: Recieved Reliable msg from server: %s", getNetMessageTypeString(reliableMsgType));
 
             handleReliablePacket(reliableMessage, reliableMsgType);
         }
@@ -125,7 +125,7 @@ void ClientConnectedState::update()
             continue;
         }
 
-        //log.logf(LogLevel::Debug, "Client: Recieved Unreliable msg from server: %s", NetMessageTypeToString(msgType));
+        //log.logf(LogLevel::Debug, "Client: Recieved Unreliable msg from server: %s", getNetMessageTypeString(msgType));
         handleUnreliablePacket(buf, msgType);
     }
 
