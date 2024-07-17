@@ -151,6 +151,6 @@ void Console::sdl2LogOutputFunction(int category, SDL_LogPriority priority, cons
         fprintf(stderr, "%-10s%s\n", priorityStr, msg);
     }
 #else
-    fprintf(stderr, "%s%s\n", priorityStr, msg);
+    fprintf(stderr, "%s %s\n", priorityStr, msg);
 #endif
 }
