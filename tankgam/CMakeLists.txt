@@ -68,12 +68,7 @@ set_target_properties(tankgam PROPERTIES CXX_EXTENSIONS OFF)
 target_link_libraries(tankgam PRIVATE tankgam-gl tankgam-util)
 
 #linking various external files
-target_link_libraries(tankgam PRIVATE SDL2::SDL2main SDL2::SDL2 glm::glm)
-
-#link JoltPhysics manually
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(tankgam PRIVATE Jolt)
-endif()
+target_link_libraries(tankgam PRIVATE SDL2::SDL2main SDL2::SDL2 glm::glm Jolt::Jolt)
 
 #move up some directories to be up
 target_include_directories(tankgam PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/core")

@@ -17,6 +17,7 @@ endif(TANKGAM_BUILD_EDITOR)
 find_package(glm REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(libzip REQUIRED)
+find_package(Jolt REQUIRED)
 
 add_subdirectory(tankgam-util)
 add_subdirectory(tankgam-gl)
